@@ -1,0 +1,199 @@
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif}
+select {
+ border-radius: 10px;
+ padding-left: 10px;
+ padding-right: 10px;
+ width: 70%;
+}
+
+.pointer {
+	cursor: pointer;
+}
+
+p.warning {
+	color: firebrick;
+	font-weight: bold;
+}
+
+h5.w3-opacity.task.editmode {
+ display: inline-block;
+ width: calc(100% - 135px);	
+ cursor: default;
+}
+
+h5.w3-opacity.task 
+{
+ border: 2px solid transparent;
+ padding: 5px;
+ border-radius: 5px; 
+ transition: background-color 0.5s linear;
+ cursor: pointer;
+}
+h5.w3-opacity.task:not(.editmode):hover
+{
+ background-color: darkseagreen;
+}
+h5.w3-opacity.task.selected
+{
+ border-color: green;	
+}
+
+h5.w3-opacity.task.editmode > span.tagicon {
+ cursor: pointer;	
+ transition: background-color 0.4s linear;
+}
+
+h5.w3-opacity.task.editmode > span.tagicon:hover {
+ background-color: orange !important;	
+}
+
+div[data-type="taskitem"] p select {
+    width: 30%;
+	margin-right: 10px;
+}
+
+div[data-type="taskitem"] p span:not(.button) {
+    margin-right: 10px;
+}
+
+span.w3-tag.tagicon.part {
+    background-color: brown;
+}
+
+span.w3-tag.tagicon.tools {
+    background-color: blueviolet;
+}
+
+span.subassembly {
+   margin-left: 10px;
+}
+
+span.w3-tag.tagicon.position {
+    background-color: steelblue;
+}
+
+span.button {
+ cursor: pointer;                         
+ padding:5px 15px; 5px; 15px;                           
+ border-radius: 5px;
+ transition: background-color 0.4s linear;
+}
+
+span.button:hover {
+ background-color: orange !important;	
+}
+
+div.position {
+	background-position:center center;
+	background-size: contain;
+	background-repeat: no-repeat;
+	position:relative;
+	width: 100%;
+}
+
+div.position > div {
+ width: 20%;
+ height: 20%;
+ border: 1px solid black;
+ position: absolute;
+ transition: background-color 0.5s linear;
+ background-color: transparent;
+ cursor: pointer;
+ text-align:center;
+ box-sizing: border-box;
+ padding: 5px;
+}
+
+div.position > div:hover {
+ background-color: orange;
+ opacity: 0.5; 
+}
+
+div.position > div:nth-of-type(1) {
+ left: 9%;
+ top: 57%; 
+}
+
+div.position > div:nth-of-type(2) {
+ left: 57%;
+ top: 69%; 
+}
+
+div.position > div:nth-of-type(3) {
+ left: 0%;
+ top: 34%; 
+}
+
+div.position > div:nth-of-type(4) {
+ left: 27%;
+ top: 34%; 
+}
+
+div.position > div:nth-of-type(5) {
+ left: 0%;
+ top: 64%; 
+}
+
+div.position > div:nth-of-type(6) {
+ left: 27%;
+ top: 64%; 
+}
+
+div.position > div:nth-of-type(7) {
+ left: 55%;
+ top: 34%; 
+}
+
+div.position > div:nth-of-type(8) {
+ left: 80%;
+ top: 34%; 
+}
+
+div.position > div:nth-of-type(9) {
+ left: 55%;
+ top: 64%; 
+}
+
+div.position > div:nth-of-type(10) {
+ left: 80%;
+ top: 64%; 
+}
+
+div.position > div.selected {
+ border-color: orange;
+ border-width: 2px;
+ background-color: yellow;
+ opacity: 0.8;	
+}
+
+h6.time {
+ display: block;
+ float: right;
+ margin-top: 15px;
+ margin-right: 10px;
+ width: 124px;
+ text-align: right;
+}
+
+h6.time > input {
+ width: 80px;	
+}
+
+div.logout {
+ position: absolute;
+ left: 5px;
+ top:  5px; 
+ width: 30px;
+ height: 30px;
+ background-position: center center;
+ background-repeat: no-repeat;
+ background-image: url('logout.png');
+ background-size: contain;
+ cursor: pointer;
+}
+
+div.version {
+ position: absolute;
+ right: 5px;
+ top:  5px;
+}

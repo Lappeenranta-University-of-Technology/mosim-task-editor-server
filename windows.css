@@ -1,0 +1,116 @@
+div.modalwindow {
+ width: 80%;
+ height: 500px;
+ border: 1px solid black;
+ position: fixed;
+ background-color: rgba(255, 255, 255, 0.9);
+ z-index: 10;
+ margin-left: auto;
+ margin-right: auto;
+ left: 10%;
+ top: 20px;
+ padding-bottom: 50px;
+ padding-top: 40px;
+ box-shadow: 5px 5px 10px black;
+ border-radius: 20px;
+ display:none;
+}
+
+div.modalwindow.show {
+ display: block;	
+}
+
+div.modalwindow > div:first-child {
+ height: 100%;
+ width: 100%;
+ overflow: auto;
+ text-align: center;
+}
+
+div.modalwindow div:not(.modalbutton) > div {
+ border: 2px dotted black;
+ width: 100px;
+ height: 100px;
+ display: inline-block;
+ margin-left: 5px;
+ margin-right: 5px;
+ margin-top: 5px;
+ margin-bottom: 5px;
+ background-position: center center;
+ background-size: contain;
+ background-repeat: no-repeat;
+ cursor: pointer;
+ transition: background-color 0.4s linear;
+}
+
+div.modalwindow div > div.chosen {
+ border-style: solid;
+ background-color: olivedrab;
+}
+
+div.modalwindow > div > div:hover, 
+div.modalwindow > div > div.chosen:hover,
+.modalbutton:hover {
+    background-color: darkorange;
+}
+
+.modalbutton {
+ width: 25%;
+ height: 40px;
+ border: 1px solid green;
+ border-radius: 10px;
+ position: absolute;
+ bottom: 5px;
+ transition: background-color 0.4s linear;
+ font-size: 20px;
+ line-height: 40px;
+ text-align: center;
+ cursor: pointer;
+}
+
+.modalbutton:nth-child(2) {
+ left: calc(20% - 5px);
+}
+
+.modalbutton:nth-child(3) {
+ left: calc(50% + 5px);
+}
+
+.modalbutton:nth-child(4) {
+ right: 20px;
+ width: 15%;
+ background-image: url('file-upload-solid.svg');
+ background-size: contain;
+ background-position: center center;
+ background-repeat: no-repeat;
+}
+
+.modalbutton.single:nth-child(3) {
+ left: 37.5%;
+}
+
+.modalbutton.single:not(:nth-child(3)) {
+ display: none;
+}
+
+div.modalwindow > input[type="file"] {
+ display:none;
+}
+
+div.modaltoolbar {
+ position: absolute;
+ top: 0px;
+ left: 0px;
+ font-size: 18px;
+ padding-left: 10px;
+ padding-top: 5px;
+ width: 100%;
+ overflow: hidden;
+ background-color: green;
+ padding-bottom: 5px;
+ color: white;
+ border-bottom: 2px solid black;
+ border-radius: 20px 20px 0px 0px;
+}
+ 
+ 
