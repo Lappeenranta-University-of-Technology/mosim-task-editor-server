@@ -489,19 +489,21 @@ div.modalwindow > div:first-child {
    $j=0;
 /*   $sql='SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, pc.icon as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, parts p, tasktypes tt, partcat pc, part_cat p_c WHERE t_c.tool=t.id and t_c.cat=tc.id and p_c.part=hlt.partid and p_c.cat=pc.id and tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.partid>0 and hlt.stationid='.$stationid.' '.*/
    $sql='SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, '.
-   '(SELECT pc.icon FROM partcat pc, part_cat p_c WHERE p_c.cat=pc.id and p_c.part=hlt.partid) as particon, '.
-   '(SELECT tc.icon FROM toolcat tc, tool_cat t_c WHERE t_c.cat=tc.id and t_c.tool=hlt.toolid) as toolicon, '.
-   'if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon '.
+   '(SELECT pc.icon FROM partcat pc, part_cat p_c WHERE p_c.cat=pc.id and p_c.part=hlt.partid LIMIT 1) as particon, '.
+   '(SELECT tc.icon FROM toolcat tc, tool_cat t_c WHERE t_c.cat=tc.id and t_c.tool=hlt.toolid LIMIT 1) as toolicon, '.
+   'if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
    'FROM highleveltasks hlt, tools t, parts p, tasktypes tt '.      
    'WHERE tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.stationid='.$stationid.' '.                                         
    'UNION ALL '.                                                                 
    'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', pc.icon, \'\', \'\' FROM stations s, parts p, positions pp, partcat pc, part_cat p_c WHERE s.mainpart=p.id and s.position=pp.id and pc.id=p_c.cat and p_c.part=s.mainpart and s.parent='.$stationid.' '.
    'UNION ALL '.
-   'SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, CONCAT(\'S\',hlt.subpartid) as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, \'subassembly.png\' as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon '.
+   'SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, CONCAT(\'S\',hlt.subpartid) as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, \'subassembly.png\' as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
    'FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, stations p, tasktypes tt WHERE t_c.tool=t.id and t_c.cat=tc.id and hlt.partid=0 and hlt.subpartid=p.id and tt.id=hlt.tasktype and t.id=hlt.toolid and hlt.stationid='.$stationid.' '.   
    '  ORDER BY sortorder, id';
    //TODO: Add display of first level subassembly headers
+   //TODO: Check why LIMIT 1 is needed in all the subqueries, they should be constrained enough not to produce more than one result.
 
+   
    if ($result=$db->query($sql))
    while ($row=$result->fetch_assoc())
    {
@@ -706,8 +708,8 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 		   else
 		   insertTools($selToolType); 
 		  ?></select></p>
-		  <p>Position: <!-- <select><?php insertPositions(); ?></select>--></p>
-		  <p><div id="positions" class="position"><img style="display:none;" src="car1.jpg" width="100%" />
+		  <p style="display:none;">Position: <!-- <select><?php insertPositions(); ?></select>--></p>
+		  <p style="display:none;"><div style="display:none;" id="positions" class="position"><img style="display:none;" src="car1.jpg" width="100%" />                            
 		  <div onclick="selectPosition(this);"></div>
 		  <div onclick="selectPosition(this);"></div>
 		  <div onclick="selectPosition(this);">1</div>

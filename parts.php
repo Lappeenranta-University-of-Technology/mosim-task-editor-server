@@ -126,7 +126,8 @@
  var accessToken="";
  
  function startPartsFromSceneImport(token) {	 
-   var getstring="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+"/mosim/api.php")+"&action=importparts&token="+encodeURI(token);	 
+   var projectname=document.getElementById("projectname").innerText;
+   var getstring="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+"/mosim/api.php")+"&action=importparts&token="+encodeURI(token)+'&name='+encodeURI(projectname);
    $.ajax({
         type: "GET",
         url: "http://127.0.0.1/"+getstring,
@@ -137,13 +138,13 @@
         success: function (data) { //success callback
 		 if (getTagValue(data,'response')=='OK')
          {
-		  document.getElementById("importpartsmsg").innerHTML+="Connected to Unity<br>";
-		  console.debug("Parts import has been started...");
+		  document.getElementById("importpartsmsg").innerHTML+="<img src=\"ok.png\" />Connected to Unity<br>";
+		  console.debug("Parts synchronization has been started...");
 		 }			 
         },
         error: function (error) { //error callback
-		  document.getElementById("importpartsmsg").innerHTML+="Error: Unity is unreachable, is unity project open?<br>";
-          console.debug("Scene not available, is target enginge up and running?");  
+		  document.getElementById("importpartsmsg").innerHTML+="<img src=\"err.png\" />Error: Unity is unreachable, is unity project open?<br><img src=\"info.png\" />You can input the following parameters in Unity:<ul><li>"+document.location.protocol+"//"+document.location.hostname+"/mosim/api.php</li><li>"+token+"</li></ul>";
+          console.debug("Scene not available, is target enginge up and running?");
         },
         async: true,
         cache: false,
@@ -165,21 +166,21 @@
 	  accessToken=getTagValue(data,'token');	 
 	  startPartsFromSceneImport(accessToken);
       console.debug("Access token granted");
-	  document.getElementById("importpartsmsg").innerHTML+="Access token has been created<br>";
+	  document.getElementById("importpartsmsg").innerHTML+="<img src=\"ok.png\" />Access token has been created<br>";
 	 }
      else
 	 {
 	  console.debug("Error in obtaining access token");	 
-	  document.getElementById("importpartsmsg").innerHTML+="Could not get access token<br>";
+	  document.getElementById("importpartsmsg").innerHTML+="<img src=\"err.png\" />Could not get access token<br>";
 	 }
 	});
  }
  
- function importPartsFromScene(projectid) {
-  if (accessToken!='')	 
+ function syncPartsWithScene(projectid) {
+  if (accessToken!='')
   startPartsFromSceneImport(accessToken);
   else
-  getToken(projectid);	  
+  getToken(projectid);
  }
  
 </script>
@@ -198,7 +199,7 @@
   transition: border-top 0.5s linear;
  }
  
- div#partcatlist > div > span {                                      
+ div#partcatlist > div > span {
   position: absolute;
   top: 0px;
   right: 0px;
@@ -268,7 +269,7 @@
   transition: border-top 0.5s linear;
  }
  
- div#partlist > div > span {                                      
+ div#partlist > div > span {
   position: absolute;
   top: 0px;
   right: 0px;
@@ -398,7 +399,7 @@
  function loadParts() {
   global $db;
   $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart FROM '.
-  '(SELECT id, name, sortorder, language, defaultpart FROM `partcat`) tc '.
+  '(SELECT id, name, sortorder, language, defaultpart FROM `partcat` WHERE projectid='.$_SESSION['projectid'].') tc '.
   ' LEFT JOIN (part_cat t_c, parts t) ON (t_c.cat=tc.id and t_c.part=t.id and t.projectid='.$_SESSION['projectid'].') '.
   ' UNION ALL '.
   'SELECT 0, \'Uncategorized\', 0, t.id, t.name, 0, 0 FROM parts t '.
@@ -443,7 +444,7 @@
         <div class="w3-container">
 		  <?php include('menu.php'); ?>
           <hr>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="importPartsFromScene(<?php echo $_SESSION['projectid']; ?>);">Import parts from scene</span></p>
+		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync parts with scene</span></p>
 		  <p id="importpartsmsg"></p>
           <br>
         </div>
@@ -454,6 +455,9 @@
 
     <!-- Right Column -->
     <div class="w3-twothird">
+	  <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <h2 id="projectname"><?php projectName(); ?></h2>
+	  </div>
       <div id="partcatlist" class="w3-container w3-card w3-white w3-margin-bottom">
         <h2>Part categories</h2>
 		<?php

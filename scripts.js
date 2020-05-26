@@ -1315,14 +1315,45 @@
   var tooltypes=document.getElementById("new_tooltype");
   var subtypes=document.getElementById("new_subtype");
   var parttypes=document.getElementById("new_parttype");
-   if (subtypes.options[subtypes.options.selectedIndex].dataset.defaulttool!=0)
-   {
-    tooltypes.value=subtypes.options[subtypes.options.selectedIndex].dataset.defaulttool;	   
-	tooltypes.onchange(tooltypes);
-   }
-   if (subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart!=0)
-   {
-    parttypes.value=subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart;	   
-	parttypes.onchange(parttypes);
-   }
+  var toolselector=document.getElementById("new_tool");
+  var partselector=document.getElementById("partselector");
+	if (subtypes.options[subtypes.options.selectedIndex].dataset.defaulttool==-1)
+	{
+	 tooltypes.style.display='none';
+	 toolselector.style.display='none';
+	}
+	else
+	{
+	 tooltypes.style.display='';
+	 toolselector.style.display='';
+	 if (subtypes.options[subtypes.options.selectedIndex].dataset.defaulttool!=0)
+	 {
+      tooltypes.value=subtypes.options[subtypes.options.selectedIndex].dataset.defaulttool;
+	  tooltypes.onchange(tooltypes);
+	 }
+	}
+	
+	 if (subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart==-1)
+	 {
+	  parttypes.style.display='none';
+	  partselector.style.display='none';
+	 }
+	 else
+	 {
+	  parttypes.style.display='';
+	  partselector.style.display='';
+	   if (subtypes.options[subtypes.options.selectedIndex].hasAttribute('data-onlyparts'))
+	   {
+		var parts=subtypes.options[subtypes.options.selectedIndex].dataset.onlyparts.split(",")
+		 if (parts.length==1)
+		 parttypes.style.display='none';
+		 if (parts.indexOf(subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart)==-1)
+		 subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart=parts[0];
+	   }
+		if (subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart!=0)
+		{
+		  parttypes.value=subtypes.options[subtypes.options.selectedIndex].dataset.defaultpart;
+		  parttypes.onchange(parttypes);
+		}
+	 }
  }

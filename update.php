@@ -304,13 +304,16 @@
 	$assembly=$tid_sid[1];
   }	  
   $sqlS='INSERT INTO stations (id, name, sortorder) VALUES ';
-  $sql='INSERT INTO highleveltasks (id, sortorder, stationid) VALUES '; 
+  $sql='INSERT INTO highleveltasks (id, sortorder, stationid, positionname, description) VALUES '; 
+  $sqlcount=0;
+  $sqlScount=0;
    for ($i=0; $i<count($neworder); $i++)
    {
 	$tid_sid=explode(';',$neworder[$i]); //taskid, stationid, level
 	if ($tid_sid[0]==0)
 	{
 	 $sqlS.='('.$tid_sid[1].',\'\','.$order[intval($tid_sid[2])].'),';   
+	 $sqlScount++;
 	 $order[intval($tid_sid[2])]++;
 	 //$level++;
 	 $level=intval($tid_sid[2])+1;
@@ -324,17 +327,21 @@
      $level=intval($tid_sid[2]);
      if ($level<0)
 	 return $sql.'  '.$i.'     Data error';	 
-	 $sql.='('.$tid_sid[0].','.$order[$level].','.$tid_sid[1].'),';   
+	 $sql.='('.$tid_sid[0].','.$order[$level].','.$tid_sid[1].',\'\',\'\'),';   
 	 $order[$level]++;
+	 $sqlcount++;
 	}
    }
   $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE stationid=values(stationid), sortorder=values(sortorder);';
   $sqlS=substr($sqlS,0,-1).' ON DUPLICATE KEY UPDATE sortorder=values(sortorder);';
+  
   $OK=true;
-  if (!($db->query($sql)))
-  $OK=false;
-  if (!($db->query($sqlS)))
-  $OK=false;
+  if ($sqlcount>0)
+   if (!($db->query($sql)))
+   $OK=false;
+  if ($sqlScount>0)
+   if (!($db->query($sqlS)))
+   $OK=false;
   if ($OK)
   return 'OK';
   return 'ERROR'; 

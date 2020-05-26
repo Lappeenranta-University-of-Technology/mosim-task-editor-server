@@ -1,18 +1,33 @@
 <?php
+ function projectName() {
+  global $db;
+  if ($_SESSION['projectid']==0)
+  return false;
+
+  if ($result=$db->query('SELECT name FROM projects WHERE id='.$_SESSION['projectid']))
+   if ($row=$result->fetch_assoc())
+   echo htmlentities($row['name']);
+ }
+
  function getIcons() {
   $ikony=scandir('icons/');
   for ($i=0; $i<count($ikony); $i++)
    if (!is_dir($ikony[$i]) && in_array(pathinfo($ikony[$i], PATHINFO_EXTENSION),array('png','svg','jpg')))   
    echo '<div data-icon="'.$ikony[$i].'" style="background-image:url(\'icons/'.$ikony[$i].'\');"></div>';
  }           
- 
 
  function insertSubTypes($maintype = 1)
  {
   global $db;  
-   if ($result=$db->query('SELECT tt.id, tt.name, dtt.tooltype, dtt.parttype  ,tt.sortorder FROM `tasktypes` tt LEFT JOIN defaulttooltype dtt ON (dtt.tasktype=tt.id) WHERE tt.parent='.$maintype.' and tt.language="mosim"'))
+   if ($result=$db->query('SELECT tt.id, tt.name, dtt.tooltype, dtt.parttype, dtt.restricttool, dtt.restrictpart, dtt.partlist, tt.sortorder FROM `tasktypes` tt LEFT JOIN defaulttooltype dtt ON (dtt.tasktype=tt.id) WHERE tt.parent='.$maintype.' and tt.language="mosim"'))
 	while ($row=$result->fetch_assoc())
-	echo '<option data-defaulttool="'.$row['tooltype'].'" data-defaultpart="'.$row['parttype'].'" value="'.$row['id'].'">'.$row['name'].'</option>';		 
+	{
+	 if ($row['restricttool']=='notool')
+	 $row['tooltype']=-1;
+     if ($row['restrictpart']=='nopart')
+	 $row['parttype']=-1;
+	 echo '<option data-defaulttool="'.$row['tooltype'].'" data-defaultpart="'.$row['parttype'].'" '.($row['restrictpart']=='onlylisted'?'data-onlyparts="'.$row['partlist'].'"':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
+	}
  }
 
  function insertParts($parttype=1)

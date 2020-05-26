@@ -37,45 +37,90 @@
  function addPartsFromScene() {	 
   global $db;                                                                   
   
-  $projectid=tokenToProjectId($_POST['token']);
-  
+  $projectid=tokenToProjectId($_POST['token']);  
   if ($projectid==0)
   return '<result>Error - insufficient user privileges</result>';	  
-  
   $sql='SELECT id, name, engineid FROM `parts` WHERE projectid='.$projectid.' ORDER BY name, engineid';
-  
   $parts=[];
-  
   if ($result=$db->query($sql))
    while ($row=$result->fetch_assoc())
    {
 	$row['changed']=false;   
     $parts[]=$row;	   
    }
-  
   $result='';	 
-  if (isset($_POST['partsNames']) && isset($_POST['partsIDs']) && 
-      count($_POST['partsNames'])==count($_POST['partsIDs']))
-  {
+  //var_dump($_POST);
+  if (!(isset($_POST['partsNames']) && isset($_POST['partsIDs']) && isset($_POST['partsMMIIDs']) && 
+      (count($_POST['partsNames'])==count($_POST['partsIDs'])) &&
+	  (count($_POST['partsNames'])==count($_POST['partsMMIIDs']))))
+	return '<result>Dataset error</result>';
+  
    $sql='INSERT INTO parts (projectid, description, name, engineid) VALUES ';	 
    $sqlu='INSERT INTO parts (id, projectid, description, name, engineid) VALUES ';
-   for ($i=0; $i<count($_POST['partsIDs']); $i++)
-   if (ctype_digit($_POST['partsIDs'][$i]))	   
-   {
-	$decamelled=deCamel($_POST['partsNames'][$i]);   
-	$found=false;
-	 for ($j=0; $j<count($parts); $j++)
-	  if ((!$parts[$j]['changed']) && ($parts[$j]['name']==$decamelled))
-	  {
-	   $found=true;
-	   $parts[$j]['changed']=true;
-	    if ($parts[$j]['engineid']!=$_POST['partsIDs'][$i])
-		$sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsIDs'][$i].'),';
-       break;	
-	  }
-	if (!$found)  
-	$sql.='('.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsIDs'][$i].'),';   
-   }
+   $unityFound=array_fill(0,count($_POST['partsIDs']),false);
+   
+	for ($i=0; $i<count($_POST['partsIDs']); $i++)
+     {
+	  $found=false;
+	  if ($_POST['partsIDs'][$i]!=0)
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+		//echo 'ByID: '.$parts[$j]['id'].'?='.$_POST['partsIDs'][$i]."<br>";
+	    if ((!$parts[$j]['changed']) && ($parts[$j]['id']==$_POST['partsIDs'][$i]))
+	    {
+		 $decamelled=deCamel($_POST['partsNames'][$i]);
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+	      if (($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i]) || 
+		      ($parts[$j]['name']!=$decamelled))
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+	 }
+	 
+	  for ($i=0; $i<count($_POST['partsIDs']); $i++)
+	   if (!$unityFound[$i])
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+		//echo 'ByLocalID: '.$parts[$j]['engineid'].'?='.$_POST['partsMMIIDs'][$i]."<br>";
+	    if ((!$parts[$j]['changed']) && ($parts[$j]['engineid']==$_POST['partsMMIIDs'][$i]))
+	    {
+		 $decamelled=deCamel($_POST['partsNames'][$i]);
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])		      
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }		   
+	   
+	  for ($i=0; $i<count($_POST['partsIDs']); $i++)
+	   if (!$unityFound[$i])
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+		$decamelled=deCamel($_POST['partsNames'][$i]);
+		//echo 'ByName: '.$parts[$j]['name'].'?='.$decamelled."<br>";
+	    if ((!$parts[$j]['changed']) && (mb_strtoupper($parts[$j]['name'],'UTF-8')==mb_strtoupper($decamelled,'UTF-8')))
+	    {
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])		      
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+    
+	for ($i=0; $i<count($_POST['partsIDs']); $i++)
+	 if (!$unityFound[$i])  
+	 {
+	  $decamelled=deCamel($_POST['partsNames'][$i]);
+	  $sql.='('.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsIDs'][$i].'),';  
+	 }
+   
    $ok=true;
    if (substr($sql,-1)==',')
    {   
@@ -85,12 +130,30 @@
    
    if ($sqlu[strlen($sqlu)-1]==',') 
    {
-    $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE engineid=values(engineid);';
+    $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE name=values(name), engineid=values(engineid);';
 	$ok=$ok && ($db->query($sqlu));
    }
-   $result.=($ok?'<result>OK</result>':'<result>ERROR</result>').'<sql>'.$sql.'</sql>'."\r\n".'<sqlu>'.$sqlu.'</sqlu>';
-  }
    
+   //echo '<sql>'.$sql.'</sql>'."\r\n"; //this is only for debug purposes
+   //echo '<sqlu>'.$sqlu.'</sqlu>'."\r\n";  //this is only for debug purposes
+   
+   if ($ok)
+   {
+	 $sql='SELECT id, name, engineid FROM `parts` WHERE engineid>0 and projectid='.$projectid.' ORDER BY name, engineid';
+	 $data=[];
+	 if ($rset=$db->query($sql))
+		 while ($row=$rset->fetch_assoc())
+		 {
+		  $row['name']=str_replace(' ','',$row['name']);                         
+		  $data[]=$row;
+		 }
+	 $result.=json_encode($data); //printing entires from database as JSON
+   }
+   else
+   {
+	$reply="Error";
+    $result.=json_encode($reply);
+   }
    
   return $result; 	   
  }
@@ -185,9 +248,12 @@ XML;
  if (isset($_POST['action']))
  {
   if (($_POST['action']=='addParts') && ($_POST['token']))
-  echo '<html><head></head><body>'.
-   addPartsFromScene().
-       '</body></html>';
+  {
+   header('Content-Type: application/json');	
+  //echo '<html><head></head><body>'.
+   echo addPartsFromScene();
+       //'</body></html>';
+  }
  }
  
 ?>

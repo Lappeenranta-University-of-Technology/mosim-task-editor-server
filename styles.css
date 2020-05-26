@@ -104,6 +104,11 @@ div.position > div {
  padding: 5px;
 }
 
+p#importpartsmsg img, p#importtoolsmsg img{
+ width: 30px;
+ height: 30px;
+}
+
 div.position > div:hover {
  background-color: orange;
  opacity: 0.5; 

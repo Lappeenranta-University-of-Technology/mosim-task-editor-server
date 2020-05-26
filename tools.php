@@ -122,6 +122,67 @@
         timeout: 60000
     });
  }
+ 
+
+var accessToken="";
+
+  function startToolsFromSceneImport(token) {	
+   var projectname=document.getElementById("projectname").innerText;  
+   var getstring="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+"/mosim/api.php")+"&action=importtools&token="+encodeURI(token)+'&name='+encodeURI(projectname);	 
+   $.ajax({
+        type: "GET",
+        url: "http://127.0.0.1/"+getstring,
+        xhr: function () {
+            var myXhr = $.ajaxSettings.xhr();
+            return myXhr;
+        },
+        success: function (data) { //success callback
+		 if (getTagValue(data,'response')=='OK')
+         {
+		  document.getElementById("importtoolsmsg").innerHTML+="<img src=\"ok.png\" />Connected to Unity<br>";
+		  console.debug("Tools synchronization has been started...");
+		 }			 
+        },
+        error: function (error) { //error callback
+		  document.getElementById("importtoolsmsg").innerHTML+="<img src=\"err.png\" />Error: Unity is unreachable, is unity project open?<br><img src=\"info.png\" />You can input the following parameters in Unity:<ul><li>"+document.location.protocol+"//"+document.location.hostname+"/mosim/api.php</li><li>"+token+"</li></ul>";
+          console.debug("Scene not available, is target enginge up and running?");  
+        },
+        async: true,
+        cache: false,
+        contentType: false,
+        processData: false,
+        timeout: 60000
+    });	 
+ }
+
+  function getToken(projectid) {
+  $.post("update.php",
+    {
+        action: "getAccessToken",
+		projectid: projectid
+    },
+    function(data, status){
+	 if (getTagValue(data,'result')=='OK')
+	 {
+	  accessToken=getTagValue(data,'token');	 
+	  startToolsFromSceneImport(accessToken);
+      console.debug("Access token granted");
+	  document.getElementById("importtoolsmsg").innerHTML+="<img src=\"ok.png\" />Access token has been created<br>";
+	 }
+     else
+	 {
+	  console.debug("Error in obtaining access token");	 
+	  document.getElementById("importtoolsmsg").innerHTML+="<img src=\"err.png\" />Could not get access token<br>";
+	 }
+	});
+ }
+ 
+ function syncToolsWithScene(projectid) {
+  if (accessToken!='')
+  startToolsFromSceneImport(accessToken);
+  else
+  getToken(projectid);
+ }
 </script>
 <style>
  div#toolcatlist > div {
@@ -382,7 +443,8 @@
         <div class="w3-container">
 		 <?php include('menu.php'); ?>
           <hr>
-
+		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncToolsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync tools with scene</span></p>
+		  <p id="importtoolsmsg"></p>
           <br>
         </div>
       </div><br>
@@ -392,6 +454,9 @@
 
     <!-- Right Column -->
     <div class="w3-twothird">
+	  <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <h2 id="projectname"><?php projectName(); ?></h2>
+	  </div>
       <div id="toolcatlist" class="w3-container w3-card w3-white w3-margin-bottom">
         <h2>Tool categories</h2>
 		<?php
