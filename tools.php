@@ -127,8 +127,10 @@
 var accessToken="";
 
   function startToolsFromSceneImport(token) {	
-   var projectname=document.getElementById("projectname").innerText;  
-   var getstring="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+"/mosim/api.php")+"&action=importtools&token="+encodeURI(token)+'&name='+encodeURI(projectname);	 
+   var projectname=document.getElementById("projectname").innerText;
+   var a=document.location.pathname.lastIndexOf('/');
+   var path = document.location.pathname.substr(0,a+1);
+   var getstring="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+path+"api.php")+"&action=importtools&token="+encodeURI(token)+'&name='+encodeURI(projectname);	 
    $.ajax({
         type: "GET",
         url: "http://127.0.0.1/"+getstring,
