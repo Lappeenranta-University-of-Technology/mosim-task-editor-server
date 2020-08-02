@@ -292,6 +292,22 @@
    }
   echo '<result>ERROR</result>'; 
  }
+ 
+ function reorderStations($neworder) {
+  global $db;
+  $sql='INSERT INTO stations (id, sortorder, name) VALUES ';
+   for ($i=0; $i<count($neworder); $i++)
+   $sql.='('.$neworder[$i].','.$i.',\'\'),';
+  $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE sortorder=values(sortorder);';
+  $db->query($sql);
+  echo '<sql>'.$sql.'</sql>';
+   if ($db->affected_rows>0)
+   {
+    echo '<result>OK</result>';
+	return;
+   }
+  echo '<result>ERROR</result>'; 
+ }
 
  function reorderTaskList($neworder) {
   global $db;
@@ -702,6 +718,21 @@
 	 echo '<result>OK</result>';
  }
  
+ //TODO: deleting stations orphans actions that previously belonged to station
+  function delStation($id) {
+  global $db;
+  if (!isUsersProject($_SESSION['projectid']))
+  return '<result>You do not have rights to edit this project</result>';
+   $sql='DELETE FROM stations WHERE id='.$id.' and projectid='.$_SESSION['projectid'].' and parent=0 LIMIT 1;';
+	if ($db->query($sql))
+	{
+	  if ($db->affected_rows>0)
+	  echo '<result>deleted</result>';
+	}
+	else
+	echo '<result>'.$db->error.'</result>';
+ }
+ 
  function getTask($taskid) {
   global $db;
   $sql='SELECT hvt.tasktype, tt.name as taskname, hvt.partid, p.name as partname, hvt.toolid, t.name as toolname, hvt.positionname, hvt.description, hvt.esttime FROM highleveltasks hvt, tasktypes tt, parts p, tools t WHERE tt.id=hvt.tasktype and p.id=hvt.partid and hvt.toolid=t.id and hvt.id='.$taskid;
@@ -839,8 +870,19 @@
  
  function addSubStation($name,$parentstation,$mainpart,$position) {
   global $db;
-  if (!(ctype_digit($parentstation) && ctype_digit($mainpart) && ctype_digit($position)))
-  return 'Data form error: data do not agree with the template.';
+  $main='part';
+   if (!ctype_digit($mainpart))
+	   if ((substr($mainpart,0,1)=='S') && (ctype_digit(substr($mainpart,1))))
+	   {
+		$main='station';
+		$mainpart=substr($mainpart,1);
+	   }
+	   else
+	   return 'Data form error: data do not agree with the template (1).';
+		   
+  if (!(ctype_digit($parentstation) && ctype_digit($position)))
+  return 'Data form error: data do not agree with the template (2).';
+
   if ($_SESSION['projectid']==0)
   return 'You do not have active project. Go to <a href=projects.php>projects</a> and select an existing project or create a new one.';
   if (!isUsersProject($_SESSION['projectid']))
@@ -868,13 +910,13 @@
   
   $order=1000;
   
-  $sql='INSERT INTO stations (projectid,name,sortorder,parent,mainpart,position) '.
-  'VALUES ('.$_SESSION['projectid'].',\''.$name.'\','.$order.','.$parentstation.','.$mainpart.','.$position.');';
+  $sql='INSERT INTO stations (projectid,name,sortorder,parent,mainpart,main,position) '.
+  'VALUES ('.$_SESSION['projectid'].',\''.$name.'\','.$order.','.$parentstation.','.$mainpart.',\''.$main.'\','.$position.');';
    $db->query($sql);
    if ($db->insert_id>0)
    return 'OK';
    else
-   return 'ERROR';	   
+   return 'ERROR: '.$sql;	   
  }
  
  function generateToken() {
@@ -984,6 +1026,19 @@
   echo '<result>ERROR</result>';
  }
  
+ function insertStationsAsParts($stationid) {
+  global $db;	 
+  if ($result=$db->query('SELECT id, name FROM `stations` WHERE parent=0 and id<>'.$stationid.' and projectid='.$_SESSION['projectid'].' ORDER BY sortorder, name'))
+  {
+   echo '<result>OK</result><maintype>-3</maintype><response>';
+	while ($row=$result->fetch_assoc())
+	echo '<option value="S'.$row['id'].'">'.$row['name'].'</option>';	
+   echo '</response>';
+  }
+  else
+  echo '<result>ERROR</result>';
+ }
+  
  function getSubAssemblies($assembly) {
   global $db;
   $sql='SELECT  hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, pc.icon as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, parts p, tasktypes tt, partcat pc, part_cat p_c WHERE t_c.tool=t.id and t_c.cat=tc.id and p_c.part=hlt.partid and p_c.cat=pc.id and tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.stationid='.$assembly.' '.               
@@ -1045,6 +1100,48 @@
   return 'You do not have permissions to edit this project.';
  }
  
+ function addAvatar($name,$age,$height,$weight,$gender) {
+	 global $db;
+	if ((!isset($_SESSION['userid'])) || (!isset($_SESSION['projectid'])))
+    return 'You do not have permissions to edit this project.';
+	if (!isUsersProject($_SESSION['projectid']))
+    return 'You do not have rights to edit this project';
+	$name='\''.$db->real_escape_string($name).'\'';
+	$gender='\''.$db->real_escape_string($gender).'\'';
+	$sql='INSERT INTO avatars (`name`, `projectid`, `age`, `height`, `weight`, `gender`) VALUES ('.$name.','.$_SESSION['projectid'].','.$age.','.$height.','.$weight.','.$gender.');';
+	if ($db->query($sql))
+		if ($db->insert_id>0)
+		return 'OK';
+	return 'Input data error.';
+ }
+ 
+ function updateAvatar($id,$name,$age,$height,$weight,$gender) {
+	global $db;
+	if ((!isset($_SESSION['userid'])) || (!isset($_SESSION['projectid'])))
+    return 'You do not have permissions to edit this project.';
+	if (!isUsersProject($_SESSION['projectid']))
+    return 'You do not have rights to edit this project';
+	$name='\''.$db->real_escape_string($name).'\'';
+	$gender='\''.$db->real_escape_string($gender).'\'';
+	$sql='UPDATE avatars SET `name`='.$name.', `height`='.$height.', `weight`='.$weight.', `age`='.$age.', `gender`='.$gender.' WHERE id='.$id.' and projectid='.$_SESSION['projectid'].' LIMIT 1';
+	if ($db->query($sql))
+	return 'OK';
+	return 'Input data error.';
+ } 
+ 
+  function updateStation($id,$name,$main,$avatar,$location) {
+	global $db;
+	if ((!isset($_SESSION['userid'])) || (!isset($_SESSION['projectid'])))
+    return 'You do not have permissions to edit this project.';
+	if (!isUsersProject($_SESSION['projectid']))
+    return 'You do not have rights to edit this project';
+	$name='\''.$db->real_escape_string($name).'\'';
+	$sql='UPDATE stations SET `name`='.$name.', `mainpart`='.(substr($main,0,1)=='S'?substr($main,1):$main).', main=\''.(substr($main,0,1)=='S'?'station':'part').'\', `position`='.$location.', `avatarid`='.$avatar.' WHERE id='.$id.' and projectid='.$_SESSION['projectid'].' LIMIT 1';
+	if ($db->query($sql))
+	return 'OK';
+	return 'Input data error.';
+ } 
+ 
  if (connectDB()==false) exit;
  
  if (isset($_POST['action']))
@@ -1078,16 +1175,22 @@
     echo '</response>';	
    } 	
    else
-	if ($_POST['maintype']==-2)
-	{
-	echo '<result>OK</result><maintype>'.$_POST['maintype'].'</maintype><response>';
-	insertUncategorizedParts();
-	echo '</response>';	
-	}
-	else
-    if (($_POST['maintype']==-1) && isset($_POST['stationid'])
-       && ctype_digit($_POST['stationid']))		//subassemblies
-    insertSubassemblies($_POST['stationid']);
+	 switch ($_POST['maintype'])
+	 {
+	   case -3: //stations
+	    if (isset($_POST['stationid']) && ctype_digit($_POST['stationid']))
+		insertStationsAsParts($_POST['stationid']);
+	   break;
+	   case -2:	
+	    echo '<result>OK</result><maintype>'.$_POST['maintype'].'</maintype><response>';
+	    insertUncategorizedParts();
+	    echo '</response>';	
+       break;
+	   case -1:
+        if (isset($_POST['stationid']) && ctype_digit($_POST['stationid']))		//subassemblies
+        insertSubassemblies($_POST['stationid']);
+		break;
+	 }
    
   if (($_POST['action']=='getSubTools') && isset($_POST['maintype']))
    if (ctype_digit($_POST['maintype']))
@@ -1166,6 +1269,10 @@
    if (isset($_POST['neworder']))
    reorderToolCat($_POST['neworder']);	
 
+  if ($_POST['action']=='reorderStations')
+   if (isset($_POST['neworder']))
+   reorderStations($_POST['neworder']);	
+
   if ($_POST['action']=='delPartCat')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
    delPartCat($_POST['id']); 	   
@@ -1173,6 +1280,10 @@
   if ($_POST['action']=='delToolCat')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
    delToolCat($_POST['id']); 	   
+
+  if ($_POST['action']=='delStation')
+   if (isset($_POST['id']) && ctype_digit($_POST['id']))
+   delStation($_POST['id']);
 
  if ($_POST['action']=='addTool')
    if (isset($_POST['name']) && (trim($_POST['name'])!=''))
@@ -1297,6 +1408,20 @@
  
  if (($_POST['action']=='cloneTasks') && isset($_POST['tasks']))
  echo cloneTasks($_POST['tasks']);
+
+ if (($_POST['action']=='addAvatar') && isset($_POST['name']) && isset($_POST['height']) && isset($_POST['weight']) && isset($_POST['gender']) && isset($_POST['age']))
+  if ((trim($_POST['name'])!='') && ctype_digit($_POST['height']) && ctype_digit($_POST['weight']) && ctype_digit($_POST['age']) && ($_POST['age']>0) && ($_POST['age']<130))
+  echo '<result>'.addAvatar(trim($_POST['name']),trim($_POST['age']),trim($_POST['height']),trim($_POST['weight']),trim($_POST['gender'])).'</result>';
+
+ if (($_POST['action']=='updateAvatar') && isset($_POST['id']) && isset($_POST['name']) && isset($_POST['height']) && isset($_POST['age']) && isset($_POST['weight']) && isset($_POST['gender']))
+  if ((trim($_POST['name'])!='') && ctype_digit($_POST['id']) && ctype_digit($_POST['height']) && ctype_digit($_POST['weight']) && ctype_digit($_POST['age']) && ($_POST['age']>0) && ($_POST['age']<130))
+  echo '<result>'.updateAvatar(trim($_POST['id']),trim($_POST['name']),trim($_POST['age']),trim($_POST['height']),trim($_POST['weight']),trim($_POST['gender'])).'</result>';
+ 
+ 
+  if (($_POST['action']=='updateStation') && isset($_POST['id']) && isset($_POST['name']) && isset($_POST['avatarid']) && isset($_POST['mainid']) && isset($_POST['location']))
+	if ((trim($_POST['name'])!='') && ctype_digit($_POST['id']) && ctype_digit($_POST['avatarid']) && ctype_digit($_POST['location']) && 
+     (ctype_digit($_POST['mainid']) || ((substr($_POST['mainid'],0,1)=='S') && ctype_digit(substr($_POST['mainid'],1)))))
+     echo '<result>'.updateStation($_POST['id'],$_POST['name'],$_POST['mainid'],$_POST['avatarid'],$_POST['location']).'</result>';
  
  //user management
  if (($_POST['action']=='updateUser') && isset($_POST['name']) && isset($_POST['email']) && isset($_POST['passcurrent']) && isset($_POST['passnew']))

@@ -1,13 +1,13 @@
 <?php
  include('common.php');
-  
+  //is this below needed? - direct copy from projects.php
   if (isset($_GET['project']) && ctype_digit($_GET['project']))
   {
    if ($result=$db->query('SELECT count(*) as ile FROM userroles ur WHERE ur.projectid='.$_GET['project'].' and ur.userid='.$_SESSION['userid'].';'))
 	 if ($row=$result->fetch_assoc())
 	  if ($row['ile']==1)
 	  {
-	   $_SESSION['projectid']=$_GET['project'];              
+	   $_SESSION['projectid']=$_GET['project'];
 	   $db->query('UPDATE users SET lastprojectid='.$_GET['project'].' WHERE id='.$_SESSION['userid'].';');
 	  }
   }
@@ -20,7 +20,7 @@
 ?>
 <!DOCTYPE html>
 <html>
-<title>MOSIM task list editor</title>
+<title>MOSIM task list editor settings</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="w3.css">
@@ -267,7 +267,7 @@
 	while ($row=$result->fetch_assoc())
 	echo '<option '.($selectCurrent && ($row['id']==$stationid)?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
  }	 
-  
+  /*
  function insertPartTypes()
  {
   global $db;
@@ -275,7 +275,7 @@
 	while ($row=$result->fetch_assoc())
 	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';	
  } 
- 
+ */
  function insertToolTypes()
  {
   global $db;
@@ -308,6 +308,25 @@
 	   while ($row=$result->fetch_assoc())
        echo '<tr data-enabled="'.$row['enabled'].'" data-id="'.$row['id'].'"><td><span class="w3-tag w3-teal w3-round button" onclick="deleteUser(this);">X</span></td><td>'.                       htmlentities($row['name']).'</td><td>'.htmlentities($row['email']).'</td><td data-data="'.$row['roledata'].'" onclick="editUserAdminRole(this);">'.htmlentities($row['role']).'</td></tr>';
      echo '</table>';
+ }
+ 
+ function insertGlobalAvatarParams()
+ {
+	 global $db;
+	 $sql='SELECT apt.`id`, apt.`projectid`, apt.`name`, apt.`optional`, apt.`type`, apt.`language`, apt.`sortorder`, GROUP_CONCAT(apv.value) as values FROM `avatar_param_types` apt WHERE apt.projectid=0 and apt.language=\'mosim\' LEFT JOIN `avatar_param_values` apv ON (apv.typeid=apt.id and apv.language=apv.language) GROUP BY apt.id ORDER BY sortorder, id';
+	 if ($result=$db->query($sql))
+	 {
+		 echo '<table class="avatarparams"><tr><th colspan="2">Name</th><th>Settings</th><th>Values</th></tr>';
+		 while ($row=$result->fetch_assoc())
+		 echo '<tr><td>'.htmlentities($row['name']).'</td><td>'.$row['optional'].'</td><td>'.$row['values'].'</td></tr>';	 
+		 echo '</table>';
+	 }
+	 
+ }
+ 
+ function insertLocalAvatarParams()
+ {
+	 global $db;
  }
  
  function isUserManager()
@@ -389,6 +408,16 @@
 	      echo $result;
 	     }
 	  ?>
+	  
+	  <div id="avatarparams" class="w3-container w3-card w3-white w3-margin-bottom">
+        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-user fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i>Avatar parameters</h2>
+		 <h3>Global</h3>
+		<?php insertGlobalAvatarParams(); ?>
+		 <h3>Local (current project)</h3>
+		<?php insertLocalAvatarParams(); ?>
+	    <div id="responseMessage4"></div>
+      </div>
+	  
     <!-- End Right Column -->
     </div>
     

@@ -8,15 +8,19 @@
  $menuitems[1]['url']='index.php';
  $menuitems[1]['icon']='fa-briefcase'; 
  $menuitems[1]['caption']='Task editor'; 
- $menuitems[2]['url']='parts.php';
+ $menuitems[2]['url']='stations.php';
  $menuitems[2]['icon']='fa-briefcase'; 
- $menuitems[2]['caption']='Part editor';
- $menuitems[3]['url']='tools.php';
- $menuitems[3]['icon']='fa-briefcase'; 
- $menuitems[3]['caption']='Tool editor';
- $menuitems[4]['url']='settings.php';                
- $menuitems[4]['icon']='fa-gear';                  
- $menuitems[4]['caption']='Settings';                  
+ $menuitems[2]['caption']='Stations editor'; 
+ $menuitems[3]=array('url'=>'avatars.php','icon'=>'fa-user','caption'=>'Avatar editor');
+ $menuitems[4]['url']='parts.php';
+ $menuitems[4]['icon']='fa-briefcase'; 
+ $menuitems[4]['caption']='Part editor';
+ $menuitems[5]['url']='tools.php';
+ $menuitems[5]['icon']='fa-briefcase'; 
+ $menuitems[5]['caption']='Tool editor';
+ $menuitems[6]['url']='settings.php';                
+ $menuitems[6]['icon']='fa-gear';                  
+ $menuitems[6]['caption']='Settings';                  
  
  for ($i=0; $i<count($menuitems); $i++)                            
   if (($menuitems[$i]['url']!=$currentfile) || 

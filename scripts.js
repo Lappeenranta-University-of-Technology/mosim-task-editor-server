@@ -96,6 +96,37 @@
 	});   	 
  }
  
+ function deleteStation(obj) {
+  if (obj.className.indexOf("clicked")>-1)
+  {
+   obj.className="";	  
+   obj.innerHTML="X";	  
+  }
+  else
+  {
+	obj.className="clicked";
+    obj.innerHTML="Delete? <span onclick=\"deleteStationYes(event);\">Yes</span><span>Cancel</span>";	
+  }
+ }
+ 
+ function deleteStationYes(e) {
+  e.stopPropagation();
+  var val=e.target.parentNode.parentNode.dataset.id;
+  $.post("update.php",
+    {
+      action: 'delStation',
+	  id: val
+    },
+    function(data, status){ 	
+     if (getTagValue(data,'result')=='deleted')
+     e.target.parentNode.parentNode.parentNode.removeChild(e.target.parentNode.parentNode);
+     else
+	 e.target.parentNode.innerHTML=getTagValue(data,'result');
+	});
+ }
+ 
+
+ 
  function deleteToolCat(obj) {
   if (obj.className.indexOf("clicked")>-1)
   {
@@ -584,7 +615,7 @@
   else	  
   obj.className=obj.className.replace(" selected","");
  }
- 
+ /*
  function partSelect(obj)
  {	 
   var p=document.getElementById("positions");	 
@@ -634,7 +665,7 @@
     p.children[10].style.display="none";   
    }
  }
- 
+ */
  function timeEstimate(obj) {
   var h=0, m=0, s=0;	 
   var allowed = '0123456789:';	 
@@ -1194,7 +1225,7 @@
 	 plabel.innerHTML=e.target.options[e.target.selectedIndex].innerText;
 	 plabel.dataset.id=e.target.value;
 	}
-  }	  
+  }
  }
  
  function getSubTypes(e) {
@@ -1269,6 +1300,15 @@
 		  }
 		  subTypesChange(subtypes);
 		}
+	   }
+	   
+	   if (e.target.id=="new_parttype")
+		partChange();
+	
+	   if (subtypes.hasAttribute('data-setvalue'))
+	   {
+			subtypes.value=subtypes.dataset.setvalue;
+			subtypes.removeAttribute('data-setvalue');
 	   }
 	 }
  
@@ -1357,3 +1397,27 @@
 		}
 	 }
  }
+ 
+ //windows
+ function windowUpdate(title,content,buttons) {
+  var w=document.getElementsByClassName("modalwindow")[0];
+  w.firstChild.innerHTML=content;
+  w.lastElementChild.innerHTML=title;
+  
+  if (buttons.length==1)
+  {
+   w.children[2].innerHTML=buttons[0];	  	  
+   if (w.children[1].className.indexOf("single")==-1)
+   w.children[1].className=w.children[1].className+" single";
+   if (w.children[2].className.indexOf("single")==-1)
+   w.children[2].className=w.children[2].className+" single";
+  }
+  else
+  {
+	w.children[1].innerHTML=buttons[0];	  	    
+	w.children[2].innerHTML=buttons[1];	    
+	w.children[1].className=w.children[1].className.split(' single').join('');  
+	w.children[2].className=w.children[2].className.split(' single').join('');  
+  }
+ }
+ 

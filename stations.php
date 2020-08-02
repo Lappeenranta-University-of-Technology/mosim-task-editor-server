@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html>
-<title>MOSIM part editor</title>
+<title>MOSIM station editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="w3.css">
@@ -185,6 +185,64 @@
   getToken(projectid);
  }
  
+ function editStation(e) {
+	var station=document.getElementById('stationdetails');
+	var stationname=document.getElementById('stationname');
+	var stations=document.getElementById('stations');
+	var assemblylocation=document.getElementById('assemblylocation');
+	var avatar=document.getElementById('avatar');
+	var mainparttype=document.getElementById('mainparttype');
+	var mainpart=document.getElementById('mainpart');
+	stations.value=e.currentTarget.dataset.id;
+	assemblylocation.value=e.currentTarget.dataset.position;
+	avatar.value=e.currentTarget.dataset.avatar;
+	stationname.innerHTML=e.currentTarget.dataset.name;
+	mainparttype.value=e.currentTarget.dataset.pc;
+	mainpart.dataset.setvalue=e.currentTarget.dataset.mainpart;                         
+	mainparttype.onchange(mainparttype);
+	//main part is selected
+	e.currentTarget.lastChild.className="mark";
+	 for (var i=0; i<e.currentTarget.parentNode.children.length; i++)
+		 if (e.currentTarget.parentNode.children[i]!=e.currentTarget)
+			 e.currentTarget.parentNode.children[i].lastChild.className="mark hidden";
+	
+ }
+ 
+ function saveStation() {
+	var stationname=document.getElementById('stationname');
+	var stations=document.getElementById('stations');
+	var assemblylocation=document.getElementById('assemblylocation');
+	var avatar=document.getElementById('avatar');
+	var mainpart=document.getElementById('mainpart');
+	var partcategory=document.getElementById('mainparttype');
+	$.post("update.php",
+    {
+        action: "updateStation",
+		id: stations.value,
+		location: assemblylocation.value,
+		avatarid: avatar.value,
+		mainid: mainpart.value,
+		name: stationname.innerText
+    },
+    function(data, status){
+	 if (getTagValue(data,'result')=='OK')
+	 {
+		var allstations=document.getElementById('stationlist');
+		for (var i=0; i<allstations.children.length; i++)
+			if (allstations.children[i].hasAttribute('data-id'))
+			if (allstations.children[i].dataset.id==stations.value)
+			{
+				allstations.children[i].dataset.position=assemblylocation.value;
+				allstations.children[i].dataset.avatar=avatar.value;
+				allstations.children[i].dataset.name=stationname.innerText;
+				allstations.children[i].dataset.pc=partcategory.value;
+				allstations.children[i].dataset.mainpart=mainpart.value;
+				allstations.children[i].childNodes[0].replaceWith(stationname.innerText);
+			}
+	 }
+	});
+ }
+ 
 </script>
 <style>
  div#partcatlist > div {
@@ -257,7 +315,7 @@
   background-color: gold;
  }
  
- div#partlist > div {
+ div#stationlist > div {
   display: inline-block;
   position: relative;
   box-sizing: border-box;
@@ -271,7 +329,21 @@
   transition: border-top 0.5s linear;
  }
  
- div#partlist > div > span {
+ div#stationlist > div > div.mark::before {
+	 content: "\003E";
+ }
+ 
+ div#stationlist > div > div.mark {
+    position: absolute;
+    left: -13px;
+    top: 2px;
+    width: 30px;
+    color: darkgreen;
+    font-size: 20px;
+    font-weight: bold;
+ }
+ 
+ div#stationlist > div > span {
   position: absolute;
   top: 0px;
   right: 0px;
@@ -285,17 +357,17 @@
   background-size:contain;
  }
  
- div#partlist > div > span.check {
+ div#stationlist > div > span.check {
   background-image:url('ok.png');	 
  }
  
- div#partlist > div > span.dialog {
+ div#stationlist > div > span.dialog {
   display:inline-block;
   width: calc(100% - 84px);  
   left:40px;
  }
  
- div#partlist > div > span.dialog > span {
+ div#stationlist > div > span.dialog > span {
   display:inline-block;
   border-radius: 5px;
   box-sizing:border-box;
@@ -306,11 +378,11 @@
   cursor: pointer;
  }
  
- div#partlist > div > span.dialog > span:hover {
+ div#stationlist > div > span.dialog > span:hover {
   background-color: gold;	 
  }
  
- div#partlist > div:not(.category) > span:first-of-type {
+ div#stationlist > div:not(.category) > span:first-of-type {
   left: 3px;
   width: 30px;
   height: calc(100% - 6px);
@@ -322,15 +394,15 @@
   cursor: pointer;
  }
  
- div#partlist > div > span:first-of-type:hover {
+ div#stationlist > div > span:first-of-type:hover {
   background-color: antiquewhite;	 
  }
  
- div#partlist > div:not(.category) > span.clicked {
+ div#stationlist > div:not(.category) > span.clicked {
   width: 50%;  
  }
 
- div#partlist > div:not(.category) > span:first-of-type > span {
+ div#stationlist > div:not(.category) > span:first-of-type > span {
   margin-left: 10px;
   margin-right: 10px;
   padding: 3px 10px;
@@ -338,22 +410,22 @@
   transition: background-color 0.4s linear;
  }
  
- div#partlist > div:not(.category) > span:first-of-type > span:hover {
+ div#stationlist > div:not(.category) > span:first-of-type > span:hover {
   background-color: gold;
  }
  
- div#partlist > div:not(.category) > span:first-of-type {
+ div#stationlist > div:not(.category) > span:first-of-type {
   overflow: hidden;	 
  }
  
- div#partlist > div.category {
+ div#stationlist > div.category {
   padding-left: 10px;
   color: #009688;
   background-color: gainsboro;
   cursor: default;  
  }
  
- div#partlist > div.category > span:first-of-type:not(.dialog) {
+ div#stationlist > div.category > span:first-of-type:not(.dialog) {
   position: absolute;
   top: 0px; 
   right: 0px;
@@ -369,15 +441,15 @@
   background-position:center center;
  }
  
- div#partlist > div.category > span:first-of-type.folded {
+ div#stationlist > div.category > span:first-of-type.folded {
   background-image:url("expand.png"); 	 
  }
  
- div#partlist > div {
+ div#stationlist > div {
   transition: height 0.4s linear; 	 
  }
  
- div#partlist > div.hidden {
+ div#stationlist > div.hidden {
   height: 0px;
   display: none;  
  }
@@ -387,17 +459,24 @@
 </head>
 
 <?php
- function loadPartCategories() {
-  global $db;
-  $sql='SELECT tc.id, tc.name, tc.sortorder, tc.icon, count(t_c.cat) as howmany FROM partcat tc LEFT JOIN (`part_cat` t_c, parts p) ON (tc.id=t_c.cat and p.id=t_c.part and p.projectid='.$_SESSION['projectid'].') WHERE tc.projectid='.$_SESSION['projectid'].' and  tc.language=\'mosim\' GROUP BY tc.id ORDER BY sortorder;';
+ function loadStations() {
+  global $db; //it assumes that stations can only have parts as man parts, but they can also have station results as main parts so union has to be created from two queries
+  $sql='SELECT s.`id`, s.`name`, s.`mainpart`, s.`main`, s.`position`, s.`avatarid`, s.`sortorder`, '.
+       '(SELECT count(*) FROM highleveltasks hlv WHERE hlv.stationid=s.id)+(SELECT count(*) FROM stations s1 WHERE s1.parent=s.id) as howmany, '.
+       ' p.name as mainpartname, '.
+	   '(SELECT p_c.cat FROM partcat pc, part_cat p_c WHERE pc.id=p_c.cat and pc.projectid=s.projectid and p_c.part=p.id LIMIT 1) as partcategory '.
+       'FROM `stations` s LEFT JOIN parts p ON (p.id=s.mainpart and s.projectid=p.projectid) WHERE s.parent=0 and s.projectid='.$_SESSION['projectid'].' '.
+       'ORDER BY sortorder;';
+	   //echo '<sql>'.$sql.'</sql>';
    if ($result=$db->query($sql))
 	while($row=$result->fetch_assoc())
     {
-       echo '<div data-icon="'.$row['icon'].'" data-catname="'.htmlentities($row['name']).'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteToolCat(this);">X</span><span onclick="windowShow(this);" style="background-image:url(\'icons/'.$row['icon'].'\')"></span><span>'.$row['howmany'].'</span></div>';
+       echo '<div data-position="'.$row['position'].'" data-avatar="'.$row['avatarid'].'" data-pc="'.
+	   ($row['main']=='part'?$row['partcategory']:'-3').'" data-mainpart="'.($row['main']=='part'?'':'S').$row['mainpart'].'" data-name="'.htmlentities($row['name']).'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteStation(this);">X</span><span>'.$row['howmany'].'</span><div class="mark hidden"></div></div>';
 	}		
-  echo '<script>makeDraggable(\'partcatlist\');</script>';	
+  echo '<script>makeDraggable(\'stationlist\');</script>';	
  }
- 
+ /*
  function loadParts() {
   global $db;
   $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart FROM '.
@@ -421,7 +500,7 @@
        echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);">X</span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
 	}		
   echo '<script>makeDraggableTool(\'partlist\');</script>';	
- }
+ }*/
 ?>
 
 <body class="w3-light-grey">
@@ -445,9 +524,6 @@
         <?php include('header.php'); ?>
         <div class="w3-container">
 		  <?php include('menu.php'); ?>
-          <hr>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync parts with scene</span></p>
-		  <p id="importpartsmsg"></p>
           <br>
         </div>
       </div><br>
@@ -460,21 +536,22 @@
 	  <div class="w3-container w3-card w3-white w3-margin-bottom">
         <h2 id="projectname"><?php projectName(); ?></h2>
 	  </div>
-      <div id="partcatlist" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2>Part categories</h2>
+      <div id="stationlist" class="w3-container w3-card w3-white w3-margin-bottom">
+        <h2>Stations</h2>
 		<?php
-		 loadPartCategories();
+		 loadStations();
 		?>
-		<p><input id="newPartCatName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPartCat('newPartCatName');">Add part category</span>
+		<p><input id="new_stationname" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addStation();">Add station</span>
       </div>
-
-	  <div id="partlist" class="w3-container w3-card w3-white w3-margin-bottom">
-		<h2>Parts to categories assignment</h2>
-		<?php
-		 loadParts();
-		?>
-		<p><input id="newPartName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPart('newPartName');">Add part</span>
-      </div>
+		
+      <div id="stationdetails" class="w3-container w3-card w3-white w3-margin-bottom"><input type="hidden" id="stations" value="0" />
+	  <h2 id="stationname"></h2>
+	  <p>Main part type: <select id="mainparttype" data-sub="mainpart" onchange="getSubParts(event);"><?php insertPartTypes(0); ?></select></p>
+	  <p>Main part: <select id="mainpart"><?php insertParts(); ?></select></p>
+	  <p>Assembly location: <select id="assemblylocation"><?php insertSubPositions(); ?></select></p>
+	  <p>Avatar: <select id="avatar"><?php insertAvatars(); ?></select></p>
+	  <p class="right"><span class="w3-tag w3-teal w3-round button" onclick="saveStation();">Save changes</span></p>
+	  </div>
     <!-- End Right Column -->
     </div>
 	

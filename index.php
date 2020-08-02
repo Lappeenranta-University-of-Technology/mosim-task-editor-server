@@ -15,18 +15,24 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
+<!-- Babylon.js -->
+<script src="https://preview.babylonjs.com/babylon.js"></script>
+<script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
+<script src="babylon.stlFileLoader.min.js"></script>
+<!-- End of Babylon.js -->
 <link rel="stylesheet" href="styles.css">
 <script>
-
+ 
  function removeStationDialog(stationid) {
-  var w=document.getElementsByClassName("modalwindow")[0];
+  var w=document.getElementById("msgwindow");
   w.dataset.stationid=stationid;
   w.className=w.className+" show";  
   windowUpdate('Delete confirmation','Are you sure you want to delete the current station with all the tasks?<br>This action is irreversable!',Array('Delete','Cancel'));
  }
 
  function windowShow(obj) {
-  var w=document.getElementsByClassName("modalwindow")[0];	 
+  var w=document.getElementById("msgwindow");	 
    if (obj!=null)
    {
     w.dataset.catid=obj.parentNode.dataset.id;
@@ -39,26 +45,10 @@
   	 
  }
  
- function windowUpdate(title,content,buttons) {
-  var w=document.getElementsByClassName("modalwindow")[0];
-  w.firstChild.innerHTML=content;
-  w.lastElementChild.innerHTML=title;
-  
-  if (buttons.length==1)
-  {
-   w.children[2].innerHTML=buttons[0];	  	  
-   if (w.children[1].className.indexOf("single")==-1)
-   w.children[1].className=w.children[1].className+" single";
-   if (w.children[2].className.indexOf("single")==-1)
-   w.children[2].className=w.children[2].className+" single";
-  }
-  else
-  {
-	w.children[1].innerHTML=buttons[0];	  	    
-	w.children[2].innerHTML=buttons[1];	    
-	w.children[1].className=w.children[1].className.split(' single').join('');  
-	w.children[2].className=w.children[2].className.split(' single').join('');  
-  }
+ function showAddTaskWindow() {
+	var w=document.getElementById("newtaskwindow");
+	if (w.className.indexOf(" show")==-1)
+		w.className=w.className+" show";
  }
  
  function windowOK(obj) {
@@ -185,6 +175,12 @@
   function(data, status){ 	
 
   });  	
+ }
+ 
+ function partChange() {
+	 var p=document.getElementById('partselector');
+	 var i=document.getElementById('new_partpreview');
+	 i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
  }
  
  function unFoldSubAssembly(obj) {
@@ -466,6 +462,33 @@ div.modalwindow > div:first-child {
  left: calc(25% - 5px);
 }
 
+div#newtaskwindow {
+	height: 600px;
+}
+
+/* TODO: make responsive for small screens*/
+
+div.modalwindow > div > div:first-of-type {
+ width: calc(100% - 550px);
+ max-width: 400px;
+ height: 350px;
+ display: inline-block;
+ float: right;
+ background-position: top center;
+ background-repeat: no-repeat;
+ border: 1px dotted black;
+}
+
+#renderCanvas {
+ width: calc(100% - 550px);
+ max-width: 400px;
+ height: 350px;
+ display: inline-block;
+ float: right;
+ border: 1px dotted black;
+ touch-action: none;
+ }
+
 </style>
 
 <?php
@@ -494,8 +517,10 @@ div.modalwindow > div:first-child {
    'if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
    'FROM highleveltasks hlt, tools t, parts p, tasktypes tt '.      
    'WHERE tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.stationid='.$stationid.' '.                                         
-   'UNION ALL '.                                                                 
-   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', pc.icon, \'\', \'\' FROM stations s, parts p, positions pp, partcat pc, part_cat p_c WHERE s.mainpart=p.id and s.position=pp.id and pc.id=p_c.cat and p_c.part=s.mainpart and s.parent='.$stationid.' '.
+   'UNION ALL '.
+   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', \'subassembly.png\' as icon, \'\', \'\' FROM stations s, stations p, positions pp WHERE s.main=\'station\' and s.mainpart=p.id and s.position=pp.id and s.parent='.$stationid.' '.
+   'UNION ALL '.
+   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', (SELECT icon FROM partcat pc, part_cat p_c WHERE pc.id=p_c.cat and p_c.part=s.mainpart LIMIT 1) as icon, \'\', \'\' FROM stations s, parts p, positions pp WHERE s.main=\'part\' and s.mainpart=p.id and s.position=pp.id and s.parent='.$stationid.' '.
    'UNION ALL '.
    'SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, CONCAT(\'S\',hlt.subpartid) as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, \'subassembly.png\' as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
    'FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, stations p, tasktypes tt WHERE t_c.tool=t.id and t_c.cat=tc.id and hlt.partid=0 and hlt.subpartid=p.id and tt.id=hlt.tasktype and t.id=hlt.toolid and hlt.stationid='.$stationid.' '.   
@@ -553,15 +578,6 @@ div.modalwindow > div:first-child {
 	}	 
  }
  
- function insertSubPositions()
- {
-  global $db;
-  $sql='SELECT id, name, sortorder FROM positions WHERE language=\'mosim\' ORDER BY sortorder, id;';
-  if ($result=$db->query($sql))
-   while ($row=$result->fetch_assoc())
-   echo '<option value="'.$row['id'].'">'.htmlentities($row['name']).'</option>';
- }
- 
  function insertStations($selectCurrent=true)
  {
   global $stations;	 
@@ -571,16 +587,12 @@ div.modalwindow > div:first-child {
   else
   echo str_ireplace('<option selected="" value=','<option value=',$stations);	  
  }	 
-  
+  /*
  function insertPartTypes()
  {
   global $db, $stationid;
   $selid=-2;
   $i=0;
-/*   if ($result=$db->query('SELECT ifnull(p_c.cat,-2) as id, ifnull(pc.name,\'Uncategorized\') as name, max(pc.sortorder) as sortorder FROM `parts` p LEFT JOIN (part_cat p_c, partcat pc) ON (p_c.part=p.id and pc.id=p_c.cat and pc.language=\'mosim\') WHERE p.projectid=1 GROUP BY cat, name '.
-   'UNION '.
-   'SELECT id, name, sortorder FROM partcat where language=\'mosim\' ORDER BY sortorder'))
-   */
    if ($result=$db->query('SELECT ifnull(pc.id,"-2") as id, ifnull(pc.name,\'Uncategorized\') as name, pc.sortorder FROM 
 (SELECT p_c.cat from parts p LEFT JOIN part_cat p_c on (p.id=p_c.part) WHERE p.projectid='.$_SESSION['projectid'].' GROUP BY p_c.cat) catids 
 LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.projectid in (0,'.$_SESSION['projectid'].') ORDER BY sortorder;'))
@@ -600,7 +612,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 	  $selid=-2;
 	}
 	return $selid;
- } 
+ } */
  
  function insertToolTypes()
  {
@@ -637,13 +649,44 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 ?>
 
 <body class="w3-light-grey">
-<div class="modalwindow"><div></div>
+<!-- First modal window is the general message window -->
+<div id="msgwindow" class="modalwindow"><div></div>
 <div class="modalbutton" onclick="windowOK(this);">Delete</div>
 <div class="modalbutton" onclick="windowCancel(this);">Cancel</div>
 <div class="modaltoolbar">Warning</div>
 </div>
 
-
+<div id="newtaskwindow" class="modalwindow"><div>
+<canvas id="renderCanvas" touch-action="none"></canvas><!-- touch-action="none" for best results from PEP -->
+<div id="new_partpreview" style="background-image: url('car.jpg'); display:none;"></div>
+<p><span>Operation type:</span><select id="new_type" data-sub="new_subtype" onchange="getSubTypes(event);"><?php insertTypes(); ?></select></p>
+<p><span>Operation:</span><select id="new_subtype" onchange="getDefaultTool(event);"><?php insertSubTypes(); ?></select></p>
+<p><span>Part type:</span><select id="new_parttype" data-sub="partselector" onchange="getSubParts(event);"><?php $selPartType=insertPartTypes($stationid); ?></select></p>
+<p><span>Part:</span><select id="partselector" onchange="partChange();">
+  <?php 
+   if ($selPartType==-2)
+   insertUncategorizedParts();
+   else
+   insertParts($selPartType); 
+  ?></select></p>
+  <p><span>Tool type:</span><select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
+<p><span>Tool:</span><select id="new_tool">
+ <?php 
+   if ($selToolType==-2)
+   insertUncategorizedTools();
+   else
+   insertTools($selToolType); 
+  ?></select></p>
+<p><span>Time estimate:</span><input id="new_time" onchange="timeEstimate(this);" type="text" placeholder="00:00:00" value="" /></p>
+<p><span>Description:</span><textarea id="new_description" style="width:100%"></textarea></p>
+</div>
+<div class="modalbutton" onclick="addTask(); windowCancel(this);">Add</div>
+<div class="modalbutton" onclick="windowCancel(this);">Cancel</div>
+<div class="modaltoolbar">New task</div>
+</div>
+<script>
+<?php include('babylon.js'); ?>
+</script>
 <!-- Page Container -->
 <div class="w3-content w3-margin-top" style="max-width:1400px;">
 
@@ -662,7 +705,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 		  <hr>
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#newstation">New station</a></p>
 		  <hr>
-          <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#newtask">New task</a></p>
+          <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a<span class="pointer" style="text-decoration:underline;" onclick="showAddTaskWindow();">New task</span></p>
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#" onclick="editTask();">Edit task</a></p>
 		  <p><i class="fa fa-copy fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#" onclick="cloneTask();">Duplicate task</a></p>
           <p><i class="fa fa-trash fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><span class="pointer" style="text-decoration: underline;" onclick="removeTask();">Remove task</span></p>
@@ -688,43 +731,6 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><span class="pointer" style="text-decoration: underline;" onclick="removeStationDialog(<?php echo $stationid; ?>);">Remove current station</span></p>
 		  
 		  <hr>
-		  
-          <p id="newtask" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right w3-text-teal"></i>New task</b></p>
-          <p>Operation type: <select id="new_type" data-sub="new_subtype" onchange="getSubTypes(event);"><?php insertTypes(); ?></select></p>
-		  <p style="margin-left:10px;">Operation: <select id="new_subtype" onchange="getDefaultTool(event);"><?php insertSubTypes(); ?></select></p>
-		  <p>Part type: <select id="new_parttype" data-sub="partselector" onchange="getSubParts(event);"><?php $selPartType=insertPartTypes(); ?></select></p>
-          <p style="margin-left:10px;">Part: <select id="partselector">
-		  <?php 
-		   if ($selPartType==-2)
-		   insertUncategorizedParts();
-		   else
-		   insertParts($selPartType); 
-		  ?></select></p>
-		  <p>Tool type: <select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
-		  <p style="margin-left:10px;">Tool: <select id="new_tool">
-		  <?php 
-		   if ($selToolType==-2)
-		   insertUncategorizedTools();
-		   else
-		   insertTools($selToolType); 
-		  ?></select></p>
-		  <p style="display:none;">Position: <!-- <select><?php insertPositions(); ?></select>--></p>
-		  <p style="display:none;"><div style="display:none;" id="positions" class="position"><img style="display:none;" src="car1.jpg" width="100%" />                            
-		  <div onclick="selectPosition(this);"></div>
-		  <div onclick="selectPosition(this);"></div>
-		  <div onclick="selectPosition(this);">1</div>
-		  <div onclick="selectPosition(this);">2</div>
-		  <div onclick="selectPosition(this);">3</div>
-		  <div onclick="selectPosition(this);">4</div>
-		  <div onclick="selectPosition(this);">5</div>
-		  <div onclick="selectPosition(this);">6</div>
-		  <div onclick="selectPosition(this);">7</div>
-		  <div onclick="selectPosition(this);">8</div>
-		  </div></p>
-		  <p>Time estimate: <input id="new_time" onchange="timeEstimate(this);" type="text" placeholder="00:00:00" value="" /></p>
-		  <p>Description: <textarea id="new_description" style="width:100%"></textarea></p>
-          <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="addTask();">Add</span></p>
-          <hr>
 
           <p id="movetoother" class="w3-large w3-text-theme"><b><i class="fa fa-sort fa-fw w3-margin-right w3-text-teal"></i>Move tasks to other station</b></p>
           <p>To station: <select id="tostation"><?php insertStations(false); ?></select></p>
@@ -735,7 +741,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 		  <p id="newsubassembly" class="w3-large w3-text-theme"><b><i class="fa fa-gear fa-fw w3-margin-right w3-text-teal"></i>Create subassembly</b></p>
           <p class="warning">Experimental - not fully supported yet</p>
 		  <p>Name: <input type="text" id="new_subassemblyname" /></p>
-		  <p>Main part type: <select id="newsub_parttype" data-sub="subpartselector" onchange="getSubParts(event);"><?php insertPartTypes(); ?></select></p>
+		  <p>Main part type: <select id="newsub_parttype" data-sub="subpartselector" onchange="getSubParts(event);"><?php insertPartTypes($stationid); ?></select></p>
           <p style="margin-left:10px;">Main part: <select id="subpartselector"><?php insertParts(); ?></select></p>
 		  <p>Place: <select id="newsub_position"><?php insertSubPositions(); ?></select></p>
 		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="addSubAssembly();">Create subassembly</span></p>               
@@ -775,7 +781,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
   <p>MOSIM ITEA project</p>
 </footer>
 <script>
-partSelect(document.getElementById("partselector"));
+//partSelect(document.getElementById("partselector"));
 makeToolDraggable();
 //dragElement(document.getElementById("tool2"));
 </script>
