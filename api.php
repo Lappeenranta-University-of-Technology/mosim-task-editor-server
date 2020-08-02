@@ -34,6 +34,71 @@
   return 0;
  }
  
+ function addCadFromScene() {
+  global $db;
+  $projectid=tokenToProjectId($_POST['token']);  
+  if ($projectid==0)
+  return '<result>Error - insufficient user privileges</result>';
+  $data=$db->real_escape_string('T='.$_POST['transform'][0].'#R='.$_POST['rotation'][0].'#S='.$_POST['scale'][0].'#v='.$_POST['vertices'][0].'#t='.$_POST['triangles'][0]);
+  $sql='UPDATE parts SET cad=\''.$data.'\' WHERE id='.$_POST['partid'].' and projectid='.$projectid;
+   if ($db->query($sql))
+   {
+	$reply="OK";
+    return json_encode($reply);   
+   }
+  $reply="Error";
+  return json_encode($reply);
+ }
+ 
+ function getCadForPart($token,$partid) {
+  global $db;
+  $projectid=tokenToProjectId($token);  
+  if ($projectid==0)
+  return '<result>Error - insufficient user privileges</result>';
+  $sql='SELECT cad FROM parts WHERE id='.$partid.' and projectid='.$projectid;
+  if ($result=$db->query($sql))
+   if ($row=$result->fetch_assoc())
+   {
+	 $result=array();
+	 $data=explode('#',$row['cad']);
+	 $names = array('T'=>'position','R'=>'rotation','S'=>'scale','v'=>'vertices','t'=>'triangles');
+	 for ($i=0; $i<count($data); $i++)
+	 {
+		 $kv=explode('=',$data[$i]);
+		 if (in_array($kv[0],array('T','S')))
+		 {
+		  $xyz=explode(',',$kv[1]);
+		  $result[$names[$kv[0]]] = array('x'=>floatval($xyz[0]),'y'=>floatval($xyz[1]),'z'=>floatval($xyz[2]));	 
+		 }
+		 if (in_array($kv[0],array('R')))
+		 {
+		  $xyz=explode(',',$kv[1]);
+		  $result[$names[$kv[0]]] = array('x'=>floatval($xyz[0]),'y'=>floatval($xyz[1]),'z'=>floatval($xyz[2]),'w'=>floatval($xyz[3]));	 
+		 }
+		 if (in_array($kv[0],array('v')))
+		 {
+		  $v=explode(';',$kv[1]);
+		  for ($j=0; $j<count($v); $j++)
+		  {
+		   $xyz=explode(',',$v[$j]);
+		   $result[$names[$kv[0]]][$j] = array('x'=>floatval($xyz[0]),'y'=>floatval($xyz[1]),'z'=>floatval($xyz[2]));
+		  }
+		 }
+		 if (in_array($kv[0],array('t')))
+		 {
+		  $v=explode(';',$kv[1]);
+		  for ($j=0; $j<count($v); $j++)
+		  {			  
+		   $result[$names[$kv[0]]][$j] = intval($v[$j]);
+		  }
+		 }
+	 }
+	return json_encode($result); 
+   }
+  $reply="Error";
+  return json_encode($reply);
+ }
+ 
  function addPartsFromScene() {	 
   global $db;                                                                   
   
@@ -222,12 +287,30 @@ XML;
   echo json_encode(array('type'=>'ToolTypes','tools'=>$tooltypes));
  }
  
+ function getStationTypes($token) {
+  global $db;
+  $sql='SELECT s.id, s.name, s.sortorder FROM `stations` s, tokens t WHERE s.parent=0 and t.projectid=s.projectid and t.token=\''.$db->real_escape_string($token).'\' ORDER BY sortorder, id;';
+  $stations=array();
+   if ($result=$db->query($sql))
+    while ($row=$result->fetch_assoc())
+	$stations[]=array("id"=>$row['id'],"station" => $row['name']);
+  header('Content-Type: application/json');	
+  echo json_encode($stations);
+ }
+ 
+ function testConnection($token) {
+	 return json_encode(array("projectid"=>intval(tokenToProjectId($token))));
+ }
+ 
 //main body
  
  if (isset($_GET['token']) && isset($_GET['action']) && isset($_GET['station']))
-  if (($_GET['action']=='getTaskList') && ($_GET['token']==$accessToken) && 
+  if (($_GET['action']=='getTaskList') && 
       ctype_digit($_GET['station']))
   {
+	$projectid=tokenToProjectId($_GET['token']);
+	if ($projectid>0)
+	{
 	$sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
 	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
 	     ' WHERE ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
@@ -236,7 +319,8 @@ XML;
 	 if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
 	 outputXML($result);	
      else 
-  	 outputJSON($result);	
+  	 outputJSON($result);
+	} 
   }		  
  
  if (isset($_GET['token']) && isset($_GET['action']) && ($_GET['action']=='getToolList') && ($_GET['token']==$accessToken))
@@ -244,16 +328,41 @@ XML;
 
  if (isset($_POST['token']) && isset($_POST['action']) && ($_POST['action']=='getToolList') && (($_POST['token']==$accessToken) || (tokenToProjectId($_POST['token'])!==0)))
  getToolTypes();
+
+ if (isset($_POST['token']) && isset($_POST['action']) && ($_POST['action']=='getStationList') && (($_POST['token']==$accessToken) || (tokenToProjectId($_POST['token'])!==0)))
+ getStationTypes($_POST['token']);
  
  if (isset($_POST['action']))
  {
-  if (($_POST['action']=='addParts') && ($_POST['token']))
+  if (($_POST['action']=='addParts') && isset($_POST['token']))
   {
-   header('Content-Type: application/json');	
-  //echo '<html><head></head><body>'.
+   header('Content-Type: application/json');
    echo addPartsFromScene();
-       //'</body></html>';
   }
+  
+  if (($_POST['action']=='addParts3D') && isset($_POST['token']) && isset($_POST['partid']) && ctype_digit($_POST['partid']))
+  {
+	header('Content-Type: application/json');
+	echo addCadFromScene();
+  }
+  
+  if (($_POST['action']=='getPart3D') && isset($_POST['token']) && isset($_POST['partid']) && ctype_digit($_POST['partid']))
+  {
+	header('Content-Type: application/json');
+	echo getCadForPart($_POST['token'],$_POST['partid']);
+  }
+ }
+ 
+ if (($_GET['action']=='getPart3D') && isset($_GET['token']) && isset($_GET['partid']) && ctype_digit($_GET['partid']))
+ {
+  header('Content-Type: application/json');
+  echo getCadForPart($_GET['token'],$_GET['partid']);
+ }
+ 
+ if (($_GET['action']=='testConnection') && isset($_GET['token']))
+ {
+	 header('Content-Type: application/json; charset=utf-8');
+	 echo testConnection($_GET['token']);
  }
  
 ?>

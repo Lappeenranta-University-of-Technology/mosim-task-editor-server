@@ -48,7 +48,15 @@ div.modalwindow div > div.chosen {
  background-color: olivedrab;
 }
 
-div.modalwindow > div > div:hover, 
+div.modalwindow > div > div#new_partpreview {
+ transition: outline 0.3s linear;
+}
+
+div.modalwindow > div > div#new_partpreview:hover {
+	outline: 2px solid orange;
+}	
+
+div.modalwindow > div > div:hover:not(#new_partpreview), 
 div.modalwindow > div > div.chosen:hover,
 .modalbutton:hover {
     background-color: darkorange;

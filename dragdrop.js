@@ -22,6 +22,8 @@ function dragDrop(e) {
  var action='reorderToolCat';
   if (div.id=='partcatlist')
   action='reorderPartCat';
+  if (div.id=='stationlist')
+  action='reorderStations';
  var dropid=e.target.dataset.id;
  var dragid=draggedObject.dataset.id;
  e.target.parentNode.insertBefore(draggedObject,e.target);
@@ -86,10 +88,14 @@ function makeDraggable(containerid) {
    if (obj.children[i].tagName=='DIV')
    {
     obj.children[i].draggable=true;
-	obj.children[i].ondragstart=startDrag;	
+	obj.children[i].ondragstart=startDrag;
 	obj.children[i].ondragover=dragOver;
 	obj.children[i].ondrop=dragDrop;
-	obj.children[i].ondragexit=dragExit;
+	obj.children[i].ondragleave=dragExit;
+		if (containerid=='stationlist')
+		obj.children[i].onclick=editStation;
+		if (containerid=='avatarlist')
+		obj.children[i].onclick=editAvatar;
    }
   }
 }
@@ -108,7 +114,7 @@ function makeDraggableTool(containerid) {
 	}
 	 obj.children[i].ondragover=dragOver;
 	 obj.children[i].ondrop=dragDropTool;
-	 obj.children[i].ondragexit=dragExit;
+	 obj.children[i].ondragleave=dragExit;
    }
 }
 

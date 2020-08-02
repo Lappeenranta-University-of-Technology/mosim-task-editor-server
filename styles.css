@@ -1,3 +1,31 @@
+
+div.modalwindow > div > p {
+	text-align:left;
+}
+
+div.modalwindow > div > p > span:first-of-type {
+	display:inline-block;
+	width:200px;
+	margin-right:10px;
+}
+
+div.modalwindow > div > p > select {
+	width: auto;
+}
+
+div.hidden {
+	 display: none;
+ }
+
+p.right {
+	text-align: right;
+}
+
+hr.grey {
+	height: 2px;
+    background-color: lightgrey;
+}
+
 html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif}
 select {
  border-radius: 10px;

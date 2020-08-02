@@ -7,7 +7,7 @@
 	 if ($row=$result->fetch_assoc())
 	  if ($row['ile']==1)
 	  {
-	   $_SESSION['projectid']=$_GET['project'];              
+	   $_SESSION['projectid']=$_GET['project'];
 	   $db->query('UPDATE users SET lastprojectid='.$_GET['project'].' WHERE id='.$_SESSION['userid'].';');
 	  }
   }
@@ -20,7 +20,7 @@
 ?>
 <!DOCTYPE html>
 <html>
-<title>MOSIM task list editor</title>
+<title>MOSIM task list editor - projects</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="w3.css">
@@ -184,7 +184,7 @@
 	while ($row=$result->fetch_assoc())
 	echo '<option '.($selectCurrent && ($row['id']==$stationid)?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
  }	 
-  
+  /*
  function insertPartTypes()
  {
   global $db;
@@ -192,7 +192,7 @@
 	while ($row=$result->fetch_assoc())
 	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';	
  } 
- 
+ */
  function insertToolTypes()
  {
   global $db;
