@@ -21,6 +21,97 @@
 	obj.className="";
  }
  
+ var MMUS = new function(){
+ 
+ var fr = new FileReader();
+ 
+ function onloadHandler(evt) {
+	 document.location.reload();
+ }
+ 
+ function onprogressHandler(evt) {
+	var percent = evt.loaded/evt.total*100;
+	console.log('Upload progress: ' + percent + '%');
+ }
+ 
+ function MMUajax(fileInputBox,progressBar,start,chunkSize,fileID)
+ {
+			var chunknum=Math.ceil(start/chunkSize);
+			 if (start<fr.result.byteLength)
+			 {
+				var chunk=[fr.result.slice(start,start+chunkSize)];
+				var blob = new Blob(chunk, {type: fileInputBox.type});
+				var formData = new FormData();
+				formData.append('action','addMMU');
+				formData.append('chunk',blob,fileInputBox.name);
+				formData.append('chunknum',chunknum);
+				formData.append('chunkend',start+chunkSize);
+				formData.append('TotalSize',fr.result.byteLength);
+				formData.append('fileID',fileID);
+				$.ajax({
+					type: "POST",
+					url: "update.php",
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function(data, status){ 	
+						var nextChunk=parseInt(getTagValue(data,'nextChunk'));
+						var nextStart=parseInt(getTagValue(data,'nextStart'));
+						fileID=getTagValue(data,'fileID');
+						var progress=document.getElementById(progressBar);
+						var progressText=(nextStart<=fr.result.byteLength?Math.ceil(nextStart*100/fr.result.byteLength):"100")+"%";
+						progress.children[0].style.width=progressText;
+						progress.children[1].innerHTML=progressText;
+						console.log("NextChunk: "+nextChunk);
+						console.log("NextStart: "+nextStart);
+						console.log("Chunk size: "+chunkSize);
+						if (nextStart<=fr.result.byteLength)
+						MMUajax(fileInputBox,progressBar,nextStart,chunkSize,fileID);
+						else //file upload complete
+						{
+						 if (getTagValue(data,'result')=='OK')
+						 document.location.reload(); 
+					     else
+						 progress.children[1].innerHTML=getTagValue(data,'msg');
+						}
+						}
+				});
+			 }	 
+ }
+ 
+ function sendMMuChunk(fileInputBoxID,progressBar,start,chunkSize,fileID)
+ {
+	fileInputBox=document.getElementById(fileInputBoxID);
+	if (fileInputBox.files.length==0)
+		return false;
+	
+	//var fr=new FileReader();
+	fileInputBox=fileInputBox.files[0];
+	fr.onload=function(){ 
+			MMUajax(fileInputBox,progressBar,start,chunkSize,fileID);
+		}
+	fr.readAsArrayBuffer(fileInputBox);
+ }
+ 
+ this.addMMU = function (fileInputBox,progressBar) {
+	var chunkSize = 128*1024; //TODO: move to mmus.php or some global settings file
+	var val=document.getElementById(fileInputBox);
+	if (val.files.length>0)
+	{
+	val=val.files[0];
+	fr.onload=function(){ 
+			var progress=document.getElementById(progressBar);
+			progress.className=progress.className.split("hide").join("").trim();
+			progress.children[0].style.width="0%";
+			progress.children[1].innerHTML="0%";
+			sendMMuChunk(fileInputBox,progressBar,0,chunkSize,0);
+	}
+	fr.readAsArrayBuffer(val);
+  }
+ }
+ 
+ }; //end of MMUS namespace
+ 
  function addPart(val) {
   val=document.getElementById(val).value;
   if (val!='')
@@ -145,6 +236,8 @@
   var action='delTool';
    if (e.target.parentNode.parentNode.parentNode.id=='partlist')
    action='delPart';	   
+   if (e.target.parentNode.parentNode.parentNode.id=='mmulist')
+   action='delMMU';
   var val=e.target.parentNode.parentNode.dataset.id;	 
   var cat=e.target.parentNode.parentNode.dataset.cat;	 
   $.post("update.php",
@@ -318,7 +411,23 @@
     obj.innerHTML="Delete? <span onclick=\"deleteToolYes(event);\">Yes</span><span>Cancel</span>";	
   }
  }
-
+ 
+ function setEnableMMU(obj) {
+  var id=obj.parentNode.dataset.id;
+  var projectid=obj.parentNode.dataset.project;
+  var action=(obj.className=="check"?"disableMMU":"enableMMU");
+   $.post("update.php",
+    {
+      action: action,
+	  id: id,
+	  projectid: projectid
+    },
+    function(data, status){ 	
+     if (getTagValue(data,'result')=='OK')
+     document.location.reload();		 
+	});   	 
+ }
+ 
  function setDefaultPart(obj) {
   var id=obj.parentNode.dataset.id;
   var tcid=obj.parentNode.dataset.cat;

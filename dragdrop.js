@@ -1,14 +1,14 @@
 draggedObject = null;
 
 function startDrag(e) {
-  draggedObject=e.target;	
+  draggedObject=e.target;
 }
 
 function dragOver(e) {
  e.preventDefault();
   if (e.target.className=="category")
-  e.target.style.borderBottom="20px solid white";	  
-  else	  
+  e.target.style.borderBottom="20px solid white";
+  else
   e.target.style.borderTop="20px solid white";
 }
 
@@ -20,6 +20,8 @@ function dragDrop(e) {
 
  var div=e.target.parentNode;
  var action='reorderToolCat';
+  if (div.id=='mmulist')
+  action='reorderMMUs';
   if (div.id=='partcatlist')
   action='reorderPartCat';
   if (div.id=='stationlist')
@@ -29,18 +31,18 @@ function dragDrop(e) {
  e.target.parentNode.insertBefore(draggedObject,e.target);
  var neworder=[];
  for (var i=0; i<div.children.length; i++)
-  if (div.children[i].tagName=='DIV') 	 
-  neworder.push(div.children[i].dataset.id);	 
+  if (div.children[i].tagName=='DIV')
+  neworder.push(div.children[i].dataset.id);
  
     $.post("update.php",
     {
       action: action,
 	  neworder: neworder
     },
-    function(data, status){ 	
+    function(data, status){
      //if (getTagValue(data,'result')=='OK')
-	  	 
-     //document.location.reload();		 
+
+     //document.location.reload();
 	});  
 }
 
@@ -48,7 +50,7 @@ function copyMoveDialog(e) {
  var a=document.createElement("SPAN");
  a.className="dialog";
  a.innerHTML='<span onclick="copyTool(this);">Copy</span><span onclick="moveTool(this,false);">Move</span><span onclick="cancelTool(this);">Cancel</span>';
- e.target.insertBefore(a,e.target.lastChild);	
+ e.target.insertBefore(a,e.target.lastChild);
 }
 
 function dragDropTool(e) {
@@ -65,7 +67,7 @@ function dragDropTool(e) {
    if (e.target.dataset.id!=draggedObject.dataset.cat)
    copyMoveDialog(e);
    else
-   moveTool(e.target,true);	   
+   moveTool(e.target,true);
   }
    else
 	if (e.target.dataset.cat!=draggedObject.dataset.cat)   

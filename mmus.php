@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html>
-<title>MOSIM part editor</title>
+<title>MOSIM MMU priority editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="w3.css">
@@ -276,7 +276,7 @@
   background-color: gold;
  }
  
- div#partlist > div {
+ div#mmulist > div {
   display: inline-block;
   position: relative;
   box-sizing: border-box;
@@ -290,7 +290,7 @@
   transition: border-top 0.5s linear;
  }
  
- div#partlist > div > span {
+ div#mmulist > div > span {
   position: absolute;
   top: 0px;
   right: 0px;
@@ -304,17 +304,17 @@
   background-size:contain;
  }
  
- div#partlist > div > span.check {
+ div#mmulist > div > span.check {
   background-image:url('ok.png');	 
  }
  
- div#partlist > div > span.dialog {
+ div#mmulist > div > span.dialog {
   display:inline-block;
   width: calc(100% - 84px);  
   left:40px;
  }
  
- div#partlist > div > span.dialog > span {
+ div#mmulist > div > span.dialog > span {
   display:inline-block;
   border-radius: 5px;
   box-sizing:border-box;
@@ -325,11 +325,11 @@
   cursor: pointer;
  }
  
- div#partlist > div > span.dialog > span:hover {
+ div#mmulist > div > span.dialog > span:hover {
   background-color: gold;	 
  }
  
- div#partlist > div:not(.category) > span:first-of-type {
+ div#mmulist > div:not(.category) > span:first-of-type {
   left: 3px;
   width: 30px;
   height: calc(100% - 6px);
@@ -341,15 +341,15 @@
   cursor: pointer;
  }
  
- div#partlist > div > span:first-of-type:hover {
+ div#mmulist > div > span:first-of-type:hover {
   background-color: antiquewhite;	 
  }
  
- div#partlist > div:not(.category) > span.clicked {
+ div#mmulist > div:not(.category) > span.clicked {
   width: 50%;  
  }
 
- div#partlist > div:not(.category) > span:first-of-type > span {
+ div#mmulist > div:not(.category) > span:first-of-type > span {
   margin-left: 10px;
   margin-right: 10px;
   padding: 3px 10px;
@@ -357,22 +357,22 @@
   transition: background-color 0.4s linear;
  }
  
- div#partlist > div:not(.category) > span:first-of-type > span:hover {
+ div#mmulist > div:not(.category) > span:first-of-type > span:hover {
   background-color: gold;
  }
  
- div#partlist > div:not(.category) > span:first-of-type {
+ div#mmulist > div:not(.category) > span:first-of-type {
   overflow: hidden;	 
  }
  
- div#partlist > div.category {
+ div#mmulist > div.category {
   padding-left: 10px;
   color: #009688;
   background-color: gainsboro;
   cursor: default;  
  }
  
- div#partlist > div.category > span:first-of-type:not(.dialog) {
+ div#mmulist > div.category > span:first-of-type:not(.dialog) {
   position: absolute;
   top: 0px; 
   right: 0px;
@@ -388,58 +388,73 @@
   background-position:center center;
  }
  
- div#partlist > div.category > span:first-of-type.folded {
+ div#mmulist > div.category > span:first-of-type.folded {
   background-image:url("expand.png"); 	 
  }
  
- div#partlist > div {
-  transition: height 0.4s linear; 	 
+ div#mmulist > div {
+  transition: height 0.4s linear;
  }
  
- div#partlist > div.hidden {
+ div#mmulist > div.hidden {
   height: 0px;
   display: none;  
  }
  
  span.button {margin-left:5px;}
+ 
+ span.progress.hide {
+  display:none;
+ }
+ 
+ span.progress {
+  width: calc(100% - 400px);
+  background-color: white;
+  display: inline-block;
+  height: 22px;
+  top: 5px;
+  position: relative;
+  text-align: center;
+  border: 1px solid black;
+  float: right;
+ }
+ 
+ span.progress> span:first-child {
+  position: absolute;
+  left: 0px;
+  display: inline-block;
+  background-color: greenyellow;
+  width: 0%;
+  height: 100%;
+ }
+ 
+ span.progress> span:nth-child(2) {
+  background-color: transparent;
+  color: black;
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+ }
 </style>
 </head>
 
 <?php
- function loadPartCategories() {
+ function loadMMUs() {
   global $db;
-  $sql='SELECT tc.id, tc.name, tc.sortorder, tc.icon, count(t_c.cat) as howmany FROM partcat tc LEFT JOIN (`part_cat` t_c, parts p) ON (tc.id=t_c.cat and p.id=t_c.part and p.projectid='.$_SESSION['projectid'].') WHERE tc.projectid='.$_SESSION['projectid'].' and  tc.language=\'mosim\' GROUP BY tc.id ORDER BY sortorder;';
+  $sql='SELECT `id`,`author`, `name`, `vendorID`, `motiontype`, `version`, `longdescription`, `shortdescription`, '.
+  'ifnull(sortorder,0) as sortorder, ifnull(enabled,1) as enabled '.
+  'FROM `mmus` LEFT JOIN `mmu_project` mmup '.
+  'ON (mmus.id=mmup.mmuid and mmup.projectid='.$_SESSION['projectid'].') '.
+  'ORDER BY motiontype, sortorder, name';
+
    if ($result=$db->query($sql))
 	while($row=$result->fetch_assoc())
-    {
-       echo '<div data-icon="'.$row['icon'].'" data-catname="'.htmlentities($row['name']).'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteToolCat(this);">X</span><span onclick="windowShow(this);" style="background-image:url(\'icons/'.$row['icon'].'\')"></span><span>'.$row['howmany'].'</span></div>';
-	}		
-  echo '<script>makeDraggable(\'partcatlist\');</script>';	
- }
- 
- function loadParts() {
-  global $db;
-  $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart FROM '.
-  '(SELECT id, name, sortorder, language, defaultpart FROM `partcat` WHERE projectid='.$_SESSION['projectid'].') tc '.
-  ' LEFT JOIN (part_cat t_c, parts t) ON (t_c.cat=tc.id and t_c.part=t.id and t.projectid='.$_SESSION['projectid'].') '.
-  ' UNION ALL '.
-  'SELECT 0, \'Uncategorized\', 0, t.id, t.name, 0, 0 FROM parts t '.
-  'LEFT JOIN part_cat t_c ON (t_c.part=t.id) '.
-  'WHERE (isnull(t_c.cat) or t_c.cat=0) and t.projectid='.$_SESSION['projectid'].' '.
-  'ORDER BY sortorder, tcid, sortorder1';
-  $lastname=-1;
-   if ($result=$db->query($sql))
-	while($row=$result->fetch_assoc())
-    {
-	   if ($row['tcid']!=$lastname)
-       {
-		 echo '<div class="category" data-id="'.$row['tcid'].'">'.htmlentities($row['tcname']).'<span onclick="foldTools(this);"></span></div>';  
-		 $lastname=$row['tcid'];
-	   }		
-       if ($row['id']!=0)                                       	   
-       echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);">X</span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
-	}		
-  echo '<script>makeDraggableTool(\'partlist\');</script>';	
+    {		
+       echo '<div data-enabled="'.$row['enabled'].'" data-project="'.$_SESSION['projectid'].'" data-cat="0" data-id="'.$row['id'].'">'.htmlentities($row['name'].' ('.$row['version'].'), '.$row['author']).'<br>'.htmlentities($row['motiontype']).'<span onclick="deleteTool(this);">X</span><span onclick="setEnableMMU(this);" '.($row['enabled']=='1'?'class="check"':"").'></span></div>';
+	}
+  echo '<script>makeDraggable(\'mmulist\');</script>';
  }
 ?>
 
@@ -465,7 +480,7 @@
         <div class="w3-container">
 		  <?php include('menu.php'); ?>
           <hr>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync parts with scene</span></p>
+		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync MMUs with launcher</span></p>
 		  <p id="importpartsmsg"></p>
           <br>
         </div>
@@ -479,20 +494,15 @@
 	  <div class="w3-container w3-card w3-white w3-margin-bottom">
         <h2 id="projectname"><?php projectName(); ?></h2>
 	  </div>
-      <div id="partcatlist" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2>Part categories</h2>
+	  <div id="mmulist" class="w3-container w3-card w3-white w3-margin-bottom">
+		<h2>MMU library</h2>
 		<?php
-		 loadPartCategories();
+		 loadMMUs();
 		?>
-		<p><input id="newPartCatName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPartCat('newPartCatName');">Add part category</span>
-      </div>
-
-	  <div id="partlist" class="w3-container w3-card w3-white w3-margin-bottom">
-		<h2>Parts to categories assignment</h2>
-		<?php
-		 loadParts();
-		?>
-		<p><input id="newPartName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPart('newPartName');">Add part</span>
+		<form method="POST" enctype="multipart/form-data" id="mmuUploadForm">
+		 <input type="hidden" name="action" value="addMMU"/>
+		<p><input id="newMMUPackage" name="mmu" type="file" /><span class="w3-tag w3-teal w3-round button" style="width:100px;" onclick="MMUS.addMMU('newMMUPackage','mmuUploadProgress');">Add MMU</span><span id="mmuUploadProgress" class="progress hide"><span></span><span>0%</span></span>
+		</form>
       </div>
     <!-- End Right Column -->
     </div>

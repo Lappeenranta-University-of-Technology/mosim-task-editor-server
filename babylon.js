@@ -115,7 +115,12 @@ var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
             var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
             var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 1, -1), scene);
 			
+			
+			BABYLON.SceneLoader.Append("", "data:" + JSON.stringify(cad), scene, function (scene) {
+				// do something with the scene
+			});
             //loading mesh directly
+			/*
 			var myMat = new BABYLON.StandardMaterial("myMat", scene);
 			myMat.diffuseColor = new BABYLON.Color3(1, 1, 0);
 			var m = new BABYLON.Mesh("mf",scene);
@@ -135,7 +140,7 @@ var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
 			var maxxyz=Math.max(m.getBoundingInfo().boundingBox.extendSize.x,m.getBoundingInfo().boundingBox.extendSize.y,m.getBoundingInfo().boundingBox.extendSize.z)
 			camera.radius=maxxyz*3;                //radius instead of position vector is changed to zoom in all the parts.
 			//end of direct mesh loading
-			
+			*/
             return scene;
         };
         /******* End of the create scene function ******/
@@ -144,14 +149,30 @@ var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
 			$.post("api.php",
 			{
 				action: "getPart3D",
-				token: val,
+				token: token,
 				partid: partid
 			},
 			function(data, status){ 	
-				scene = createSceneScrew(data);
-				engine.runRenderLoop(function () {
-                scene.render();
-				});
+				var i=document.getElementById('new_partpreview');
+				var c=document.getElementById('renderCanvas');
+				
+				if ((typeof(data)=="string") && 
+				    ((data.indexOf("Error")==0) || (data.indexOf("no cad data")==0)))
+				{
+					var p=document.getElementById('partselector');
+					i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
+					i.style.display="";
+					c.style.display="none";
+				}
+				else
+				{
+				 i.style.display="none";
+				 c.style.display="";
+				 scene = createSceneScrew(data);
+				 engine.runRenderLoop(function () {
+                 scene.render();
+				 });
+				}
 			});  
 
 		}

@@ -34,6 +34,55 @@
   return 0;
  }
  
+ function tokenToProjectIdAndName($token) {
+  global $db;
+  $sql='SELECT tokens.userid, projects.id, projects.name FROM tokens, projects WHERE projects.id=tokens.projectid and token=\''.$db->real_escape_string($token).'\';';  
+   if ($result=$db->query($sql))
+	if ($row=$result->fetch_assoc())
+	return $row;
+  return array('userid'=>0, 'id'=>0, 'name'=>'');
+ }
+ 
+ function getSettings($token)
+ {
+	 if (tokenToProjectId($token)>0)
+	 {
+		 include_once('config.php');
+		 return '<chunkSize>'.$settings['chunkSize'].'</chunkSize>';
+	 }
+	 return false;
+ }
+ 
+ function getMMUList($token)
+ {
+  global $db;
+  $projectid=tokenToProjectId($token);
+   if ($projectid!=0)
+   {
+    $sql='SELECT mmus.id as url, mmus.vendorID, mmus.name, mmus.version, ifnull(mp.sortorder,0) as sortorder, ifnull(mp.enabled,1) as enabled FROM `mmus` LEFT JOIN mmu_project mp ON (mp.mmuid=mmus.id and mp.projectid='.$projectid.') ORDER BY vendorID;';
+    $mmus=[];
+	$url=(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") .'://'.$_SERVER['HTTP_HOST'];
+	if (substr($url,-1)!='/')
+		$url.='/';
+	$p=strripos($_SERVER['PHP_SELF'],'/');
+	  if ($p!==false)
+		  $url.=substr($_SERVER['PHP_SELF'],0,$p+1);
+	 $url.='api.php?action=downloadMMU&id=';
+     if ($result=$db->query($sql))
+     {
+	  while ($row=$result->fetch_assoc())  
+	  {
+	   //$row['url']=$url.$row['url'];
+	   $row['sortorder']=intval($row['sortorder']);
+	   $row['enabled']=($row['enabled']=='1');
+	   $mmus[]=$row;
+	  }
+      return json_encode($mmus); //returning list of MMUs with enable and sortorder taken from specific project   
+     }
+   }
+   return false;
+ }
+ 
  function addCadFromScene() {
   global $db;
   $projectid=tokenToProjectId($_POST['token']);  
@@ -50,6 +99,22 @@
   return json_encode($reply);
  }
  
+ function addCad_glTF_FromScene() {
+  global $db;
+  $projectid=tokenToProjectId($_POST['token']);
+  if ($projectid==0)
+  return json_encode('Error - insufficient user privileges');
+  $data=$db->real_escape_string($_POST['glTF']);
+  $sql='UPDATE parts SET cad=\''.$data.'\' WHERE id='.$_POST['partid'].' and projectid='.$projectid;
+   if ($db->query($sql))
+   {
+	$reply="OK";
+    return json_encode($reply);
+   }
+  $reply="Error";
+  return json_encode($reply);
+ }
+ /*
  function getCadForPart($token,$partid) {
   global $db;
   $projectid=tokenToProjectId($token);  
@@ -98,29 +163,48 @@
   $reply="Error";
   return json_encode($reply);
  }
+ */
+ function getCadForPart($token,$partid) {
+  global $db;
+  $projectid=tokenToProjectId($token);  
+  if ($projectid==0)
+  return json_encode('Error - insufficient user privileges');
+ //update the sql statement now it should be correct
+  $sql='SELECT cad FROM parts WHERE id='.$partid.' and projectid='.$projectid.' and cad is not null;';
+  if ($result=$db->query($sql))
+  {
+	if ($result->num_rows==0)
+		return json_encode("no cad data");
+	else
+	 if ($row=$result->fetch_assoc())
+	 return $row['cad']; 
+  }
+  $reply="Error";
+  return json_encode($reply);
+ }
  
- function addPartsFromScene() {	 
-  global $db;                                                                   
+ function addPartsFromScene() {
+  global $db;
   
   $projectid=tokenToProjectId($_POST['token']);  
   if ($projectid==0)
-  return '<result>Error - insufficient user privileges</result>';	  
+  return '<result>Error - insufficient user privileges</result>';
   $sql='SELECT id, name, engineid FROM `parts` WHERE projectid='.$projectid.' ORDER BY name, engineid';
   $parts=[];
   if ($result=$db->query($sql))
    while ($row=$result->fetch_assoc())
    {
-	$row['changed']=false;   
-    $parts[]=$row;	   
+	$row['changed']=false;
+    $parts[]=$row;
    }
-  $result='';	 
+  $result='';
   //var_dump($_POST);
   if (!(isset($_POST['partsNames']) && isset($_POST['partsIDs']) && isset($_POST['partsMMIIDs']) && 
       (count($_POST['partsNames'])==count($_POST['partsIDs'])) &&
 	  (count($_POST['partsNames'])==count($_POST['partsMMIIDs']))))
 	return '<result>Dataset error</result>';
   
-   $sql='INSERT INTO parts (projectid, description, name, engineid) VALUES ';	 
+   $sql='INSERT INTO parts (projectid, description, name, engineid) VALUES ';
    $sqlu='INSERT INTO parts (id, projectid, description, name, engineid) VALUES ';
    $unityFound=array_fill(0,count($_POST['partsIDs']),false);
    
@@ -160,7 +244,7 @@
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
          break;	
 	    }
-	   }		   
+	   }
 	   
 	  for ($i=0; $i<count($_POST['partsIDs']); $i++)
 	   if (!$unityFound[$i])
@@ -173,7 +257,7 @@
 	     $found=true;
 		 $unityFound[$i]=true;
 	     $parts[$j]['changed']=true;
-	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])		      
+	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
          break;	
 	    }
@@ -209,7 +293,7 @@
 	 if ($rset=$db->query($sql))
 		 while ($row=$rset->fetch_assoc())
 		 {
-		  $row['name']=str_replace(' ','',$row['name']);                         
+		  $row['name']=str_replace(' ','',$row['name']);
 		  $data[]=$row;
 		 }
 	 $result.=json_encode($data); //printing entires from database as JSON
@@ -220,7 +304,7 @@
     $result.=json_encode($reply);
    }
    
-  return $result; 	   
+  return $result;
  }
  
  function outputJSON($result) {
@@ -236,11 +320,11 @@
 				   'id'=>"NULL"),
 			       'position'=>array('type'=>camel($row['positionname']),
 				                     'id'=>"NULL"));
-   $i++;			 
+   $i++;
   }
   header('Content-Type: application/json');	
   echo                  	
-  json_encode(array('callback'=>array('url'=>'https://kone.pc.lut.fi:80/api.php',
+  json_encode(array('callback'=>array('url'=>'https://taskeditor.mosim.eu/api.php',
                     'token'=>'mosim2020-983456/'.$_GET['station']),
                     'scene'=>array('type'=>'default','id'=>"NULL"),
                     'avatars'=>array('type'=>'default','id'=>"NULL"),
@@ -249,42 +333,46 @@
  
  function outputXML($result) {
   $xml=<<<XML
-<?xml version="1.0" encoding="UTF-8"?>  
+<?xml version="1.0" encoding="UTF-8"?>
 <tasks>
-</tasks>                 
+</tasks>
 XML;
-  $xml = new SimpleXMLElement($xml);	 
+  $xml = new SimpleXMLElement($xml);
   $i=0;	
   while ($row=$result->fetch_assoc())
   {
    $xml->addChild('task','');
    $xml->task[$i]->addChild('task',($i+1));
-   $xml->task[$i]->addChild('taskid',$row['id']);                       
-                                                  
+   $xml->task[$i]->addChild('taskid',$row['id']);
    $xml->task[$i]->addChild('operation',camel($row['operation']));
-   $xml->task[$i]->addChild('partname',camel($row['partname']));   
-   $xml->task[$i]->addChild('partid',$row['engineid']);   
-   $xml->task[$i]->addChild('toolname',camel($row['toolname']));   
+   $xml->task[$i]->addChild('partname',camel($row['partname']));
+   $xml->task[$i]->addChild('partid',$row['engineid']);
+   $xml->task[$i]->addChild('toolname',camel($row['toolname']));
    $xml->task[$i]->addChild('toolid','');
-   $xml->task[$i]->addChild('positionname',camel($row['positionname']));   
+   $xml->task[$i]->addChild('positionname',camel($row['positionname']));
    $xml->task[$i]->addChild('positionid','');
-   $i++;			 
+   $i++;
   }	
   header('Content-Type: application/xml; charset=utf-8');
-  header("Content-Disposition: attachment; filename=tasks.xml");  
+  header("Content-Disposition: attachment; filename=tasks.xml");
   echo $xml->asXML();
  }
 
 
- function getToolTypes() {
+ function getToolTypes($token) {
   global $db;
   $sql='SELECT name FROM `tools` WHERE language=\'mosim\';';
   $tooltypes=array();
    if ($result=$db->query($sql))
     while ($row=$result->fetch_assoc())
 	$tooltypes[]=camel($row['name']);
+  $projectData=tokenToProjectIdAndName($token);
+  
   header('Content-Type: application/json');	
-  echo json_encode(array('type'=>'ToolTypes','tools'=>$tooltypes));
+  echo json_encode(array('projectID'=>$projectData['id'],
+						 'projectName'=>$projectData['name'],
+						 'type'=>'ToolTypes',
+						 'tools'=>$tooltypes));
  }
  
  function getStationTypes($token) {
@@ -320,14 +408,14 @@ XML;
 	 outputXML($result);	
      else 
   	 outputJSON($result);
-	} 
-  }		  
- 
- if (isset($_GET['token']) && isset($_GET['action']) && ($_GET['action']=='getToolList') && ($_GET['token']==$accessToken))
- getToolTypes();
+	}
+  }
+
+ if (isset($_GET['token']) && isset($_GET['action']) && ($_GET['action']=='getToolList') && (($_GET['token']==$accessToken) || (tokenToProjectId($_GET['token'])!==0)))
+ getToolTypes($_GET['token']);
 
  if (isset($_POST['token']) && isset($_POST['action']) && ($_POST['action']=='getToolList') && (($_POST['token']==$accessToken) || (tokenToProjectId($_POST['token'])!==0)))
- getToolTypes();
+ getToolTypes($_POST['token']);                 
 
  if (isset($_POST['token']) && isset($_POST['action']) && ($_POST['action']=='getStationList') && (($_POST['token']==$accessToken) || (tokenToProjectId($_POST['token'])!==0)))
  getStationTypes($_POST['token']);
@@ -341,28 +429,90 @@ XML;
   }
   
   if (($_POST['action']=='addParts3D') && isset($_POST['token']) && isset($_POST['partid']) && ctype_digit($_POST['partid']))
-  {
-	header('Content-Type: application/json');
-	echo addCadFromScene();
-  }
+	  if (isset($_POST['glTF']))
+		{
+		header('Content-Type: application/json');
+		echo addCad_glTF_FromScene();
+		}
+		else
+		{
+		header('Content-Type: application/json');
+		echo addCadFromScene();
+		}
   
   if (($_POST['action']=='getPart3D') && isset($_POST['token']) && isset($_POST['partid']) && ctype_digit($_POST['partid']))
   {
 	header('Content-Type: application/json');
 	echo getCadForPart($_POST['token'],$_POST['partid']);
   }
- }
  
  if (($_GET['action']=='getPart3D') && isset($_GET['token']) && isset($_GET['partid']) && ctype_digit($_GET['partid']))
  {
   header('Content-Type: application/json');
   echo getCadForPart($_GET['token'],$_GET['partid']);
  }
- 
- if (($_GET['action']=='testConnection') && isset($_GET['token']))
+
+ if (($_POST['action']=='getMMUList') && isset($_POST['token']))
  {
+  header('Content-Type: application/json');
+  echo getMMUList($_POST['token']);
+ }
+ 
+ if (($_POST['action']=='getSettings') && isset($_POST['token']))
+ echo getSettings($_POST['token']);
+ 
+ if (($_POST['action']=='downloadMMU') && isset($_POST['token']) && isset($_POST['mmuID']) && ctype_digit($_POST['mmuID']))
+ {
+	if (tokenToProjectId($_POST['token'])>0)
+	{
+     include_once("mmu-functions.php");
+	 downloadMMU('mmus/'.$_POST['mmuID'].'.zip');	                      
+	}
+	else
+		echo '<result>Incorrect project token</result>';
+ }
+ 
+ if (($_POST['action']=='uploadMMU') && isset($_POST['token']) && isset($_POST['chunkend'])  && isset($_POST['chunknum']) && isset($_POST['sessionID']) && isset($_POST['fileID']) && isset($_POST['TotalSize']) && ctype_digit($_POST['chunkend']) && ctype_digit($_POST['chunknum']) && isset($_FILES['chunk']) && ctype_digit($_POST['TotalSize']))
+ {
+	if (tokenToProjectId($_POST['token'])>0)
+	{
+     include_once("mmu-functions.php");
+	 uploadMMU();	
+	}
+	else
+		echo '<result>Incorrect project token</result>';
+ }
+
+ } //action issset (POST)
+ 
+ if (isset($_GET['action']))
+ {
+  if (($_GET['action']=='downloadMMU') && isset($_GET['token']) && isset($_GET['mmuID']) && ctype_digit($_GET['mmuID'])) 
+  {
+	if (tokenToProjectId($_GET['token'])>0)
+	{
+     include_once("mmu-functions.php");
+	 if ($_GET['mmuID']!="0")
+	 downloadMMU('mmus/'.$_GET['mmuID'].'.zip');
+	}
+	else
+		echo '<result>Incorrect project token</result>';
+  }
+	 
+  if (($_GET['action']=='getSettings') && isset($_GET['token']))
+  echo getSettings($_GET['token']);	 
+	 
+  if (($_GET['action']=='getMMUList') && isset($_GET['token']))
+  {
+    header('Content-Type: application/json');
+    echo getMMUList($_GET['token']);
+  }
+ 
+  if (($_GET['action']=='testConnection') && isset($_GET['token']))
+  {
 	 header('Content-Type: application/json; charset=utf-8');
 	 echo testConnection($_GET['token']);
- }
+  }
+ } //action isset (GET)
  
 ?>

@@ -1,5 +1,7 @@
 <?php
- $version="V2.0";
+ $f=file_get_contents("Version.txt");
+ $f=explode("\n",$f);
+ $version="V".trim($f[0]);
  //database access
  $db=false;
  

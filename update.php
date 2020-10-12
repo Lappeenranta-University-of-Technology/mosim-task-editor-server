@@ -137,23 +137,23 @@
  //end user management
  
  
- function addProject() { //$db->real_escape_string(
+ function addProject($name,$desc) { //$db->real_escape_string(
   global $db; //add checking if name is used and then modify name by adding number suffix
-  $_POST['name']=$db->real_escape_string(trim($_POST['name']));
-  $_POST['desc']=$db->real_escape_string(trim($_POST['desc']));
-  $sql='SELECT count(id) as ile FROM projects WHERE name=\''.$_POST['name'].'\';';
+  $name=$db->real_escape_string(trim($name));
+  $desc=$db->real_escape_string(trim($desc));
+  $sql='SELECT count(id) as ile FROM projects WHERE name=\''.$name.'\';';
   if ($result=$db->query($sql))
    if ($row=$result->fetch_assoc())
     if ($row['ile']==0)
-    {		
+    {
      $sql='INSERT INTO `projects` (`name`, `description`) VALUES '.
-       '(\''.$_POST['name'].'\',\''.$_POST['desc'].'\');';
-     echo '<p>'.$sql;                   
+       '(\''.$name.'\',\''.$desc.'\');';
+     echo '<p>'.$sql;
      $db->query($sql);
      if ($db->insert_id>0)
      {
 	  $sql='INSERT INTO userroles (userid,projectid) VALUES ('.$_SESSION['userid'].','.$db->insert_id.');';
-	  echo '<p>'.$sql;                   
+	  echo '<p>'.$sql;
 	  $db->query($sql);
 	  echo '<result>OK</result>';
 	  return true;
@@ -165,6 +165,161 @@
 	 return true;
 	}
   return false;	
+ }
+
+ function cloneProject($id,$cloneName,$cloneList)
+ {
+	global $db;
+	if (!ctype_digit($id))
+	{
+		echo '<result>Invalid project id.</result>';
+		return false;
+	}
+	if (trim($cloneName)=='')
+	{
+		echo '<result>Project name cannot be empty</result>';
+		return false;
+	}
+	if (is_array($cloneList))
+	{
+		echo '<result>Properties to clone have to be supplied as a list.</result>';
+		return false;
+	}
+	
+	if (!isUsersProject($id))
+	{
+		echo '<result>You are not a member of this project.</result>';
+		return false;
+	}
+	
+	if ($_SESSION['projectid']!=$id)
+	{
+		if (!($result=$db->query('SELECT count(*) as ile FROM userroles WHERE role=\'owner\' and userid='.$_SESSION['userid'].' and projectid='.$id)))
+		{
+			echo '<result>Database error 1.</result>';
+			return false;
+		}
+		if (!($row=$result->fetch_assoc()))
+		{
+			echo '<result>Database error 2.</result>';
+			return false;
+		}
+		
+		if ($row['ile']==0)
+		{
+			echo '<result>Only project owner can do that (Err: 1).</result>';
+			return false;
+		}
+	} else
+		if ($_SESSION['role']!='owner')
+		{
+			echo '<result>Only project owner can do that (Err: 2).</result>';
+			return false;
+		}
+	
+	$desc='';
+	 if ($result=$db->query('SELECT description FROM projects WHERE id='.$id))
+		 if ($row=$result->fetch_assoc())
+	      $desc=$row['description'];
+	 if (!addProject($cloneName,$desc)) //cloning project
+		return false;
+	 $newId=$db->insert_id;
+	 $result=$cloneList;
+	 echo '<p>New project id: '.$newId.'</p>';
+	 //cloning tools
+	 if ($cloneList['tools']) //tools so far are common so there is no need to clone them explicitly
+	 {
+	 }
+	 if ($cloneList['toolCats']) //tools' categories so far are common so there is no need to clone them explicitly
+	 {
+	 }
+	 //cloning parts
+	 if ($cloneList['parts'])
+	 {
+		 $sql='INSERT INTO parts (`projectid`, `name`, `engineid`, `picture`, `cad`, `description`) '.
+		 'SELECT '.$newId.', `name`, `engineid`, `picture`, `cad`, `description` FROM `parts` WHERE projectid='.$id.' ORDER BY id;';
+		 $result['parts']=($db->query($sql));
+		 echo '<p>Parts SQL: '.htmlentities($sql).'</p>';
+		 $minid=$db->insert_id;
+		 $sql='Set @rownum='.($minid-1).'; CREATE TEMPORARY TABLE part_temp AS (SELECT id as oldid, (@rownum:=@rownum+1) as newid FROM `parts` WHERE projectid='.$id.' ORDER BY id);';
+		 echo '<p>Parts temp SQL: '.htmlentities($sql).'</p>';
+		 $db->multi_query($sql);
+		  while ($db->next_result()) // flush multi_queries
+			if (!$db->more_results()) break;
+		 /*
+		 $minid=$db->insert_id;
+		 $sql='SELECT id FROM parts WHERE projectid='.$id.' ORDER by id;';
+		 $partMapping=array()
+		 if ($result=$db->query($sql))
+			 while ($row=$result->fetch_assoc())
+				 $partMapping[]=array('oldid'=>$row['id'],'newid'=>$minid++);*/
+	 }
+	 //cloning part categories
+	 if ($cloneList['partCats'])
+	 {
+		 if ($cloneList['parts'])
+		 $sql='INSERT INTO `partcat` (`projectid`, `name`,  `syncwith`, `defaultpart`, `icon`, `sortorder`, `language`) '.
+		 'SELECT '.$newId.', `name`, `syncwith`, ifnull(newid,0), `icon`, `sortorder`, `language` FROM `partcat` LEFT JOIN part_temp ON (part_temp.oldid=partcat.defaultpart) WHERE projectid='.$id.' ORDER BY id;';
+		 else
+		 $sql='INSERT INTO `partcat` (`projectid`, `name`,  `syncwith`, `defaultpart`, `icon`, `sortorder`, `language`) '.
+		 'SELECT '.$newId.', `name`, `syncwith`, 0, `icon`, `sortorder`, `language` FROM `partcat` WHERE projectid='.$id.' ORDER BY id;';
+		 $result['partCats']=($db->query($sql));
+		 echo '<p>Part categories SQL: '.htmlentities($sql).'</p>';
+		 
+	 }
+	 //cloning avatars
+	 if ($cloneList['avatars'])
+	 {
+		$sql='INSERT INTO avatars (`projectid`, `name`, `age`, `height`, `weight`, `gender`, `sortorder`) SELECT '.$newId.', `name`, `age`, `height`, `weight`, `gender`, `sortorder` FROM `avatars` WHERE projectid='.$id.' ORDER BY id;';
+		 $result['avatars']=($db->query($sql));
+		 echo '<p>Avatars SQL: '.htmlentities($sql).'</p>';
+		 $minid=$db->insert_id;
+		 $sql='Set @rownum='.($minid-1).'; CREATE TEMPORARY TABLE avatar_temp AS (SELECT id as oldid, (@rownum:=@rownum+1) as newid FROM `avatars` WHERE projectid='.$id.' ORDER BY id);';
+		 $db->multi_query($sql);
+		  while ($db->next_result()) // flush multi_queries
+			if (!$db->more_results()) break;
+		  echo '<p>Avatars temp SQL: '.htmlentities($sql).'</p>';
+	 }
+	 
+	 if ($cloneList['stations'])
+	 {
+		 if ($cloneList['avatars'])
+		 $sql='INSERT INTO stations (`parent`, `projectid`, `name`, `mainpart`, `main`, `position`, `avatarid`, `sortorder`, `lastchange`) SELECT s.`parent`, '.$newId.', s.`name`, s.`mainpart`, s.`main`, s.`position`, ifnull(at.newid,0), s.`sortorder`, s.`lastchange` FROM `stations` s LEFT JOIN avatar_temp at ON (s.avatarid=at.oldid) WHERE projectid='.$id.' ORDER BY id;';
+		 else
+		 $sql='INSERT INTO stations (`parent`, `projectid`, `name`, `mainpart`, `main`, `position`, `avatarid`, `sortorder`, `lastchange`) SELECT s.`parent`, '.$newId.', s.`name`, s.`mainpart`, s.`main`, s.`position`, 0, s.`sortorder`, s.`lastchange` FROM `stations` s WHERE projectid='.$id.' ORDER BY id;';
+		 $result['stations']=($db->query($sql));
+		 echo '<p>Stations SQL: '.htmlentities($sql).'</p>';
+		 $minid=$db->insert_id;
+		 $sql='Set @rownum='.($minid-1).'; CREATE TEMPORARY TABLE station_temp AS (SELECT id as oldid, (@rownum:=@rownum+1) as newid FROM `stations` WHERE projectid='.$id.' ORDER BY id);';
+		 $db->multi_query($sql);
+		  while ($db->next_result()) // flush multi_queries
+			if (!$db->more_results()) break;
+		echo '<p>Stations temp SQL: '.htmlentities($sql).'</p>'; 
+		
+		if ($cloneList['parts']) 
+		$sql='INSERT INTO stations (id, mainpart, name) SELECT s.id, ifnull(if(s.main=\'part\',(SELECT newid FROM part_temp pt WHERE pt.oldid=s.mainpart LIMIT 1),(SELECT newid FROM station_temp st WHERE st.oldid=s.mainpart LIMIT 1)),0) ,\'\' FROM stations s WHERE projectid='.$newId;
+		else
+		$sql='INSERT INTO stations (id, mainpart, name) SELECT s.id, ifnull(if(s.main=\'part\',0,(SELECT newid FROM station_temp st WHERE st.oldid=s.mainpart LIMIT 1)),0) ,\'\' FROM stations s WHERE projectid='.$newId;
+		$sql.=' ON DUPLICATE KEY UPDATE mainpart=VALUES(mainpart);';
+		$db->query($sql);
+		echo '<p>Stations update SQL: '.htmlentities($sql).'</p>'; 
+	 }
+	 
+	 if ($cloneList['tasks'] && $cloneList['parts'] && $cloneList['stations'])
+	 {
+		 $sql='INSERT INTO highleveltasks (`stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `toolid`, `positionname`, `description`, `esttime`) SELECT st.newid, hlt.`tasktype`, hlt.`sortorder`, if(hlt.`partid`=0,0,(SELECT pt.newid FROM part_temp pt WHERE pt.oldid=hlt.partid LIMIT 1)), if(hlt.`subpartid`=0,0,(SELECT newid FROM station_temp WHERE oldid=hlt.subpartid LIMIT 1)), hlt.`toolid`, hlt.`positionname`, hlt.`description`, hlt.`esttime` FROM `highleveltasks` hlt, station_temp st WHERE st.oldid=hlt.id ORDER BY hlt.id;';
+		 $result['tasks']=($db->query($sql));
+		 echo '<p>Tasks SQL: '.htmlentities($sql).'</p>'; 
+	 }
+	 
+	 if ($cloneList['users'])
+	 {
+		$sql='INSERT INTO `userroles` (`userid`, `projectid`, `laststation`, `role`) SELECT `userid`, '.$newId.', `laststation`, `role` FROM `userroles` WHERE projectid='.$id;
+		$result['users']=($db->query($sql));
+		echo '<p>User roles SQL: '.htmlentities($sql).'</p>'; 
+	 }
+	 
+	return true;
  }
 
  function addPart($name) {
@@ -258,6 +413,22 @@
 	   return;
       }
 	} 
+  echo '<result>ERROR</result>'; 
+ }
+
+  function reorderMMUs($neworder) {
+  global $db;
+  $sql='INSERT INTO mmu_project (mmuid, sortorder, projectid) VALUES ';
+   for ($i=0; $i<count($neworder); $i++)
+   $sql.='('.$neworder[$i].','.$i.',\''.$_SESSION['projectid'].'\'),';
+  $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE sortorder=values(sortorder);';
+  $db->query($sql);
+  echo '<sql>'.$sql.'</sql>';
+   if ($db->affected_rows>0)
+   {
+    echo '<result>OK</result>';
+	return;
+   }
   echo '<result>ERROR</result>'; 
  }
 
@@ -538,7 +709,34 @@
    else
    echo '<result>ERROR</result>';	   
  }
+ 
+ function delMMU($id) { //TODO: check user rights before performing this operation
+  global $db;
+  $sql='DELETE FROM mmus WHERE id='.$id.';';  
+  $db->query($sql);
+   if ($db->affected_rows>0)
+   {
+	chmod(realpath('mmus/'.$id.'.zip'), 0777);
+	echo "\r\nUnlink status: ".(unlink(realpath('mmus/'.$id.'.zip'))?"True":"False")."\r\n";
+    echo '<result>OK</result>'; 	   
+   }
+   else
+   echo '<result>ERROR</result>';	   
+ }
 
+ function setEnableMMU($id,$project,$action) {
+  global $db;
+  $sql='INSERT INTO `mmu_project` (`projectid`, `mmuid`, `enabled`) '.
+  'VALUES ('.$project.','.$id.','.($action=='enableMMU'?'1':'0').') '.
+  'ON DUPLICATE KEY UPDATE enabled=VALUES(enabled);';
+  $db->query($sql);
+  echo '<sql>'.$sql.'</sql>';
+   if ($db->affected_rows>0)
+   echo '<result>OK</result>'; 	   
+   else
+   echo '<result>ERROR</result>';	   
+ }
+ 
  function setDefaultPartCat($id,$cat) {
   global $db;
   $sql='UPDATE partcat SET defaultpart='.$id.' WHERE id='.$cat;
@@ -1209,7 +1407,7 @@
  
   if ($_POST['action']=='addProject')                                               
    if (isset($_POST['name']) && isset($_POST['desc']))	 
-   addProject();	
+   addProject($_POST['name'],$_POST['desc']);	
 
   if ($_POST['action']=='editUserRole')
    if (isset($_POST['userid']) && isset($_POST['projectid']) && isset($_POST['newrole']))
@@ -1261,9 +1459,13 @@
    if (isset($_POST['name']) && (trim($_POST['name'])!=''))
    addToolCat(trim($_POST['name']));	
   
+  if ($_POST['action']=='reorderMMUs')
+   if (isset($_POST['neworder']))
+   reorderMMUs($_POST['neworder']);
+  
   if ($_POST['action']=='reorderPartCat')
    if (isset($_POST['neworder']))
-   reorderPartCat($_POST['neworder']);	
+   reorderPartCat($_POST['neworder']);
   
   if ($_POST['action']=='reorderToolCat')
    if (isset($_POST['neworder']))
@@ -1280,6 +1482,10 @@
   if ($_POST['action']=='delToolCat')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
    delToolCat($_POST['id']); 	   
+
+  if ($_POST['action']=='delMMU')
+   if (isset($_POST['id']) && ctype_digit($_POST['id']))
+   delMMU($_POST['id']); 	   
 
   if ($_POST['action']=='delStation')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
@@ -1310,6 +1516,12 @@
  if ($_POST['action']=='reorderTaskList')
    if (isset($_POST['neworder']))
    echo '<result>'.reorderTaskList($_POST['neworder']).'</result>';	
+
+ if (($_POST['action']=='enableMMU') || ($_POST['action']=='disableMMU'))
+   if (isset($_POST['id']) && ctype_digit($_POST['id']) &&
+	   isset($_POST['projectid']) && ctype_digit($_POST['projectid']))
+	if (($_POST['projectid']==$_SESSION['projectid']) || isUsersProject($_POST['projectid']))
+   setEnableMMU($_POST['id'],$_POST['projectid'],$_POST['action']);                      
 
   if ($_POST['action']=='setDefaultPartCat')
    if (isset($_POST['id']) && ctype_digit($_POST['id']) &&
@@ -1362,6 +1574,70 @@
 	  isset($_POST['description']) && isset($_POST['time']))	 
   echo updateTask($_POST['taskid'],$_POST['operationid'],$_POST['partid'],$_POST['toolid'],$_POST['description'],$_POST['time']);	  
 
+ //chunk file upload
+ if (($_POST['action']=='addMMU') && isset($_FILES['chunk']) && isset($_POST['chunknum']) && isset($_POST['fileID']) && isset($_POST['chunkend']) && isset($_POST['TotalSize']) && ctype_digit($_POST['chunknum']) && ctype_digit($_POST['chunkend']) && ctype_digit($_POST['TotalSize']))
+ {
+	 include_once("mmu-functions.php");
+	 uploadMMU();
+ }
+
+ //full file upload - not needed anymore
+ if (($_POST['action']=='addMMU') && isset($_FILES['mmu']))
+ {
+	 echo '<p>Checking mmu upload';
+	 if (is_uploaded_file($_FILES['mmu']['tmp_name']))
+	 {
+	  echo 'MMU file is uploaded: '.$_FILES['mmu']['name'];
+	  $zip = new ZipArchive;
+	  if ($zip->open($_FILES['mmu']['tmp_name']) === TRUE) {
+		  $fileID=$zip->locateName('description.json',ZipArchive::FL_NOCASE|ZipArchive::FL_NODIR);
+		  echo "\r\n<p>Zip file ID: ".$fileID;
+		  if ($fileID===false)
+		  echo "\r\n<p>Description file cannot be found";
+	      else
+		  {
+			$desc=json_decode($zip->getFromIndex($fileID),true);
+			$lasterror=json_last_error();
+			echo "\r\n<p>Json last error (0==success): ".$lasterror."\r\n";
+			if ($lasterror==0)
+			{
+				$desc['ID']="'".$db->real_escape_string(trim($desc['ID']))."'";
+				$desc['Name']="'".$db->real_escape_string(trim($desc['Name']))."'";
+				$desc['Author']="'".$db->real_escape_string(trim($desc['Author']))."'";
+				$desc['MotionType']="'".$db->real_escape_string(trim($desc['MotionType']))."'";
+				$desc['Version']="'".$db->real_escape_string(trim($desc['Version']))."'";
+				$desc['LongDescription']="'".$db->real_escape_string(trim($desc['LongDescription']))."'";
+				$desc['ShortDescription']="'".$db->real_escape_string(trim($desc['ShortDescription']))."'";
+				$sql='SELECT count(id) as ile FROM mmus WHERE vendorID='.$desc['ID'].';';
+				if ($result=$db->query($sql))
+				{
+					if ($row=$result->fetch_assoc())
+					{
+					 if (intval($row['ile'])==0)
+					 {
+						$mmuUpload=file_get_contents($_FILES['mmu']['tmp_name']);
+						$sql='INSERT INTO `mmus`(`name`, `author`, `vendorID`, `motiontype`, `version`, `longdescription`, `shortdescription`, `package`) VALUES '.
+						'('.$desc['Name'].','.$desc['Author'].','.$desc['ID'].','.$desc['MotionType'].','.$desc['Version'].','.$desc['LongDescription'].','.$desc['ShortDescription'].',0x'.bin2hex($mmuUpload).');';
+						if ($db->query($sql))
+						echo '<result>Success</result>';
+					 }
+					 else
+						 echo '<result>MMU already in library</result>';
+					}
+					else
+						echo '<result>Database error 2</result><sql>'.$sql.'</sql>';
+				}
+				else
+				echo '<result>Database error 1</result><sql>'.$sql.'</sql>';
+			}
+		  }
+       $zip->close();
+      }
+	  else 
+       echo '<p>Zip failed';
+	 }
+ }
+  
  if (($_POST['action']=='uploadIcons') && isset($_FILES['icon']))
  {
   for ($i=0; $i<count($_FILES['icon']['name']); $i++)                       
@@ -1381,7 +1657,7 @@
     else
 	echo '<icon'.$i.'>ERR</icon'.$i.'>';	
    }	     
-  echo '<result>OK</result><count>'.count($_FILES['icon']['name']).'</count>';                       
+  echo '<result>OK</result><count>'.count($_FILES['icon']['name']).'</count>';
  }
 
  if (($_POST['action']=='deleteStation') && isset($_POST['stationid']) &&
@@ -1448,12 +1724,21 @@
  {
   if ($_POST['id']!=$_SESSION['userid'])
   echo activateUser($_POST['id'],0);
-  else                           
+  else
   echo '<result>ERR</result><message>You cannot deactivate own account!</message>';
  }
  //end user management
  
+ //project management
+  if (($_POST['action']=='duplicateProject') && isset($_POST['id']) && isset($_POST['cloneList']) && isset($_POST['cloneName']))
+  cloneProject($_POST['id'],$_POST['cloneName'],$_POST['cloneList']);
+ //end project management
+ 
 }
+
+if (isset($_GET['date']))
+	echo md5(date("Ymd").rand(0,2000)); //just for tests remove later     
+	
 ?>
 
 </body>
