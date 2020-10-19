@@ -1,3 +1,7 @@
+2.3
+ - Removed hardcoded token key in the api.php
+ - Added favicon
+ - MMU library linking to Launcher - first test version
 2.2
  - MMU library implementation
 2.1

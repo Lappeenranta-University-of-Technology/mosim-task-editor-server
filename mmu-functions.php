@@ -151,4 +151,35 @@
 	 else
 		 echo '<result>File '.$file.'does not exist</result>';
  }
+ 
+ function delMMU($ids) { //TODO: check user rights before performing this operation
+  global $db;
+  $sql='DELETE FROM mmus WHERE id in ('.implode(',',$ids).');';  
+  $db->query($sql);
+   if ($db->affected_rows>0)
+   {
+	for ($i=0; $i<Count($ids); $i++)
+	{
+	 chmod(realpath('mmus/'.$ids[$i].'.zip'), 0777);
+	 $ids[$i]=unlink(realpath('mmus/'.$ids[$i].'.zip'));
+	}
+   }
+   else
+    for ($i=0; $i<Count($ids); $i++)
+	$ids[$i]=false;
+  return $ids;
+ }
+ 
+ function removeMMU($vendorID)
+ {
+	global $db;
+	$sql='SELECT GROUP_CONCAT(id) as ids FROM mmus WHERE vendorID=\''.$db->real_escape_string($vendorID).'\';';
+	 if ($result=$db->query($sql))
+		if ($row=$result->fetch_assoc())
+		{
+			$delresult=delMMU(explode(',',$row['ids']));
+			return in_array(true,$delresult);
+		}
+	return false;
+ }
 ?>

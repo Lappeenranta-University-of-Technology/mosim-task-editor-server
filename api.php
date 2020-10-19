@@ -2,8 +2,6 @@
  
  include('db.php'); 
  
- $accessToken='mosim2020-983456';
- 
  if (!connectDB())
  exit();
 
@@ -43,12 +41,25 @@
   return array('userid'=>0, 'id'=>0, 'name'=>'');
  }
  
+ function tokenAndPartToProjectID($token,$part)
+ {
+	global $db;
+	$sql='SELECT t.projectid FROM tokens t, `parts` p  WHERE t.token=\''.$db->real_escape_string($token).'\' and p.id='.$part.' and p.projectid=t.projectid LIMIT 1';
+	if ($result=$db->query($sql))
+	if ($row=$result->fetch_assoc())
+	return $row['projectid'];
+	return 0;
+ }
+ 
  function getSettings($token)
  {
 	 if (tokenToProjectId($token)>0)
 	 {
 		 include_once('config.php');
-		 return '<chunkSize>'.$settings['chunkSize'].'</chunkSize>';
+		 return '<chunkSize>'.$settings['chunkSize'].'</chunkSize>'.
+				'<canDownload>True</canDownload>'.
+				'<canUpload>True</canUpload>'.
+				'<canRemove>True</canRemove>'; //TODO: user rights should be taken from database and detemined by the provided token
 	 }
 	 return false;
  }
@@ -183,10 +194,10 @@
   return json_encode($reply);
  }
  
- function addPartsFromScene() {
+ function addPartsFromScene($token) {
   global $db;
   
-  $projectid=tokenToProjectId($_POST['token']);  
+  $projectid=tokenToProjectId($token);  
   if ($projectid==0)
   return '<result>Error - insufficient user privileges</result>';
   $sql='SELECT id, name, engineid FROM `parts` WHERE projectid='.$projectid.' ORDER BY name, engineid';
@@ -198,7 +209,7 @@
     $parts[]=$row;
    }
   $result='';
-  //var_dump($_POST);
+
   if (!(isset($_POST['partsNames']) && isset($_POST['partsIDs']) && isset($_POST['partsMMIIDs']) && 
       (count($_POST['partsNames'])==count($_POST['partsIDs'])) &&
 	  (count($_POST['partsNames'])==count($_POST['partsMMIIDs']))))
@@ -358,7 +369,6 @@ XML;
   echo $xml->asXML();
  }
 
-
  function getToolTypes($token) {
   global $db;
   $sql='SELECT name FROM `tools` WHERE language=\'mosim\';';
@@ -392,40 +402,54 @@ XML;
  
 //main body
  
- if (isset($_GET['token']) && isset($_GET['action']) && isset($_GET['station']))
-  if (($_GET['action']=='getTaskList') && 
-      ctype_digit($_GET['station']))
+ //POST requests begin
+ 
+ if (isset($_POST['action']) && isset($_POST['token']))
+ {
+  if (($_POST['action']=='getToolList') && (tokenToProjectId($_POST['token'])!==0))
+  getToolTypes($_POST['token']);
+
+  if (($_POST['action']=='getStationList') && (tokenToProjectId($_POST['token'])!==0))
+  getStationTypes($_POST['token']);
+
+  if (($_POST['action']=='removeMMU') && isset($_POST['vendorID']))
   {
-	$projectid=tokenToProjectId($_GET['token']);
-	if ($projectid>0)
-	{
-	$sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
-	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
-	     ' WHERE ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
-	     'ORDER BY ht.sortorder, ht.id;';
-	if ($result=$db->query($sql))
-	 if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
-	 outputXML($result);	
-     else 
-  	 outputJSON($result);
-	}
+   include_once 'mmu-functions.php';
+   if (removeMMU($_POST['vendorID']))
+   {
+	header('Content-Type: application/json');
+	echo getMMUList($_POST['token']);
+   } //TODO: prepare response for error state
   }
 
- if (isset($_GET['token']) && isset($_GET['action']) && ($_GET['action']=='getToolList') && (($_GET['token']==$accessToken) || (tokenToProjectId($_GET['token'])!==0)))
- getToolTypes($_GET['token']);
-
- if (isset($_POST['token']) && isset($_POST['action']) && ($_POST['action']=='getToolList') && (($_POST['token']==$accessToken) || (tokenToProjectId($_POST['token'])!==0)))
- getToolTypes($_POST['token']);                 
-
- if (isset($_POST['token']) && isset($_POST['action']) && ($_POST['action']=='getStationList') && (($_POST['token']==$accessToken) || (tokenToProjectId($_POST['token'])!==0)))
- getStationTypes($_POST['token']);
- 
- if (isset($_POST['action']))
- {
-  if (($_POST['action']=='addParts') && isset($_POST['token']))
+  if (($_POST['action']=='addParts'))
   {
    header('Content-Type: application/json');
-   echo addPartsFromScene();
+   echo addPartsFromScene($_POST['token']);
+  }
+
+  if (($_POST['action']=='addPartPicture') && isset($_POST['partid']) && ctype_digit($_POST['partid']) && isset($_FILES['part']) && file_exists($_FILES['part']['tmp_name']))
+  {
+	$projectid=tokenAndPartToProjectID($_POST['token'],$_POST['partid']);
+	if ($projectid>0)
+	{
+	 $pic=file_get_contents($_FILES['part']['tmp_name']);
+	 $pic=bin2hex($pic);
+	 $sql='UPDATE parts SET picture=0x'.$pic.' WHERE id='.$_POST['partid'].' LIMIT 1;';
+	 $db->query($sql);
+	 if ($db->affected_rows>-1) //-1 means error, everything above is okay
+		 echo '<result>OK</result>';
+	 else
+		 echo '<result>ERR</result><msg>'.$db->error.'</msg>';
+	 echo '<uploadSize>'.filesize($_FILES['part']['tmp_name']).'</uploadSize>';
+	}
+	else
+	{
+		if (tokenToProjectId($_POST['token'])>0)
+		echo '<result>ERR-FATAL</result><msg>Part does not belong to the project</msg>';
+		else
+		echo '<result>ERR</result><msg>Project not found</msg>';
+	}
   }
   
   if (($_POST['action']=='addParts3D') && isset($_POST['token']) && isset($_POST['partid']) && ctype_digit($_POST['partid']))
@@ -439,18 +463,12 @@ XML;
 		header('Content-Type: application/json');
 		echo addCadFromScene();
 		}
-  
+
   if (($_POST['action']=='getPart3D') && isset($_POST['token']) && isset($_POST['partid']) && ctype_digit($_POST['partid']))
   {
 	header('Content-Type: application/json');
 	echo getCadForPart($_POST['token'],$_POST['partid']);
   }
- 
- if (($_GET['action']=='getPart3D') && isset($_GET['token']) && isset($_GET['partid']) && ctype_digit($_GET['partid']))
- {
-  header('Content-Type: application/json');
-  echo getCadForPart($_GET['token'],$_GET['partid']);
- }
 
  if (($_POST['action']=='getMMUList') && isset($_POST['token']))
  {
@@ -466,7 +484,7 @@ XML;
 	if (tokenToProjectId($_POST['token'])>0)
 	{
      include_once("mmu-functions.php");
-	 downloadMMU('mmus/'.$_POST['mmuID'].'.zip');	                      
+	 downloadMMU('mmus/'.$_POST['mmuID'].'.zip');
 	}
 	else
 		echo '<result>Incorrect project token</result>';
@@ -485,9 +503,37 @@ XML;
 
  } //action issset (POST)
  
- if (isset($_GET['action']))
+ //POST requests end
+ //GET requests begin
+ if (isset($_GET['action']) && isset($_GET['token']))
  {
-  if (($_GET['action']=='downloadMMU') && isset($_GET['token']) && isset($_GET['mmuID']) && ctype_digit($_GET['mmuID'])) 
+  if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))
+  {
+	$projectid=tokenToProjectId($_GET['token']);
+	if ($projectid>0)
+	{
+	$sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
+	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
+	     ' WHERE ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
+	     'ORDER BY ht.sortorder, ht.id;';
+	if ($result=$db->query($sql))
+	 if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
+	 outputXML($result);	
+     else 
+  	 outputJSON($result);
+	}
+  }
+
+  if (($_GET['action']=='getToolList') && (tokenToProjectId($_GET['token'])!==0))
+  getToolTypes($_GET['token']);
+
+  if (($_GET['action']=='getPart3D') && isset($_GET['partid']) && ctype_digit($_GET['partid']))
+  {
+   header('Content-Type: application/json');
+   echo getCadForPart($_GET['token'],$_GET['partid']);
+  }
+  
+  if (($_GET['action']=='downloadMMU') && isset($_GET['mmuID']) && ctype_digit($_GET['mmuID'])) 
   {
 	if (tokenToProjectId($_GET['token'])>0)
 	{
@@ -499,20 +545,20 @@ XML;
 		echo '<result>Incorrect project token</result>';
   }
 	 
-  if (($_GET['action']=='getSettings') && isset($_GET['token']))
+  if (($_GET['action']=='getSettings'))
   echo getSettings($_GET['token']);	 
 	 
-  if (($_GET['action']=='getMMUList') && isset($_GET['token']))
+  if (($_GET['action']=='getMMUList'))
   {
     header('Content-Type: application/json');
     echo getMMUList($_GET['token']);
   }
  
-  if (($_GET['action']=='testConnection') && isset($_GET['token']))
+  if (($_GET['action']=='testConnection'))
   {
 	 header('Content-Type: application/json; charset=utf-8');
 	 echo testConnection($_GET['token']);
   }
- } //action isset (GET)
+ } //GET requests end
  
 ?>

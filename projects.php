@@ -91,6 +91,74 @@
 	 obj.parentNode.previousSibling.removeAttribute('data-saved');
 	 obj.parentNode.innerHTML=data;
  }
+ 
+ function cloneProject(newName,outputBox) {
+	 var outBox=document.getElementById(outputBox);
+	 var cloneList = {tools:document.getElementById('param_tools').checked,
+					toolCats:document.getElementById('param_toolscats').checked,
+					parts:document.getElementById('param_parts').checked,
+					partCats:document.getElementById('param_partscats').checked,
+					avatars:document.getElementById('param_avatars').checked,
+					avatarsParams:document.getElementById('param_avatarparam').checked,
+					stations:document.getElementById('param_stations').checked,
+					tasks:document.getElementById('param_tasks').checked,
+					users:document.getElementById('param_users').checked};
+	 
+	$.post("update.php",
+	{
+	  action: 'duplicateProject',
+	  id: document.getElementById("projects").value,
+	  cloneList: cloneList,
+	  cloneName: document.getElementById(newName).value
+	},
+	function(data, status){
+		outBox.innerHTML=data;
+	});	 
+	 
+ }
+ 
+ function backupProject(desc,outputBox) {
+	 
+ }
+ 
+ function projectActions(group, obj) {
+	 //obtaining container boxes
+	 projectName=document.getElementById("projects");
+	 projectName=projectName.children[projectName.selectedIndex].text; //TODO: name escaping
+	 params=document.getElementById(group+"params");
+	 group=document.getElementById(group);
+	 //modifying selection of the item
+	 obj.className="chosen";
+	 //unselecting all other options
+	  for (i=0; i<group.children.length; i++)
+		  if (group.children[i]!=obj.parentNode)
+			  group.children[i].firstChild.className="";
+	//common actions
+	 actions="<br><input type=\"checkbox\" id=\"param_tools\" checked /><label for=\"param_tools\">Tools</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_toolscats\" checked /><label for=\"param_toolscats\">Tools' categories</label>"+
+	         "<br><input type=\"checkbox\" id=\"param_parts\" checked /><label for=\"param_parts\">Parts</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_partscats\" checked /><label for=\"param_partscats\">Parts' categories</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_stations\" checked /><label for=\"param_stations\">Stations</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_avatars\" checked /><label for=\"param_avatars\">Avatars</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_avatarparam\" checked /><label for=\"param_avatarparam\">Avatar paramerers</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_tasks\" checked /><label for=\"param_tasks\">Task lists (require stations and parts)</label>"+
+			 "<br><input type=\"checkbox\" id=\"param_users\" checked /><label for=\"param_users\">User lists</label>"; //TODO: add user password export options, encrypted project package
+	//displaying parameters relevant to specific actions
+	 if (obj.dataset.action=="clone")
+	 params.innerHTML="Clone project name: <input id=\"clone_name\" type=\"text\" value=\""+projectName+" - clone\"/><p>Content to clone:"+actions+"</p><p>"+
+	 "<span class=\"w3-tag w3-teal w3-round button\" onclick=\"cloneProject('clone_name','"+params.id+"');\">Create duplicate</span></p>";
+	 else
+	 if (obj.dataset.action=="backup")
+	  params.innerHTML="Backup remarks: <textarea id=\"backup_desc\" style=\"width:100%;\"></textarea><p>Content to backup:"+actions+"</p><p>"+
+	 "<span class=\"w3-tag w3-teal w3-round button\" onclick=\"backupProject('backup_desc','"+params.id+"');\">Create backup</span></p>";
+	 else
+	 if (obj.dataset.action=="export")
+	  params.innerHTML="Content to export:"+actions+"</p><p>"+
+	 "<span class=\"w3-tag w3-teal w3-round button\" onclick=\"backupProject('backup_desc','"+params.id+"');\">Export</span></p>";
+	 else
+		 params.innerHTML=obj.innerHTML+" action is not yet implemented.";
+ }
+ 
 </script>
 
 <style>
@@ -135,6 +203,27 @@
  
  table.results tr td.error {
    color: red;	 
+ }
+ 
+ ul#projectactions li span {
+	 color: rgb(117, 117, 117);
+	 cursor: pointer;
+	 transition: color 0.4s linear;
+ }
+ 
+ ul#projectactions li span:hover {
+	 color: black;
+ }
+ 
+ ul#projectactions li span.chosen {
+   color: goldenrod;
+   font-size: larger;
+   text-decoration: underline;
+ }
+ 
+ div#projectactionsparams label {
+	 margin-left:10px;
+	 cursor: pointer;
  }
 </style>
 
@@ -251,14 +340,25 @@
     <div class="w3-twothird">
     
       <div id="tasklist" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeProject(this);" id="stations"><?php loadProjects(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
+        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeProject(this);" id="projects"><?php loadProjects(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
 		<?php
 		loadProjectDetails();
 		?>
 		<p><input type="text" class="searchbox hidden" onKeyPress="searchUsers(this,event,'searchUsers');" /><span class="w3-tag w3-teal w3-round button" onclick="addUser('searchUsers');">Add user</span>
 	    <div id="searchUsers"></div>
       </div>
-
+	  
+	  <div id="tasklist" class="w3-container w3-card w3-white w3-margin-bottom">
+	  <h2><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i>Project actions</h2>
+	  <ul id="projectactions">
+	  <li><span onclick="projectActions('projectactions', this);" data-action="clone">Duplicate</span>
+	  <li><span onclick="projectActions('projectactions', this);" data-action="backup">Create backup</span>
+	  <li><span onclick="projectActions('projectactions', this);" data-action="restore">Restore from backup</span>
+	  <li><span onclick="projectActions('projectactions', this);" data-action="export">Export</span>
+	  <li><span onclick="projectActions('projectactions', this);" data-action="import">Import</span>
+	  </ul>
+	  <div id="projectactionsparams"></div>
+	  </div>
     <!-- End Right Column -->
     </div>
     

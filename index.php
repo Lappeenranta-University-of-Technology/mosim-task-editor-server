@@ -179,8 +179,9 @@
  
  function partChange() {
 	 var p=document.getElementById('partselector');
-	 var i=document.getElementById('new_partpreview');
-	 i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
+	 loadPart3D(p.value,"pyTxMNWiTCQLK6rkTiocd486spTm33");
+	 //var i=document.getElementById('new_partpreview');
+	 //i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
  }
  
  function unFoldSubAssembly(obj) {

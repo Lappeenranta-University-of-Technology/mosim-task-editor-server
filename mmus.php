@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html>
-<title>MOSIM MMU priority editor</title>
+<title>MOSIM MMU Library</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="w3.css">
@@ -124,54 +124,17 @@
  }
  
  var accessToken="";
- var portsToTry=[80,8080,8081];
- var portIndex = 0;
  
- function startPartsFromSceneImport(token) {	 
-   var projectname=document.getElementById("projectname").innerText;
+ function linkMMULibraryToLauncher(token) {
+   var projectName=document.getElementById("projectname").innerText;
    var a=document.location.pathname.lastIndexOf('/');
    var path = document.location.pathname.substr(0,a+1);
-   var getstring="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+path+"api.php")+"&action=importparts&token="+encodeURI(token)+'&name='+encodeURI(projectname);
-   $.ajax({
-        type: "GET",
-/*		xhrFields: { withCredentials: true },
-		headers: {
-              accept: "application/json",
-              "Access-Control-Allow-Origin": "*"
-          },                               
-		crossDomain: true,*/
-        url: "http://127.0.0.1"+":"+portsToTry[portIndex]+getstring,
-        xhr: function () {
-            var myXhr = $.ajaxSettings.xhr();
-            return myXhr;
-        },
-        success: function (data) { //success callback
-		 if (getTagValue(data,'response')=='OK')
-         {
-		  document.getElementById("importpartsmsg").innerHTML+="<br><img src=\"ok.png\" />Connected to Unity";
-		  console.debug("Parts synchronization has been started...");
-		 }			 
-        },
-        error: function (error) { //error callback
-		  
-		   if (portIndex>=portsToTry.length-1)
-		   {
-			document.getElementById("importpartsmsg").innerHTML+="<br><img src=\"err.png\" />Error: Unity is unreachable, is unity project open?<br><img src=\"info.png\" />You can input the following parameters in Unity:<ul><li>"+document.location.protocol+"//"+document.location.hostname+document.location.pathname.substr(0,document.location.pathname.lastIndexOf('/'))+"/api.php</li><li>"+token+"</li></ul>";
-			console.debug("Scene not available, is target enginge up and running?");
-		   }
-		   else
-		   {
-			document.getElementById("importpartsmsg").innerHTML+="<br><img src=\"err.png\" />Error: Unity is unreachable on port "+portsToTry[portIndex]+", trying port "+portsToTry[portIndex+1]+"...";
-			portIndex++;
-			startPartsFromSceneImport(token);
-		   }
-        },
-        async: true,
-        cache: false,
-        contentType: false,
-        processData: false,
-        timeout: 60000
-    });	 
+   var url="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+path+"api.php");
+   var linkdata="mmulib://mmulibrary/add?name="+encodeURI(projectName)+"&token="+token+"&url="+encodeURI(url);
+   document.getElementById("importpartsmsg").innerHTML+=
+   "Select Launcher as opening program to add the library<br />"+
+   "<a href=\""+linkdata+"\">Try again</a><br />";
+   window.location.href=linkdata;
  }
  
  function getToken(projectid) {
@@ -183,10 +146,10 @@
     function(data, status){
 	 if (getTagValue(data,'result')=='OK')
 	 {
-	  accessToken=getTagValue(data,'token');	 
-	  startPartsFromSceneImport(accessToken);
+	  accessToken=getTagValue(data,'token');
       console.debug("Access token granted");
 	  document.getElementById("importpartsmsg").innerHTML+="<img src=\"ok.png\" />Access token has been created<br>";
+	  linkMMULibraryToLauncher(accessToken);
 	 }
      else
 	 {
@@ -196,10 +159,10 @@
 	});
  }
  
- function syncPartsWithScene(projectid) {
+ function syncMMUsWithLauncher(projectid) {
   document.getElementById("importpartsmsg").innerHTML="";
    if (accessToken!='')
-   startPartsFromSceneImport(accessToken);
+   linkMMULibraryToLauncher(accessToken);
    else
    getToken(projectid);
  }
@@ -480,7 +443,7 @@
         <div class="w3-container">
 		  <?php include('menu.php'); ?>
           <hr>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync MMUs with launcher</span></p>
+		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncMMUsWithLauncher(<?php echo $_SESSION['projectid']; ?>);">Sync MMUs with launcher</span></p>
 		  <p id="importpartsmsg"></p>
           <br>
         </div>
