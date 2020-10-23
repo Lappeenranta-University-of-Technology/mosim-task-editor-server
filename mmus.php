@@ -129,11 +129,10 @@
    var projectName=document.getElementById("projectname").innerText;
    var a=document.location.pathname.lastIndexOf('/');
    var path = document.location.pathname.substr(0,a+1);
-   var url="?url="+encodeURI(document.location.protocol+"//"+document.location.hostname+path+"api.php");
-   var linkdata="mmulib://mmulibrary/add?name="+encodeURI(projectName)+"&token="+token+"&url="+encodeURI(url);
+   var url=btoa(document.location.protocol+"//"+document.location.hostname+path+"api.php");
+   var linkdata="mmulib://add?name="+btoa(projectName)+"&token="+token+"&url="+url;
    document.getElementById("importpartsmsg").innerHTML+=
-   "Select Launcher as opening program to add the library<br />"+
-   "<a href=\""+linkdata+"\">Try again</a><br />";
+   "Select <b>MMU Library Linker</b> as opening program to add the library<br />";
    window.location.href=linkdata;
  }
  
