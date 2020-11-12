@@ -1,4 +1,5 @@
 <?php
+ session_start();
  
  include('db.php'); 
  
@@ -13,7 +14,7 @@
  }
  
  function deCamel($str) {
-  $out=''; 	 
+  $out='';
   for ($i=0; $i<mb_strlen($str,'UTF-8'); $i++)
   {
    if (($i>0) && (preg_match('~^\p{Lu}~u', mb_substr($str,$i,1,'UTF-8'))))
@@ -23,9 +24,29 @@
   return $out;
  }
  
+ function stationInCurrentProject($station)                        
+ {
+	global $db;
+	$sql='SELECT count(*) as ile FROM userroles ur, stations s WHERE ur.userid='.
+	$_SESSION['userid'].' and s.id='.$station.' and ur.projectid=s.projectid;';
+   if ($result=$db->query($sql))
+	if ($row=$result->fetch_assoc())
+	return ($row['ile']>0);
+  return false;
+ }
+ 
  function tokenToProjectId($token) {
   global $db;
   $sql='SELECT userid, projectid FROM tokens WHERE token=\''.$db->real_escape_string($token).'\';';  
+   if ($result=$db->query($sql))
+	if ($row=$result->fetch_assoc())
+	return $row['projectid'];
+  return 0;
+ }
+ 
+ function tokenToProjectIdAndRoleCheck($token,$role) {
+  global $db;
+  $sql='SELECT t.userid, t.projectid FROM tokens t, adminroles a WHERE a.role=\''.$role.'\' and a.userid=t.userid and t.token=\''.$db->real_escape_string($token).'\';';  
    if ($result=$db->query($sql))
 	if ($row=$result->fetch_assoc())
 	return $row['projectid'];
@@ -55,11 +76,13 @@
  {
 	 if (tokenToProjectId($token)>0)
 	 {
+		 $canmanage=(tokenToProjectIdAndRoleCheck($token,'MMU Library manager')>0?"True":"False");
 		 include_once('config.php');
+		 
 		 return '<chunkSize>'.$settings['chunkSize'].'</chunkSize>'.
 				'<canDownload>True</canDownload>'.
-				'<canUpload>True</canUpload>'.
-				'<canRemove>True</canRemove>'; //TODO: user rights should be taken from database and detemined by the provided token
+				'<canUpload>'.$canmanage.'</canUpload>'.
+				'<canRemove>'.$canmanage.'</canRemove>'; //TODO: user rights should be taken from database and detemined by the provided token
 	 }
 	 return false;
  }
@@ -414,12 +437,15 @@ XML;
 
   if (($_POST['action']=='removeMMU') && isset($_POST['vendorID']))
   {
-   include_once 'mmu-functions.php';
-   if (removeMMU($_POST['vendorID']))
-   {
-	header('Content-Type: application/json');
-	echo getMMUList($_POST['token']);
-   } //TODO: prepare response for error state
+	if (tokenToProjectIdAndRoleCheck($_POST['token'],'MMU Library manager')>0)
+	{
+     include_once 'mmu-functions.php';
+     if (removeMMU($_POST['vendorID']))
+     {
+	  header('Content-Type: application/json');
+	  echo getMMUList($_POST['token']);
+     } //TODO: prepare response for error state
+	}
   }
 
   if (($_POST['action']=='addParts'))
@@ -492,12 +518,15 @@ XML;
  
  if (($_POST['action']=='uploadMMU') && isset($_POST['token']) && isset($_POST['chunkend'])  && isset($_POST['chunknum']) && isset($_POST['sessionID']) && isset($_POST['fileID']) && isset($_POST['TotalSize']) && ctype_digit($_POST['chunkend']) && ctype_digit($_POST['chunknum']) && isset($_FILES['chunk']) && ctype_digit($_POST['TotalSize']))
  {
-	if (tokenToProjectId($_POST['token'])>0)
+	if (tokenToProjectIdAndRoleCheck($_POST['token'],'MMU Library manager')>0)
 	{
      include_once("mmu-functions.php");
-	 uploadMMU();	
+	 uploadMMU();
 	}
 	else
+		if (tokenToProjectId($_POST['token'])>0)
+		echo '<result>Insufficient user privileges</result>';
+		else
 		echo '<result>Incorrect project token</result>';
  }
 
@@ -505,6 +534,24 @@ XML;
  
  //POST requests end
  //GET requests begin
+ 
+ if (isset($_GET['action']))
+ {
+	if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))                             
+	if (stationInCurrentProject($_GET['station']))                   
+	{
+	 $sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
+	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
+	     ' WHERE ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
+	     'ORDER BY ht.sortorder, ht.id;';
+	 if ($result=$db->query($sql))
+	  if (	isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
+	  outputXML($result);
+      else 
+  	  outputJSON($result);
+	}
+ }
+
  if (isset($_GET['action']) && isset($_GET['token']))
  {
   if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))

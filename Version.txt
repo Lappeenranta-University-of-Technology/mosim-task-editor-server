@@ -1,3 +1,8 @@
+2.5.1
+ - Fixed XML export function
+2.5
+ - MMU library management api checks for user rights and does not allow uploading or removing when user rights are not sufficient
+ - MMU manager user right can now be assigned to a user
 2.4
  - Improved MMU library functionality - api allows removing and adding MMUs
  - Api provides user rights for MMU library as output for getSettings

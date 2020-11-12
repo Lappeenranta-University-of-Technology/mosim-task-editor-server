@@ -1,5 +1,5 @@
 <?php
- include('common.php');
+ include 'common.php';
  if (!isset($_SESSION['showTaskID']))
  $_SESSION['showTaskID']=false;
 ?>
@@ -48,13 +48,16 @@
  function showAddTaskWindow() {
 	var w=document.getElementById("newtaskwindow");
 	if (w.className.indexOf(" show")==-1)
+	{
 		w.className=w.className+" show";
+		partChange();
+	}
  }
  
  function windowOK(obj) {
   $.post("update.php",
   {
-   action: "deleteStation",                                     
+   action: "deleteStation",
    stationid: obj.parentNode.dataset.stationid
   },
   function(data, status){ 	
@@ -67,7 +70,7 @@
  }
  
  function windowCancel(obj) {
-  obj.parentNode.className=obj.parentNode.className.split(' show').join('');	 
+  obj.parentNode.className=obj.parentNode.className.split(' show').join('');
  }
  
  function refreshTaskIDs() {
@@ -720,7 +723,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 		  
 		   if ($stationid>0)
 		   echo '<hr>'.
-		        '<p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="api.php?action=getTaskList&token=mosim2020-983456&station='.$stationid.'&format=XML">Export tasks to XML</a></p>';
+		        '<p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="api.php?action=getTaskList&station='.$stationid.'&format=XML">Export tasks to XML</a></p>';
 		  ?>
 		  
           <hr>
