@@ -1,3 +1,9 @@
+2.5.2
+ - Added MMU deletion function
+ - User privileges are checked before deleting file.
+ - Update.php uses mmu-functions.php for MMU manipulation related functions.
+ - Testing API connection returns project ID and project name
+ - mmus.php utilizes mmu-functions.php for MMU manipulation related functions.
 2.5.1
  - Fixed XML export function
 2.5

@@ -709,9 +709,26 @@
    else
    echo '<result>ERROR</result>';	   
  }
- 
- function delMMU($id) { //TODO: check user rights before performing this operation
+ /*
+ function isMMUManager2() //copy from mmu-functions
+ {
+	global $db;
+	$sql='SELECT count(*) as ile FROM `adminroles` WHERE userid='.$_SESSION['userid'].
+		' and role=\'MMU Library manager\';';
+	if ($result=$db->query($sql))
+		if ($row=$result->fetch_assoc())
+		if ($row['ile']>0)
+		return true;
+	return false;
+ }*/
+ /*
+ function delMMU($id) {
   global $db;
+  if (!isMMUManager2())
+  {
+	  echo '<result>ERROR</result><msg>You need MMU library manager rights to perform this action.</msg>';
+	  return;
+  }
   $sql='DELETE FROM mmus WHERE id='.$id.';';  
   $db->query($sql);
    if ($db->affected_rows>0)
@@ -723,7 +740,7 @@
    else
    echo '<result>ERROR</result>';	   
  }
-
+*/
  function setEnableMMU($id,$project,$action) {
   global $db;
   $sql='INSERT INTO `mmu_project` (`projectid`, `mmuid`, `enabled`) '.
@@ -1482,10 +1499,22 @@
   if ($_POST['action']=='delToolCat')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
    delToolCat($_POST['id']); 	   
-
+ 
   if ($_POST['action']=='delMMU')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
-   delMMU($_POST['id']); 	   
+   {
+	include "mmu-functions.php"; //most mmu related function
+	if (isMMUManager())                            
+	{
+		$result=delMMU($_POST['id']);
+		if ($result[0])
+			echo '<result>OK</result>';
+		else
+			echo '<result>ERROR</result><msg>MMU cannot be deleted, file access error</msg>';
+	}
+	else
+	  echo '<result>ERROR</result><msg>You need MMU library manager rights to perform this action.</msg>';
+   }
 
   if ($_POST['action']=='delStation')
    if (isset($_POST['id']) && ctype_digit($_POST['id']))
@@ -1521,8 +1550,8 @@
    if (isset($_POST['id']) && ctype_digit($_POST['id']) &&
 	   isset($_POST['projectid']) && ctype_digit($_POST['projectid']))
 	if (($_POST['projectid']==$_SESSION['projectid']) || isUsersProject($_POST['projectid']))
-   setEnableMMU($_POST['id'],$_POST['projectid'],$_POST['action']);                      
-
+   setEnableMMU($_POST['id'],$_POST['projectid'],$_POST['action']);
+ 
   if ($_POST['action']=='setDefaultPartCat')
    if (isset($_POST['id']) && ctype_digit($_POST['id']) &&
 	   isset($_POST['catid']) && ctype_digit($_POST['catid']))
@@ -1575,9 +1604,10 @@
   echo updateTask($_POST['taskid'],$_POST['operationid'],$_POST['partid'],$_POST['toolid'],$_POST['description'],$_POST['time']);	  
 
  //chunk file upload
+
  if (($_POST['action']=='addMMU') && isset($_FILES['chunk']) && isset($_POST['chunknum']) && isset($_POST['fileID']) && isset($_POST['chunkend']) && isset($_POST['TotalSize']) && ctype_digit($_POST['chunknum']) && ctype_digit($_POST['chunkend']) && ctype_digit($_POST['TotalSize']))
- {
-	 include_once("mmu-functions.php");
+ { //TODO: add user right checking before commencing with upload
+	 include_once 'mmu-functions.php';
 	 uploadMMU();
  }
 
@@ -1738,7 +1768,7 @@
 
 if (isset($_GET['date']))
 	echo md5(date("Ymd").rand(0,2000)); //just for tests remove later     
-	
+
 ?>
 
 </body>

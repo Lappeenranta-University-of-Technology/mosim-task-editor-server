@@ -420,7 +420,9 @@ XML;
  }
  
  function testConnection($token) {
-	 return json_encode(array("projectid"=>intval(tokenToProjectId($token))));
+	 $idName=tokenToProjectIdAndName($token);
+	 return json_encode(array("projectid"=>intval($idName['id']),
+	 "projectName"=>$idName['name']));
  }
  
 //main body
@@ -535,7 +537,7 @@ XML;
  //POST requests end
  //GET requests begin
  
- if (isset($_GET['action']))
+ if (isset($_GET['action']) && (!isset($_GET['token'])))
  {
 	if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))                             
 	if (stationInCurrentProject($_GET['station']))                   

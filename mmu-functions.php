@@ -1,4 +1,17 @@
 <?php
+
+ function isMMUManager()
+ {
+	global $db;
+	$sql='SELECT count(*) as ile FROM `adminroles` WHERE userid='.$_SESSION['userid'].
+		' and role=\'MMU Library manager\';';
+	if ($result=$db->query($sql))
+		if ($row=$result->fetch_assoc())
+		if ($row['ile']>0)
+		return true;
+	return false;
+ }
+
  function uploadMMU()
  {
 	 global $db;
@@ -152,10 +165,13 @@
 		 echo '<result>File '.$file.'does not exist</result>';
  }
  
- function delMMU($ids) { //TODO: check user rights before performing this operation
+ function delMMU($ids) { //TODO: check user rights before performing this operation (api does it already)
   global $db;
+  if (!is_array($ids))
+	  $ids=array($ids);
   $sql='DELETE FROM mmus WHERE id in ('.implode(',',$ids).');';  
-  $db->query($sql);
+  if ($db->query($sql))
+  {
    if ($db->affected_rows>0)
    {
 	for ($i=0; $i<Count($ids); $i++)
@@ -167,6 +183,7 @@
    else
     for ($i=0; $i<Count($ids); $i++)
 	$ids[$i]=false;
+  }
   return $ids;
  }
  
@@ -182,4 +199,5 @@
 		}
 	return false;
  }
+ 
 ?>

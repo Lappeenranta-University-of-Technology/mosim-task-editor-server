@@ -1,6 +1,7 @@
 <?php
- include('common.php');
- include('functions.php');
+ include 'common.php';
+ include 'functions.php';
+ include 'mmu-functions.php';
 ?>
 
 <!DOCTYPE html>
@@ -403,6 +404,7 @@
 </head>
 
 <?php
+
  function loadMMUs() {
   global $db;
   $sql='SELECT `id`,`author`, `name`, `vendorID`, `motiontype`, `version`, `longdescription`, `shortdescription`, '.
@@ -412,11 +414,28 @@
   'ORDER BY motiontype, sortorder, name';
 
    if ($result=$db->query($sql))
-	while($row=$result->fetch_assoc())
+	while ($row=$result->fetch_assoc())
     {		
        echo '<div data-enabled="'.$row['enabled'].'" data-project="'.$_SESSION['projectid'].'" data-cat="0" data-id="'.$row['id'].'">'.htmlentities($row['name'].' ('.$row['version'].'), '.$row['author']).'<br>'.htmlentities($row['motiontype']).'<span onclick="deleteTool(this);">X</span><span onclick="setEnableMMU(this);" '.($row['enabled']=='1'?'class="check"':"").'></span></div>';
 	}
   echo '<script>makeDraggable(\'mmulist\');</script>';
+ }
+ 
+ function MMUUploadForm() {
+	global $db;
+	if (isMMUManager())
+	{
+	ob_start(); ?>
+	<form method="POST" enctype="multipart/form-data" id="mmuUploadForm">
+	 <input type="hidden" name="action" value="addMMU"/>
+	<p><input id="newMMUPackage" name="mmu" type="file" /><span class="w3-tag w3-teal w3-round button" style="width:100px;" onclick="MMUS.addMMU('newMMUPackage','mmuUploadProgress');">Add MMU</span><span id="mmuUploadProgress" class="progress hide"><span></span><span>0%</span></span>
+	</form>
+	<?php
+	$out = ob_get_clean();
+	echo $out;
+	}
+	else
+	echo '<p>You can modify MMU order, enable/disable MMU but you cannot add new MMUs. Only MMU library managers can upload new MMUs or delete existing ones.</p>';
  }
 ?>
 
@@ -460,11 +479,8 @@
 		<h2>MMU library</h2>
 		<?php
 		 loadMMUs();
+		 MMUUploadForm();
 		?>
-		<form method="POST" enctype="multipart/form-data" id="mmuUploadForm">
-		 <input type="hidden" name="action" value="addMMU"/>
-		<p><input id="newMMUPackage" name="mmu" type="file" /><span class="w3-tag w3-teal w3-round button" style="width:100px;" onclick="MMUS.addMMU('newMMUPackage','mmuUploadProgress');">Add MMU</span><span id="mmuUploadProgress" class="progress hide"><span></span><span>0%</span></span>
-		</form>
       </div>
     <!-- End Right Column -->
     </div>
