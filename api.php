@@ -532,6 +532,12 @@ XML;
 		echo '<result>Incorrect project token</result>';
  }
 
+  if (($_POST['action']=='testConnection'))
+  {
+	 header('Content-Type: application/json; charset=utf-8');
+	 echo testConnection($_POST['token']);
+  }
+ 
  } //action issset (POST)
  
  //POST requests end

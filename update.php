@@ -562,6 +562,34 @@
   echo '<result>ERROR</result>'; 
  }
  
+ function reorderPartsToStations($neworder) {
+  global $db;
+  $sql='INSERT INTO part_station (station, part, sortorder) VALUES ';
+  $sqlA='';
+   for ($i=0; $i<count($neworder); $i++)
+   {
+	$vals=explode(',',$neworder[$i]);
+	echo $i.' - '.$vals[0].', '.$vals[1].', '.$vals[2].
+	((trim($vals[2])!="-1")?", true":", false")."\r\n";
+	echo "\r\n";
+    $sql.='('.trim($vals[1]).','.trim($vals[0]).','.$i.'),';
+     if (trim($vals[2])>=0)
+     $sqlA='DELETE FROM part_station WHERE station='.trim($vals[2]).' and part='.trim($vals[0]).' LIMIT 1;';
+   }
+  $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE  sortorder=values(sortorder);';
+  
+  $db->query($sql);
+   if ($sqlA!='')
+   $db->query($sqlA);
+  echo '<sql>'.$sql.'</sql><sql>'.$sqlA.'</sql>';                    
+   if ($db->affected_rows>0)
+   { 
+    echo '<result>OK</result>';
+	return;
+   }
+  echo '<result>ERROR</result>'; 
+ } 
+ 
  function reorderTools($neworder) {
   global $db;
   $sql='INSERT INTO tool_cat (cat, tool, sortorder) VALUES ';
@@ -1537,6 +1565,10 @@
  if ($_POST['action']=='reorderParts')
    if (isset($_POST['neworder']))
    reorderParts($_POST['neworder']);	  
+
+ if ($_POST['action']=='reorderPartsToStations')
+   if (isset($_POST['neworder']))
+   reorderPartsToStations($_POST['neworder']);	  
    
  if ($_POST['action']=='reorderTools')
    if (isset($_POST['neworder']))

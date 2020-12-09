@@ -1,3 +1,5 @@
+2.5.3
+ - Added Parts assignment to stations
 2.5.2
  - Added MMU deletion function
  - User privileges are checked before deleting file.

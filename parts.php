@@ -276,7 +276,7 @@
   background-color: gold;
  }
  
- div#partlist > div {
+ div#partlist > div, div#partstationlist > div {
   display: inline-block;
   position: relative;
   box-sizing: border-box;
@@ -290,7 +290,7 @@
   transition: border-top 0.5s linear;
  }
  
- div#partlist > div > span {
+ div#partlist > div > span, div#partstationlist > div > span {
   position: absolute;
   top: 0px;
   right: 0px;
@@ -304,17 +304,17 @@
   background-size:contain;
  }
  
- div#partlist > div > span.check {
+ div#partlist > div > span.check, div#partstationlist > div > span.check {
   background-image:url('ok.png');	 
  }
  
- div#partlist > div > span.dialog {
+ div#partlist > div > span.dialog, div#partstationlist > div > span.dialog {
   display:inline-block;
   width: calc(100% - 84px);  
   left:40px;
  }
  
- div#partlist > div > span.dialog > span {
+ div#partlist > div > span.dialog > span, div#partstationlist > div > span.dialog > span {
   display:inline-block;
   border-radius: 5px;
   box-sizing:border-box;
@@ -325,11 +325,11 @@
   cursor: pointer;
  }
  
- div#partlist > div > span.dialog > span:hover {
+ div#partlist > div > span.dialog > span:hover, div#partstationlist > div > span.dialog > span:hover {
   background-color: gold;	 
  }
  
- div#partlist > div:not(.category) > span:first-of-type {
+ div#partlist > div:not(.category) > span:first-of-type, div#partstationlist > div:not(.category) > span:first-of-type {
   left: 3px;
   width: 30px;
   height: calc(100% - 6px);
@@ -345,11 +345,11 @@
   background-color: antiquewhite;	 
  }
  
- div#partlist > div:not(.category) > span.clicked {
+ div#partlist > div:not(.category) > span.clicked, div#partstationlist > div:not(.category) > span.clicked {
   width: 50%;  
  }
 
- div#partlist > div:not(.category) > span:first-of-type > span {
+ div#partlist > div:not(.category) > span:first-of-type > span, div#partstationlist > div:not(.category) > span:first-of-type > span {
   margin-left: 10px;
   margin-right: 10px;
   padding: 3px 10px;
@@ -357,22 +357,22 @@
   transition: background-color 0.4s linear;
  }
  
- div#partlist > div:not(.category) > span:first-of-type > span:hover {
+ div#partlist > div:not(.category) > span:first-of-type > span:hover, div#partstationlist > div:not(.category) > span:first-of-type > span:hover {
   background-color: gold;
  }
  
- div#partlist > div:not(.category) > span:first-of-type {
+ div#partlist > div:not(.category) > span:first-of-type, div#partstationlist > div:not(.category) > span:first-of-type {
   overflow: hidden;	 
  }
  
- div#partlist > div.category {
+ div#partlist > div.category, div#partstationlist > div.category {
   padding-left: 10px;
   color: #009688;
   background-color: gainsboro;
   cursor: default;  
  }
  
- div#partlist > div.category > span:first-of-type:not(.dialog) {
+ div#partlist > div.category > span:first-of-type:not(.dialog), div#partstationlist > div.category > span:first-of-type:not(.dialog) {
   position: absolute;
   top: 0px; 
   right: 0px;
@@ -388,15 +388,15 @@
   background-position:center center;
  }
  
- div#partlist > div.category > span:first-of-type.folded {
+ div#partlist > div.category > span:first-of-type.folded, div#partstationlist > div.category > span:first-of-type.folded {
   background-image:url("expand.png"); 	 
  }
  
- div#partlist > div {
+ div#partlist > div, div#partstationlist > div {
   transition: height 0.4s linear; 	 
  }
  
- div#partlist > div.hidden {
+ div#partlist > div.hidden, div#partstationlist > div.hidden {
   height: 0px;
   display: none;  
  }
@@ -408,7 +408,7 @@
 <?php
  function loadPartCategories() {
   global $db;
-  $sql='SELECT tc.id, tc.name, tc.sortorder, tc.icon, count(t_c.cat) as howmany FROM partcat tc LEFT JOIN (`part_cat` t_c, parts p) ON (tc.id=t_c.cat and p.id=t_c.part and p.projectid='.$_SESSION['projectid'].') WHERE tc.projectid='.$_SESSION['projectid'].' and  tc.language=\'mosim\' GROUP BY tc.id ORDER BY sortorder;';
+  $sql='SELECT tc.id, tc.name, tc.sortorder, tc.icon, count(t_c.cat) as howmany FROM partcat tc LEFT JOIN (`part_cat` t_c, parts p) ON (tc.id=t_c.cat and p.id=t_c.part and p.projectid='.$_SESSION['projectid'].') WHERE tc.projectid='.$_SESSION['projectid'].' and  tc.language=\'mosim\' and tc.grouptype=\'parttype\' GROUP BY tc.id ORDER BY sortorder;';
    if ($result=$db->query($sql))
 	while($row=$result->fetch_assoc())
     {
@@ -420,7 +420,7 @@
  function loadParts() {
   global $db;
   $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart FROM '.
-  '(SELECT id, name, sortorder, language, defaultpart FROM `partcat` WHERE projectid='.$_SESSION['projectid'].') tc '.
+  '(SELECT id, name, sortorder, language, defaultpart FROM `partcat` WHERE grouptype=\'parttype\' and projectid='.$_SESSION['projectid'].') tc '.
   ' LEFT JOIN (part_cat t_c, parts t) ON (t_c.cat=tc.id and t_c.part=t.id and t.projectid='.$_SESSION['projectid'].') '.
   ' UNION ALL '.
   'SELECT 0, \'Uncategorized\', 0, t.id, t.name, 0, 0 FROM parts t '.
@@ -440,6 +440,29 @@
        echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);">X</span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
 	}		
   echo '<script>makeDraggableTool(\'partlist\');</script>';	
+ }
+ 
+  function loadPartsForStations() {
+  global $db;
+  $sql='SELECT p.id, p.name, ifnull(s.id,0) as stationid, ifnull(s.name,\'Uncategorized\') as stationname, ifnull(s.sortorder,-1) as sortorder, ifnull(ps.sortorder,-1) as sortorder1 '.
+  'FROM parts p '.
+  'LEFT JOIN (`part_station` ps, stations s) ON ps.part=p.id and ps.station=s.id WHERE p.projectid='.$_SESSION['projectid'].' '.
+  'UNION ALL '.
+  'SELECT 0, \'\', s.id, s.name, s.sortorder, -1 FROM stations s LEFT JOIN `part_station` ps ON ps.station=s.id WHERE isnull(ps.station) and s.projectid='.$_SESSION['projectid'].' '.
+  'ORDER BY sortorder, sortorder1, stationname, name;';
+  $lastname=-1;
+   if ($result=$db->query($sql))
+	while($row=$result->fetch_assoc())
+    {
+	   if ($row['stationid']!=$lastname)
+       {
+		 echo '<div class="category" data-id="'.$row['stationid'].'">'.htmlentities($row['stationname']).'<span onclick="foldTools(this);"></span></div>';  
+		 $lastname=$row['stationid'];
+	   }		
+       if ($row['id']!=0)
+       echo '<div data-cat="'.$row['stationid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);">X</span><span></span></div>';
+	}		
+  echo '<script>makeDraggableTool(\'partstationlist\');</script>';	
  }
 ?>
 
@@ -493,6 +516,14 @@
 		 loadParts();
 		?>
 		<p><input id="newPartName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPart('newPartName');">Add part</span>
+      </div>
+	  
+	  <div id="partstationlist" class="w3-container w3-card w3-white w3-margin-bottom">
+		<h2>Parts to stations assignment</h2>
+		<?php
+		 loadPartsForStations();
+		?>
+		<p><input id="newStationName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addStation('newStationName');">Add station</span>
       </div>
     <!-- End Right Column -->
     </div>

@@ -326,6 +326,8 @@
  var action='reorderTools';
   if (div.id=='partlist')
   action='reorderParts';
+  if (div.id=='partstationlist')
+  action='reorderPartsToStations';
  for (var i=0; i<div.children.length; i++)
   if ((div.children[i].tagName=='DIV') && (div.children[i].className.indexOf("category")==-1))
   if (div.children[i].dataset.cat==NewObject.dataset.cat) 
@@ -879,8 +881,10 @@
 	});
  }
  
- function addStation() {
-  var name=document.getElementById("new_stationname");
+ function addStation(fieldname) {
+  if ((fieldname==null) || (fieldname==""))
+	  fieldname="new_stationname";
+  var name=document.getElementById(fieldname);
     $.post("update.php",
     {
         action: "addStation",
