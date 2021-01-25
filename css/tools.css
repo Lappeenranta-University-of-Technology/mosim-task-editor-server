@@ -1,0 +1,214 @@
+div#toolcatlist > div {
+ display: inline-block;
+ position: relative;
+ box-sizing: border-box;
+ width: 100%;
+ padding: 5px 40px 5px 40px;
+ margin-bottom: 5px;
+ color: white;
+ border: none;
+ background-color: #3a97b9;
+ cursor: pointer;
+ transition: border-top 0.2s linear;
+}
+
+div#toolcatlist > div > span {
+ position: absolute;
+ top: 0px;
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #213864;
+ background-size: contain;
+ background-position: center center;
+ background-repeat: no-repeat;
+ text-align: center;
+}
+
+div#toolcatlist > div > span:nth-of-type(2) {
+ right: 45px;
+}
+
+div#toolcatlist > div > span:first-of-type {
+ left: 3px;
+ width: 30px;
+ height: calc(100% - 6px);
+ top: 3px;
+ color: white;
+ background-color: #213864;
+ padding-top: 3px;
+ transition: background-color 0.4s linear, width 0.6s linear;
+ cursor: pointer;
+ overflow: hidden;
+}
+
+div#toolcatlist > div > span:first-of-type:not(.clicked):hover,
+div#toollist > div > span:not(.clicked):not(.check):not(.dialog):hover {
+ background-color: #99bbce;
+}
+
+div#toolcatlist > div > span.clicked {
+ width: 50%;
+}
+
+div#toolcatlist > div > span.clicked:first-of-type > span,
+div#toollist > div:not(.category) > span.clicked:first-of-type > span {
+ margin-left: 10px;
+}
+
+div#toollist > div:not(.category) > span {
+ transition: background-color 0.2s linear;
+}
+
+div#toolcatlist > div > span:first-of-type > span,
+div#toollist > div:not(.category) > span:first-of-type > span {
+ margin-right: 10px;
+ padding: 3px 10px;
+ border-radius: 5px;
+ transition: background-color 0.2s linear;
+ position: absolute;
+ top: 50%;
+}
+
+div#toolcatlist > div > span:first-of-type > span:nth-child(1), 
+div#toollist > div:not(.category) > span:first-of-type > span:nth-child(1) {
+ left: 0%;
+ transform: translateY(-50%);
+}
+
+div#toolcatlist > div > span:first-of-type > span:nth-child(2), 
+div#toollist > div:not(.category) > span:first-of-type > span:nth-child(2) {
+ left: 50%;
+ transform: translateY(-50%) translateX(-50%);
+}
+
+div#toolcatlist > div > span:first-of-type > span:nth-child(3), 
+div#toollist > div:not(.category) > span:first-of-type > span:nth-child(3) {
+ right: 0%;
+ transform: translateY(-50%);
+}
+
+div#toolcatlist > div > span:nth-of-type(2) {
+ margin-right:0px;
+}
+
+div#toolcatlist > div > span:first-of-type > span:not(:first-child):hover,
+div#toollist > div:not(.category) > span:first-of-type > span:not(:first-child):hover {
+ background-color: #99bbce;
+}
+
+div#toollist > div {
+ display: inline-block;
+ position: relative;
+ box-sizing: border-box;
+ width: 100%;
+ padding: 5px 40px 5px 40px;
+ margin-bottom: 5px;
+ color: white;
+ border: none;
+ background-color: #3a97b9;
+ cursor: pointer;
+ transition: border-top 0.2s linear;
+}
+
+div#toollist > div > span {
+ position: absolute;
+ top: 0px;
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #3a97b9;
+ text-align: center;
+ background-position:center center;
+ background-size:contain;
+}
+
+div#toollist > div > span.check {
+ background-image:url('../ok-w.png');
+ background-position: center center;
+ background-repeat: no-repeat;
+}
+
+div#toollist > div > span.dialog {
+ display:inline-block;
+ width: calc(100% - 84px);
+ left:40px;
+}
+
+div#toollist > div > span.dialog > span {
+ display:inline-block;
+ border-radius: 5px;
+ box-sizing:border-box;
+ margin-left: 5px;
+ margin-right: 5px;
+ width: calc(33% - 15px);
+ transition: background-color 0.2s linear;
+ cursor: pointer;
+}
+
+div#toollist > div > span.dialog > span:hover {
+ background-color: #99bbce;
+}
+
+div#toollist > div:not(.category) > span:first-of-type {
+ left: 3px;
+ width: 30px;
+ height: calc(100% - 6px);
+ top: 3px;
+ color: white;
+ background-color: #213864;
+ padding-top: 3px;
+ transition: background-color 0.4s linear, width 0.6s linear;
+ cursor: pointer;
+}
+
+div#toollist > div:not(.category) > span.clicked {
+ width: 50%;
+}
+
+div#toollist > div:not(.category) > span:first-of-type {
+ overflow: hidden;
+}
+
+div#toollist > div.category {
+ padding-left: 10px;
+ color: #213864;
+ background-color: #e2e2e2;
+ cursor: default;
+}
+
+div#toollist > div.category > span:first-of-type:not(.dialog) {
+ position: absolute;
+ top: 0px; 
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #213864;
+ text-align: center;
+ cursor: pointer;
+ background-image:url("../fold-w.png");
+ background-size:contain;
+ background-position:center center;
+ transition: background 0.2s linear;
+}
+
+div#toollist > div.category > span:first-of-type.folded {
+ background-image:url("../expand-w.png");
+}
+
+div#toollist > div {
+ transition: height 0.2s linear;
+}
+
+div#toollist > div.hidden {
+ height: 0px;
+ display: none;
+}
+
+span.button {margin-left:5px;}

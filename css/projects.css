@@ -1,0 +1,63 @@
+input[type="text"] {width:100%}
+ p#new_projecterror {color: red; display:none;}
+ table.users {
+	width:100%;	
+	margin-bottom:20px;
+ }
+ table.users th {
+    border: 1px solid #213864;
+    background-color: #213864;
+	color: white;
+	padding: 2px;
+ }
+ table.users td {
+    border: 1px solid #e2e2e2;
+	background-color: #e2e2e2;
+	padding: 5px;
+	cursor: pointer;
+ }
+ table.users td > select {
+    width: calc(100% - 85px);
+ }
+ table.users td > span {
+	width: 40px;
+	padding: 5px;
+    margin-left: 2px;
+ }
+ table.users td:first-child {
+    width: 55px;
+ }
+ table.users.results td:first-child {
+   width: auto;	 
+ }
+ input.hidden {display: none; width: 0px !important;}
+ input.searchbox {transition: width 1s linear; width: 50%; margin-right:5px;}
+ 
+ table.results tr {
+   cursor: pointer;
+ }
+ 
+ table.results tr td.error {
+   color: red;
+ }
+ 
+ ul#projectactions li span {
+	 color: #676464;
+	 cursor: pointer;
+	 transition: color 0.2s linear;
+ }
+ 
+ ul#projectactions li span:hover {
+	 color: #99bbce;
+ }
+ 
+ ul#projectactions li span.chosen {
+   color: #213864;
+   font-size: larger;
+   text-decoration: underline;
+ }
+ 
+ div#projectactionsparams label {
+	 margin-left:10px;
+	 cursor: pointer;
+ }
