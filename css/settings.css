@@ -1,0 +1,117 @@
+ input[type="text"] {width:100%}
+ p#new_projecterror {color: red; display:none;}
+ table.users {
+	width:100%;	
+	margin-bottom:20px;
+ }
+ table.users th {
+    border: 1px solid #213864;
+    background-color: #213864;
+	color: white;
+	padding: 2px;
+ }
+ table.users td {
+    border: 1px solid #e2e2e2;
+	background-color: #e2e2e2;
+	padding: 5px;
+	cursor: pointer;
+ }
+ table.users td > select {
+    width: calc(100% - 85px);
+ }
+ table.users td > span {
+	width: 40px;  
+	padding: 5px;
+    margin-left: 2px;
+ }
+ table.users td:first-child {
+    width: 55px;	 
+ }
+ table.users.results td:first-child {
+   width: auto;	 
+ }
+ input.hidden {display: none; width: 0px !important;}
+ input.searchbox {transition: width 1s linear; width: 50%; margin-right:5px;}
+ 
+ table.results tr {
+   cursor: pointer;	 
+ }
+ 
+ table.results tr td.error {
+   color: red;	 
+ }
+ 
+ table.users tr[data-enabled="0"] {
+    color: #606060;
+ }
+ 
+ table.users tr > td:first-child {
+	 position: relative;
+ }
+ 
+ table.users td:first-child > span {
+	 transition: width 0.2s linear;
+ }
+ 
+ table.users td:first-child > span > span:hover {
+	 background-color: #99bbce;
+ }
+ 
+ table.users td:first-child > span > span {
+	cursor: pointer;
+	margin-left: 20px;
+	margin-right: 20px;
+	padding: 3px 10px;
+	border-radius: 5px;
+	transition: background-color 0.2s linear;
+ }
+ 
+ table.users td > span.clicked {
+  width: 100%;
+  background-color: #213864;
+  border-radius: 10px;
+  height: 34px;
+  font-size: 16px;
+  color: white;
+  overflow: hidden;
+ }
+ 
+ table.users td:last-of-type > span {
+	 display: inline-block;
+     background-color: #213864;
+     width: 100%;
+     border-radius: 10px;
+     text-align: center;
+     margin-top: 5px;
+	 color: white;
+	 border-bottom: 3px solid #213864;
+     border-top: 3px solid #213864;
+	 transition: background-color 0.2s linear;
+ }
+ table.users td:last-of-type > span:hover {
+	background-color: #99bbce;
+ }
+ 
+ table.users td:last-of-type > span.selected {
+	 border-top-color: #213864;
+	 border-bottom-color: #213864;
+	 background-color: #99bbce;
+	 transition: color 0.2s linear;
+ }
+ 
+table.users td:last-of-type > span.selected:hover {
+	color: #213864;
+}
+ 
+ span[data-toggleval="0"] {
+   background-color: #42b6d4;
+ }
+ 
+ span[data-toggleval="1"] {
+   background-color: crimson;
+   color: white;
+ }
+ 
+ span[data-toggleval="1"]:hover {
+	 color:red;
+ }

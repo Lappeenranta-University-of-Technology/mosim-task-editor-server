@@ -21,7 +21,7 @@
   if (($menuitems[$i]['url']!=$currentfile) || 
       ((strlen($menuitems[$i]['url'])>strlen($currentfile)) && (parse_url($menuitems[$i]['url'],PHP_URL_PATH)==$currentfile)))	 
   {
-   echo '<p><i class="fa '.$menuitems[$i]['icon'].' fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="'.$menuitems[$i]['url'].'">'.$menuitems[$i]['caption'].'</a></p>';	 
+   echo '<p><i class="fa '.$menuitems[$i]['icon'].' fa-fw w3-margin-right w3-large iconback pointer"></i><a href="'.$menuitems[$i]['url'].'">'.$menuitems[$i]['caption'].'</a></p>';	 
   }
 ?>
  

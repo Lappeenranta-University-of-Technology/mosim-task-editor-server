@@ -7,3 +7,5 @@ thrift-0.12.0
 webgl
 3D
 cryptojs
+*.sql
+api2.php

@@ -1,3 +1,7 @@
+2.5.4
+ - Styles update to mosim theme
+ - All css files are now grouped in css folder
+ - Login error message is now shown and hidden on change in login or email field
 2.5.3
  - Added Parts assignment to stations
 2.5.2

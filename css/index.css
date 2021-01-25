@@ -1,0 +1,203 @@
+div.brackettop {
+ background-position: left 3px, left bottom;
+ background-repeat: no-repeat, no-repeat;
+ background-size: 12px, 12px calc(100% - 48px);
+ background-image: url('../brackettop.png'), url('../bracketstraight.png');
+ margin-bottom: 0px;
+ margin-top: 0px;
+ background-origin: border-box;
+}
+
+div.bracketbottom {
+ background-position: left calc(100% - 3px), left top;
+ background-repeat: no-repeat, no-repeat;
+ background-size: 12px, 12px calc(100% - 60px);
+ background-image: url('../bracketbottom.png'), url('../bracketstraight.png');
+ margin-bottom: 0px;
+ margin-top: 0px;
+ background-origin: border-box;
+}
+
+div.brackettopm {
+ background-position: left 3px, left center, left calc(100% + 59px);
+ background-repeat: no-repeat;
+ background-size: 12px, 12px calc(100% - 90px), 12px;
+ background-image: url('../brackettop.png'), url('../bracketstraight.png'), url('../bracketmiddle.png');
+ margin-bottom: 0px;
+ margin-top: 0px;
+ background-origin: border-box;
+}
+
+div.bracketbottomm {
+ background-position: left calc(100% - 3px), left center, left -68px;
+ background-repeat: no-repeat;
+ background-size: 12px, 12px calc(100% - 118px), 12px;
+ background-image: url('../bracketbottom.png'), url('../bracketstraight.png'), url('../bracketmiddle.png');
+ margin-bottom: 0px;
+ margin-top: 0px;
+ background-origin: border-box;
+}
+
+div.bracketmiddle {
+ background-position: left top;
+ background-repeat: repeat-y;
+ background-size: 12px, 12px;
+ background-image: url('../bracketstraight.png');
+ margin-bottom: 0px;
+ margin-top: 0px;
+ background-origin: border-box;
+}
+
+div.draggedtask {
+ position: absolute;
+ width: 100%;
+ box-sizing: border-box;
+ top: 182px;
+ background-color: white;
+ left: 0px;
+ border: 1px solid chocolate;
+ transform: scale(0.9);
+ z-index:2;
+}
+
+span.tagicon {
+ padding-left: 30px;
+ background-repeat: no-repeat;
+ background-position: 5px center;
+ background-size: 22px;
+ margin-bottom: 5px;
+ margin-left: 5px;
+}
+
+span.w3-tag.tagicon.part {
+ background-color: #50a7d8;
+}
+
+span.w3-tag.tagicon.tools {
+  background-color: #495f6b;
+}
+
+span.subassembly {
+ margin-left: 10px;
+}
+
+span.w3-tag.tagicon.position {
+ background-color: #313864;
+}
+
+div.w3-container.assembly {
+ width: calc(100% - 20px);
+ margin-left: 20px;
+}
+
+div.w3-container.assemblybottom {
+ height: 20px;
+}
+
+div.handle.subassembly {
+ width: 50%;
+ left: 25%; 
+}
+
+div.handle.subassembly.bottom {
+ border-radius: 0px 0px 5px 5px;
+}
+
+div.unfold, div.fold {
+ position: absolute;
+ border: 1px solid black;
+ border-radius: 5px;
+ width: 35px;
+ height: 35px;
+ right: 0px;	
+ background-position: center center;
+ background-size: contain;
+ background-repeat: no-repeat;
+ background-color: white;
+ cursor: pointer;	
+ transition: background-color 0.2s linear;
+}
+
+div.unfold:hover, div.fold:hover {
+ background-color: #99bbce;
+}
+
+div.unfold {
+ background-image:url('../expand.png');
+}
+
+div.fold {
+ background-image:url('../fold.png');
+}
+
+div.handle {
+ position: absolute;
+ width: 30%;
+ height: 10px;
+ background-color: #e2e2e2;
+ left: calc(50% - 15%);
+ cursor: pointer;
+ border-radius: 5px 5px 0px 0px;
+}
+
+div.handle.bottom {
+ border-radius: 0px 0px 5px 5px;
+}
+
+div[data-type="taskitem"] textarea {
+ width: 100%;
+ min-height: 200px; 
+}
+
+div[data-type="taskitem"] > p > span {
+ width: 25%;
+ border-radius: 5px; 
+}
+
+h5.task > b {
+ display: block;
+}
+
+div[data-type="taskitem"] > p > span.button:last-of-type {
+ margin-left: 10px;	
+}
+
+div.modalwindow {
+	height:250px;
+}
+
+div.modalwindow > div:first-child {
+ padding: 20px;
+ font-size: 18px;
+}
+
+.modalbutton:nth-child(2) {
+ left: calc(25% - 5px);
+}
+
+div#newtaskwindow {
+	height: 600px;
+}
+
+/* TODO: make responsive for small screens*/
+
+div.modalwindow > div > div:first-of-type {
+ width: calc(100% - 550px);
+ max-width: 400px;
+ height: 350px;
+ display: inline-block;
+ float: right;
+ background-position: top center;
+ background-repeat: no-repeat;
+ border: 1px dotted black;
+}
+
+#renderCanvas {
+ width: calc(100% - 550px);
+ max-width: 400px;
+ height: 350px;
+ display: inline-block;
+ float: right;
+ border: 1px dotted black;
+ touch-action: none;
+ }

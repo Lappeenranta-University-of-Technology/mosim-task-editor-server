@@ -8,8 +8,8 @@
 <title>MOSIM task list editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="w3.css">
-<link rel="stylesheet" href="windows.css">
+<link rel="stylesheet" href="css/w3.css">
+<link rel="stylesheet" href="css/windows.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -21,7 +21,8 @@
 <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
 <script src="babylon.stlFileLoader.min.js"></script>
 <!-- End of Babylon.js -->
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/index.css">
 <script>
  
  function removeStationDialog(stationid) {
@@ -261,7 +262,7 @@
 		 
 		 if (getTagValue(data2,'tasktypeid')==0)
 	     html+='<div class="unfold" onclick="unFoldSubAssembly(this);"></div>';
-	     html+="<h6 class=\"w3-text-teal time\"><i class=\"fa fa-hourglass fa-fw w3-margin-right\"></i>"+getTagValue(data2,'esttime')+"</h6>";
+	     html+="<h6 class=\"iconback time\"><i class=\"fa fa-hourglass fa-fw w3-margin-right\"></i>"+getTagValue(data2,'esttime')+"</h6>";
 		 html+="<h5 onclick=\"clickSel(this);\" class=\"w3-opacity task\"><b>"+(getTagValue(data2,'showTaskID')?"ID "+getTagValue(data2,'id'):(getTagValue(data2,'tasktypeid')==0?'':"Task "+mainid+'.'+( i + 1 )))+"</b>";
 		 if (getTagValue(data2,'tasktypeid')==0) //subassembly header/footer
 		 {
@@ -271,7 +272,7 @@
 		 }
 	     else		                             
 		 {
-	     html+="<span id=\"task_"+getTagValue(data2,'id')+'_operation' + "\" onclick=\"clickTaskType(this);\" style=\"background-image:url('icons/"+getTagValue(data2,'tticon')+"');\" class=\"w3-tag w3-teal w3-round tagicon operation\" data-id=\""+getTagValue(data2,'tasktypeid')+"\">"+getTagValue(data2,'tasktype')+"</span>";
+	     html+="<span id=\"task_"+getTagValue(data2,'id')+'_operation' + "\" onclick=\"clickTaskType(this);\" style=\"background-image:url('icons/"+getTagValue(data2,'tticon')+"');\" class=\"w3-tag w3-round tagicon operation\" data-id=\""+getTagValue(data2,'tasktypeid')+"\">"+getTagValue(data2,'tasktype')+"</span>";
 		 html+="<span id=\"task_"+getTagValue(data2,'id')+'_part'+"\" data-id=\""+getTagValue(data2,'partid')+"\" onclick=\"clickPart(this);\" style=\"background-image:url('icons/"+getTagValue(data2,'particon')+"');\" class=\"w3-tag w3-round tagicon part\">"+getTagValue(data2,'partname')+"</span>";
 		 html+="<span id=\"task_"+getTagValue(data2,'id')+'_tool' + "\" onclick=\"clickTool(this);\" data-id=\""+getTagValue(data2,'toolid')+"\" style=\"background-image:url('icons/"+getTagValue(data2,'toolicon')+"');\" class=\"w3-tag w3-round tagicon tools\">"+getTagValue(data2,'toolname')+"</span>";
 		 }
@@ -293,207 +294,6 @@
   }
  }
 </script>
-
-<style>
-div.brackettop {
- background-position: left 3px, left bottom;
- background-repeat: no-repeat, no-repeat;
- background-size: 12px, 12px calc(100% - 48px);
- background-image: url('brackettop.png'), url('bracketstraight.png');
- margin-bottom: 0px;
- margin-top: 0px;
- background-origin: border-box;
-}
-
-div.bracketbottom {
- background-position: left calc(100% - 3px), left top;
- background-repeat: no-repeat, no-repeat;
- background-size: 12px, 12px calc(100% - 60px);
- background-image: url('bracketbottom.png'), url('bracketstraight.png');
- margin-bottom: 0px;
- margin-top: 0px;
- background-origin: border-box;
-}
-
-div.brackettopm {
- background-position: left 3px, left center, left calc(100% + 59px);
- background-repeat: no-repeat;
- background-size: 12px, 12px calc(100% - 90px), 12px;
- background-image: url('brackettop.png'), url('bracketstraight.png'), url('bracketmiddle.png');
- margin-bottom: 0px;
- margin-top: 0px;
- background-origin: border-box;
-}
-
-div.bracketbottomm {
- background-position: left calc(100% - 3px), left center, left -68px;
- background-repeat: no-repeat;
- background-size: 12px, 12px calc(100% - 118px), 12px;
- background-image: url('bracketbottom.png'), url('bracketstraight.png'), url('bracketmiddle.png');
- margin-bottom: 0px;
- margin-top: 0px;
- background-origin: border-box;
-}
-
-div.bracketmiddle {
- background-position: left top;
- background-repeat: repeat-y;
- background-size: 12px, 12px;
- background-image: url('bracketstraight.png');
- margin-bottom: 0px;
- margin-top: 0px;
- background-origin: border-box;
-}
-
-div.draggedtask {
- position: absolute;
- width: 100%;
- box-sizing: border-box;
- top: 182px;
- background-color: white;
- left: 0px;
- border: 1px solid chocolate;
- transform: scale(0.9);	
- z-index:2;
-}
-
-span.tagicon {
- padding-left: 30px;
- background-repeat: no-repeat;
- background-position: 5px center;
- background-size: 22px;
- margin-bottom: 5px;
- margin-left: 5px;
-}
-/*
-span.tagicon.tools {
- background-image: url('tools-solid.svg');
-}
-
-span.tagicon.part {
- background-image: url('puzzle-piece-solid.svg');
-}
-
-span.tagicon.operation {
- background-image: url('cogs-solid.svg');
-}
-*/
-
-div.w3-container.assembly {
- width: calc(100% - 20px);
- margin-left: 20px;
-}
-
-div.w3-container.assemblybottom {
- height: 20px;
-}
-
-div.handle.subassembly {
- width: 50%;
- left: 25%; 
-}
-
-div.handle.subassembly.bottom {
- border-radius: 0px 0px 5px 5px;
-}
-
-div.unfold, div.fold {
- position: absolute;
- border: 1px solid black;
- border-radius: 5px;
- width: 35px;
- height: 35px;
- right: 0px;	
- background-position: center center;
- background-size: contain;
- background-repeat: no-repeat;
- background-color: white;
- cursor: pointer;	
- transition: background-color 0.4s linear;
-}
-
-div.unfold:hover, div.fold:hover {
- background-color: bisque;	
-}
-
-div.unfold {
- background-image:url('expand.png');	
-}
-
-div.fold {
- background-image:url('fold.png');	
-}
-
-div.handle {
- position: absolute;
- width: 30%;
- height: 10px;
- background-color:
- cadetblue;
- left: calc(50% - 15%);
- cursor: pointer;
- border-radius: 5px 5px 0px 0px;	
-}
-
-div.handle.bottom {
- border-radius: 0px 0px 5px 5px;
-}
-
-div[data-type="taskitem"] textarea {
- width: 100%;
- min-height: 200px; 
-}
-
-div[data-type="taskitem"] > p > span {
- width: 25%;
- border-radius: 5px; 
-}
-
-div[data-type="taskitem"] > p > span.button:last-of-type {
- margin-left: 10px;	
-}
-
-div.modalwindow {
-	height:250px;
-}
-
-div.modalwindow > div:first-child {
- padding: 20px;
- font-size: 18px;	
-}
-
-.modalbutton:nth-child(2) {
- left: calc(25% - 5px);
-}
-
-div#newtaskwindow {
-	height: 600px;
-}
-
-/* TODO: make responsive for small screens*/
-
-div.modalwindow > div > div:first-of-type {
- width: calc(100% - 550px);
- max-width: 400px;
- height: 350px;
- display: inline-block;
- float: right;
- background-position: top center;
- background-repeat: no-repeat;
- border: 1px dotted black;
-}
-
-#renderCanvas {
- width: calc(100% - 550px);
- max-width: 400px;
- height: 350px;
- display: inline-block;
- float: right;
- border: 1px dotted black;
- touch-action: none;
- }
-
-</style>
 
 <?php
  $stationid=0;
@@ -541,7 +341,7 @@ div.modalwindow > div > div:first-of-type {
 	 echo '<div class="handle'.(($row['tasktypeid']==0)?' subassembly':'').'"></div>';
 	 if ($row['tasktypeid']==0)
 	 echo '<div class="unfold" onclick="unFoldSubAssembly(this);"></div>';
-	 echo "<h6 class=\"w3-text-teal time\"><i class=\"fa fa-hourglass fa-fw w3-margin-right\"></i>".$row['esttime']."</h6>";
+	 echo "<h6 class=\"iconback time\"><i class=\"fa fa-hourglass fa-fw w3-margin-right\"></i>".$row['esttime']."</h6>";
 	                                         
      echo "<h5 onclick=\"clickSel(this);\" class=\"w3-opacity task\"><b>".
 	 ($_SESSION['showTaskID']?"ID ".$row['id']:"Task $j")."</b>";
@@ -554,7 +354,7 @@ div.modalwindow > div > div:first-of-type {
 	 }
 	 else		 //tasks
 	 {
-	 echo "<span id=\"task_".$row['id'].'_operation'."\" onclick=\"clickTaskType(this);\" ".notBlankIcon($row['tticon'])." class=\"w3-tag w3-teal w3-round tagicon operation\" data-id=\"".$row['tasktypeid']."\">".htmlentities($row['tasktype'])."</span>";
+	 echo "<span id=\"task_".$row['id'].'_operation'."\" onclick=\"clickTaskType(this);\" ".notBlankIcon($row['tticon'])." class=\"w3-tag w3-round tagicon operation\" data-id=\"".$row['tasktypeid']."\">".htmlentities($row['tasktype'])."</span>";
 	 echo "<span id=\"task_".$row['id'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])." class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";                              
 	 echo "<span id=\"task_".$row['id'].'_tool'."\" onclick=\"clickTool(this);\" data-id=\"".$row['toolid']."\" ".notBlankIcon($row['toolicon'])." class=\"w3-tag w3-round tagicon tools\">".htmlentities($row['toolname'])."</span></h5>";
      }
@@ -704,51 +504,51 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
         
 		<?php include('header.php'); ?>
         
-        <div class="w3-container">
+        <div class="w3-container menuitems">
         <?php include('menu.php'); ?>
 		  <hr>
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#newstation">New station</a></p>
+		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#newstation">New station</a></p>
 		  <hr>
-          <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a<span class="pointer" style="text-decoration:underline;" onclick="showAddTaskWindow();">New task</span></p>
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#" onclick="editTask();">Edit task</a></p>
-		  <p><i class="fa fa-copy fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#" onclick="cloneTask();">Duplicate task</a></p>
-          <p><i class="fa fa-trash fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><span class="pointer" style="text-decoration: underline;" onclick="removeTask();">Remove task</span></p>
-          <p><i class="fa fa-sort fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#movetoother">Move task to other station</a></p>
+          <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a<span class="pointer" onclick="showAddTaskWindow();">New task</span></p>
+		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#" onclick="editTask();">Edit task</a></p>
+		  <p><i class="fa fa-copy fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#" onclick="cloneTask();">Duplicate task</a></p>
+          <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeTask();">Remove task</span></p>
+          <p><i class="fa fa-sort fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#movetoother">Move task to other station</a></p>
 		  <hr>
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#newsubassembly">New subassembly</a></p>
+		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#newsubassembly">New subassembly</a></p>
 		  <hr>
 		  
 		  <?php
-		  echo '<p><i class="fa fa-eye fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="#" id="taskidshowhide" onclick="showTaskID(this);" data-show="'.($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs').'</a></p>';
+		  echo '<p><i class="fa fa-eye fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#" id="taskidshowhide" onclick="showTaskID(this);" data-show="'.($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs').'</a></p>';
 		  
 		   if ($stationid>0)
 		   echo '<hr>'.
-		        '<p><i class="fa fa-gear fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><a href="api.php?action=getTaskList&station='.$stationid.'&format=XML">Export tasks to XML</a></p>';
+		        '<p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="api.php?action=getTaskList&station='.$stationid.'&format=XML">Export tasks to XML</a></p>';
 		  ?>
 		  
           <hr>
 		  
           
-		  <p id="newstation" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right w3-text-teal"></i>New station</b></p>
+		  <p id="newstation" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right iconback"></i>New station</b></p>
 		  <p>Name: <input id="new_stationname" type="text" /></p>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="addStation();">Create station</span></p>
-		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large w3-text-teal pointer"></i><span class="pointer" style="text-decoration: underline;" onclick="removeStationDialog(<?php echo $stationid; ?>);">Remove current station</span></p>
+		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="addStation();">Create station</span></p>
+		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeStationDialog(<?php echo $stationid; ?>);">Remove current station</span></p>
 		  
 		  <hr>
 
-          <p id="movetoother" class="w3-large w3-text-theme"><b><i class="fa fa-sort fa-fw w3-margin-right w3-text-teal"></i>Move tasks to other station</b></p>
+          <p id="movetoother" class="w3-large w3-text-theme"><b><i class="fa fa-sort fa-fw w3-margin-right iconback"></i>Move tasks to other station</b></p>
           <p>To station: <select id="tostation"><?php insertStations(false); ?></select></p>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="moveSelected();">Move selected</span></p>               
+		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="moveSelected();">Move selected</span></p>               
 
 		  <hr>
 		  
-		  <p id="newsubassembly" class="w3-large w3-text-theme"><b><i class="fa fa-gear fa-fw w3-margin-right w3-text-teal"></i>Create subassembly</b></p>
+		  <p id="newsubassembly" class="w3-large w3-text-theme"><b><i class="fa fa-gear fa-fw w3-margin-right iconback"></i>Create subassembly</b></p>
           <p class="warning">Experimental - not fully supported yet</p>
 		  <p>Name: <input type="text" id="new_subassemblyname" /></p>
 		  <p>Main part type: <select id="newsub_parttype" data-sub="subpartselector" onchange="getSubParts(event);"><?php insertPartTypes($stationid); ?></select></p>
           <p style="margin-left:10px;">Main part: <select id="subpartselector"><?php insertParts(); ?></select></p>
 		  <p>Place: <select id="newsub_position"><?php insertSubPositions(); ?></select></p>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="addSubAssembly();">Create subassembly</span></p>               
+		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="addSubAssembly();">Create subassembly</span></p>               
         </div>
       </div>
 
@@ -759,7 +559,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
     <div class="w3-twothird">
     
       <div id="tasklist" style="position:relative;" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeStation(this);" id="stations"><?php insertStations(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
+        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeStation(this);" id="stations"><?php insertStations(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
 		<?php
 		loadTasks();
 		?>
@@ -774,7 +574,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
   <!-- End Page Container -->
 </div>
 
-<footer class="w3-container w3-teal w3-center w3-margin-top">
+<footer class="w3-container banner w3-center w3-margin-top">
 <!--  <p>Find me on social media.</p> -->
 <!--  <i class="fa fa-facebook-official w3-hover-opacity"></i>
   <i class="fa fa-instagram w3-hover-opacity"></i>

@@ -221,13 +221,13 @@
  function deleteToolCat(obj) {
   if (obj.className.indexOf("clicked")>-1)
   {
-   obj.className="";	  
-   obj.innerHTML="X";	  
+   obj.className="";
+   obj.innerHTML="<span>X</span>";
   }
   else
   {
 	obj.className="clicked";
-    obj.innerHTML="Delete? <span onclick=\"deleteToolCatYes(event);\">Yes</span><span>Cancel</span>";	
+    obj.innerHTML="<span>Delete?</span><span onclick=\"deleteToolCatYes(event);\">Yes</span><span>Cancel</span>";	
   }
  }
  
@@ -404,13 +404,13 @@
  function deleteTool(obj) {
   if (obj.className.indexOf("clicked")>-1)
   {
-   obj.className="";	  
-   obj.innerHTML="X";	  
+   obj.className="";
+   obj.innerHTML="<span>X</span>";
   }
   else
   {
 	obj.className="clicked";
-    obj.innerHTML="Delete? <span onclick=\"deleteToolYes(event);\">Yes</span><span>Cancel</span>";	
+    obj.innerHTML="<span>Delete?</span><span onclick=\"deleteToolYes(event);\">Yes</span><span>Cancel</span>";	
   }
  }
  
@@ -1005,7 +1005,7 @@
    var options='';
     for (var i=0; i<values.length; i++)
     options+='<option '+(values[i]==obj.dataset.value?'selected="" ':'')+'value="'+values[i]+'">'+values[i]+'</option>';
-   obj.innerHTML='<select>'+options+'</select><span class="w3-tag w3-teal w3-round button" onclick="editUserRoleOK(this,event);">OK</span><span class="w3-tag w3-teal w3-round button" onclick="cancelEdit(this,event);">X</span>';
+   obj.innerHTML='<select>'+options+'</select><span class="w3-tag w3-round button" onclick="editUserRoleOK(this,event);">OK</span><span class="w3-tag w3-round button" onclick="cancelEdit(this,event);">X</span>';
   }
  }
  
@@ -1031,7 +1031,7 @@
    var options='';
     for (var i=0; i<roles.length; i++)
     options+='<span onclick="toggleClass(this,\'selected\')"'+(inarray(roles[i],values)?' class="selected"':'')+'>'+roles[i]+'</span>';
-   obj.innerHTML=options+'<span class="w3-tag w3-teal w3-round button" onclick="editUserAdminRoleOK(this,event);">Save</span><span class="w3-tag w3-teal w3-round button" onclick="cancelEdit(this,event);">Cancel</span>';
+   obj.innerHTML=options+'<span class="w3-tag w3-round button" onclick="editUserAdminRoleOK(this,event);">Save</span><span class="w3-tag w3-round button" onclick="cancelEdit(this,event);">Cancel</span>';
   }
  } 
  
@@ -1086,7 +1086,7 @@
 		 var newrow = userlist.insertRow();
          newrow.dataset.id=obj.dataset.id;
          newrow.dataset.project=userlist.dataset.project;
-         newrow.innerHTML='<td><span class="w3-tag w3-teal w3-round button" onclick="removeUserFromProject(this);">X</span></td><td>'+obj.cells[0].innerHTML+'</td><td>'+obj.cells[1].innerHTML+'</td><td onclick="editUserRole(this);">editor</td>';
+         newrow.innerHTML='<td><span class="w3-tag w3-round button" onclick="removeUserFromProject(this);">X</span></td><td>'+obj.cells[0].innerHTML+'</td><td>'+obj.cells[1].innerHTML+'</td><td onclick="editUserRole(this);">editor</td>';
          obj.parentNode.deleteRow(obj.rowIndex);	
 		}
 		else
@@ -1217,12 +1217,12 @@
   tasks.children[i].children[4].appendChild(d);
   var button=document.createElement('SPAN');
   button.innerHTML='OK';
-  button.className="w3-tag w3-teal w3-round button";
+  button.className="w3-tag w3-round button";
   button.onclick=okTaskEdit;                                        
   tasks.children[i].children[4].appendChild(button);
   button=document.createElement('SPAN');
   button.innerHTML='Cancel';
-  button.className="w3-tag w3-teal w3-round button";
+  button.className="w3-tag w3-round button";
   button.onclick=cancelTaskEdit;
   tasks.children[i].children[4].appendChild(button);
   tasks.children[i].children[3].children[2].click();	 
@@ -1243,12 +1243,12 @@
   tasks.children[i].children[3].appendChild(d);
   var button=document.createElement('SPAN');
   button.innerHTML='OK';
-  button.className="w3-tag w3-teal w3-round button";
+  button.className="w3-tag w3-round button";
   button.onclick=okTaskEdit;                                        
   tasks.children[i].children[3].appendChild(button);
   button=document.createElement('SPAN');
   button.innerHTML='Cancel';
-  button.className="w3-tag w3-teal w3-round button";
+  button.className="w3-tag w3-round button";
   button.onclick=cancelTaskEdit;
   tasks.children[i].children[3].appendChild(button);
   tasks.children[i].children[2].children[1].click();	 
