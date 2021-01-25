@@ -8,14 +8,16 @@
 <title>MOSIM station editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="w3.css">
-<link rel="stylesheet" href="windows.css">
+<link rel="stylesheet" href="css/w3.css">
+<link rel="stylesheet" href="css/windows.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/stations.css">
+
 <script>
  function windowShow(obj) {
   var w=document.getElementsByClassName("modalwindow")[0];	 
@@ -51,9 +53,9 @@
 	   if (iconchanged)
 	    $.post("update.php",
         {
-         action: "changePartCatIcon",                                     
+         action: "changePartCatIcon",
 	     partcat: obj.parentNode.dataset.catid,
-		 icon: w.children[j].dataset.icon                           
+		 icon: w.children[j].dataset.icon
         },
          function(data, status){ 	
           if (getTagValue(data,'result')!='OK')
@@ -64,26 +66,26 @@
 	   break;
 	  }
    }
-  windowCancel(obj);	 
+  windowCancel(obj);
  }
  
  function windowCancel(obj) {
-  obj.parentNode.className=obj.parentNode.className.split(' show').join('');	 
+  obj.parentNode.className=obj.parentNode.className.split(' show').join('');
  }
  
  function choose(e) {
   for (var i=0; i<e.target.parentNode.children.length; i++)
    if (e.target.parentNode.children[i].className.indexOf('chosen')>-1)
    e.target.parentNode.children[i].className="";
-  e.target.className="chosen";	   
+  e.target.className="chosen";
  }
  
  function uploadIcons(obj) {
   var formData = new FormData();
    for (var i=0; i<obj.files.length; i++)
    formData.append("icon[]",obj.files[i],obj.files[i].name);
-  formData.append("upload_file",true);  
-  formData.append("action","uploadIcons");  
+  formData.append("upload_file",true);
+  formData.append("action","uploadIcons");
   
   $.ajax({
         type: "POST",
@@ -106,10 +108,10 @@
 			  img.dataset.icon=icon.split('icons/').join('');
           	  img.style.backgroundImage='url(\''+icon+'\')';
 			  img.onclick=choose;
-			  obj.parentNode.firstChild.appendChild(img);   
+			  obj.parentNode.firstChild.appendChild(img);
 			 }
-		   }			   
-		 }			 
+		   }
+		 }
         },
         error: function (error) {
             // handle error
@@ -125,7 +127,7 @@
  
  var accessToken="";
  
- function startPartsFromSceneImport(token) {	 
+ function startPartsFromSceneImport(token) {
    var projectname=document.getElementById("projectname").innerText;
    var a=document.location.pathname.lastIndexOf('/');
    var path = document.location.pathname.substr(0,a+1);
@@ -142,7 +144,7 @@
          {
 		  document.getElementById("importpartsmsg").innerHTML+="<img src=\"ok.png\" />Connected to Unity<br>";
 		  console.debug("Parts synchronization has been started...");
-		 }			 
+		 }
         },
         error: function (error) { //error callback
 		  document.getElementById("importpartsmsg").innerHTML+="<img src=\"err.png\" />Error: Unity is unreachable, is unity project open?<br><img src=\"info.png\" />You can input the following parameters in Unity:<ul><li>"+document.location.protocol+"//"+document.location.hostname+"/mosim/api.php</li><li>"+token+"</li></ul>";
@@ -244,218 +246,7 @@
  }
  
 </script>
-<style>
- div#partcatlist > div {
-  display: inline-block;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px 40px 5px 40px;
-  margin-bottom: 5px;
-  color: white;
-  border: none;
-  background-color: #009688;
-  cursor: pointer;
-  transition: border-top 0.5s linear;
- }
- 
- div#partcatlist > div > span {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
-  text-align: center;
- }
- 
- div#partcatlist > div > span:nth-of-type(2) {
-  right: 45px;	 
- }
- 
- div#partcatlist > div > span:first-of-type {
-  left: 3px;
-  width: 30px;
-  height: calc(100% - 6px);
-  top: 3px;
-  color: crimson;
-  background-color: darkslategray;
-  padding-top: 3px;
-  transition: background-color 0.4s linear, width 0.6s linear;
-  cursor: pointer;
-  overflow: hidden;
- }
- 
- div#partcatlist > div > span:first-of-type:hover {
-  background-color: antiquewhite;	 
- }
- 
- div#partcatlist > div > span.clicked {
-  width: 50%;  
- }
- 
- div#partcatlist > div > span:first-of-type > span {
-  margin-left: 10px;
-  margin-right: 10px;
-  padding: 3px 10px;
-  border-radius: 5px;
-  transition: background-color 0.4s linear;
- }
- 
- div#partcatlist > div > span:nth-of-type(2) {
-  margin-right:0px;	 
- }
- 
- div#partcatlist > div > span:first-of-type > span:hover {
-  background-color: gold;
- }
- 
- div#stationlist > div {
-  display: inline-block;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px 40px 5px 40px;
-  margin-bottom: 5px;
-  color: white;
-  border: none;
-  background-color: #009688;
-  cursor: pointer;
-  transition: border-top 0.5s linear;
- }
- 
- div#stationlist > div > div.mark::before {
-	 content: "\003E";
- }
- 
- div#stationlist > div > div.mark {
-    position: absolute;
-    left: -13px;
-    top: 2px;
-    width: 30px;
-    color: darkgreen;
-    font-size: 20px;
-    font-weight: bold;
- }
- 
- div#stationlist > div > span {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  text-align: center;
-  background-position:center center;
-  background-size:contain;
- }
- 
- div#stationlist > div > span.check {
-  background-image:url('ok.png');	 
- }
- 
- div#stationlist > div > span.dialog {
-  display:inline-block;
-  width: calc(100% - 84px);  
-  left:40px;
- }
- 
- div#stationlist > div > span.dialog > span {
-  display:inline-block;
-  border-radius: 5px;
-  box-sizing:border-box;
-  margin-left: 5px;
-  margin-right: 5px;  
-  width: calc(33% - 15px);
-  transition: background-color 0.4s linear;
-  cursor: pointer;
- }
- 
- div#stationlist > div > span.dialog > span:hover {
-  background-color: gold;	 
- }
- 
- div#stationlist > div:not(.category) > span:first-of-type {
-  left: 3px;
-  width: 30px;
-  height: calc(100% - 6px);
-  top: 3px;
-  color: crimson;
-  background-color: darkslategray;
-  padding-top: 3px;
-  transition: background-color 0.4s linear, width 0.6s linear;
-  cursor: pointer;
- }
- 
- div#stationlist > div > span:first-of-type:hover {
-  background-color: antiquewhite;	 
- }
- 
- div#stationlist > div:not(.category) > span.clicked {
-  width: 50%;  
- }
 
- div#stationlist > div:not(.category) > span:first-of-type > span {
-  margin-left: 10px;
-  margin-right: 10px;
-  padding: 3px 10px;
-  border-radius: 5px;
-  transition: background-color 0.4s linear;
- }
- 
- div#stationlist > div:not(.category) > span:first-of-type > span:hover {
-  background-color: gold;
- }
- 
- div#stationlist > div:not(.category) > span:first-of-type {
-  overflow: hidden;	 
- }
- 
- div#stationlist > div.category {
-  padding-left: 10px;
-  color: #009688;
-  background-color: gainsboro;
-  cursor: default;  
- }
- 
- div#stationlist > div.category > span:first-of-type:not(.dialog) {
-  position: absolute;
-  top: 0px; 
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  text-align: center;	 
-  cursor: pointer;
-  background-image:url("fold.png");
-  background-size:contain;
-  background-position:center center;
- }
- 
- div#stationlist > div.category > span:first-of-type.folded {
-  background-image:url("expand.png"); 	 
- }
- 
- div#stationlist > div {
-  transition: height 0.4s linear; 	 
- }
- 
- div#stationlist > div.hidden {
-  height: 0px;
-  display: none;  
- }
- 
- span.button {margin-left:5px;}
-</style>
 </head>
 
 <?php
@@ -522,7 +313,7 @@
     
       <div class="w3-white w3-text-grey w3-card-4">
         <?php include('header.php'); ?>
-        <div class="w3-container">
+        <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?>
           <br>
         </div>
@@ -541,7 +332,7 @@
 		<?php
 		 loadStations();
 		?>
-		<p><input id="new_stationname" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addStation();">Add station</span>
+		<p><input id="new_stationname" type="text" /><span class="w3-tag w3-round button" onclick="addStation();">Add station</span>
       </div>
 		
       <div id="stationdetails" class="w3-container w3-card w3-white w3-margin-bottom"><input type="hidden" id="stations" value="0" />
@@ -550,7 +341,7 @@
 	  <p>Main part: <select id="mainpart"><?php insertParts(); ?></select></p>
 	  <p>Assembly location: <select id="assemblylocation"><?php insertSubPositions(); ?></select></p>
 	  <p>Avatar: <select id="avatar"><?php insertAvatars(); ?></select></p>
-	  <p class="right"><span class="w3-tag w3-teal w3-round button" onclick="saveStation();">Save changes</span></p>
+	  <p class="right"><span class="w3-tag w3-round button" onclick="saveStation();">Save changes</span></p>
 	  </div>
     <!-- End Right Column -->
     </div>
@@ -561,7 +352,7 @@
   <!-- End Page Container -->
 </div>
 
-<footer class="w3-container w3-teal w3-center w3-margin-top">
+<footer class="w3-container banner w3-center w3-margin-top">
 <!--  <p>Find me on social media.</p> -->
 <!--  <i class="fa fa-facebook-official w3-hover-opacity"></i>
   <i class="fa fa-instagram w3-hover-opacity"></i>

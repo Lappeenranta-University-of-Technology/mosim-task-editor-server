@@ -1,0 +1,137 @@
+ div#stationlist > div {
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px 40px 5px 40px;
+  margin-bottom: 5px;
+  color: white;
+  border: none;
+  background-color: #3a97b9;
+  cursor: pointer;
+  transition: border-top 0.2s linear;
+ }
+ 
+ div#stationlist > div > div.mark::before {
+	 content: "\003E";
+ }
+ 
+ div#stationlist > div > div.mark {
+    position: absolute;
+    left: -13px;
+    top: 2px;
+    width: 30px;
+    color: #213864;
+    font-size: 20px;
+    font-weight: bold;
+ }
+ 
+ div#stationlist > div > span {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 40px;
+  height: 100%;
+  padding: 5px 0px 0px 0px;
+  border-radius: 5px;
+  background-color: #213864;
+  color: white;
+  text-align: center;
+  background-position:center center;
+  background-size:contain;
+ }
+ 
+ div#stationlist > div > span.dialog {
+  display:inline-block;
+  width: calc(100% - 84px);
+  left:40px;
+ }
+ 
+ div#stationlist > div > span.dialog > span {
+  display:inline-block;
+  border-radius: 5px;
+  box-sizing:border-box;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: calc(33% - 15px);
+  transition: background-color 0.2s linear;
+  cursor: pointer;
+ }
+ 
+ div#stationlist > div > span.dialog > span:hover {
+  background-color: #99bbce;
+ }
+ 
+ div#stationlist > div:not(.category) > span:first-of-type {
+  left: 3px;
+  width: 30px;
+  height: calc(100% - 6px);
+  top: 3px;
+  color: white;
+  background-color: #213864;
+  padding-top: 3px;
+  transition: background-color 0.4s linear, width 0.6s linear;
+  cursor: pointer;
+ }
+ 
+ div#stationlist > div > span:first-of-type:not(.clicked):hover {
+  background-color: #99bbce;
+ }
+ 
+ div#stationlist > div:not(.category) > span.clicked {
+  width: 50%;
+ }
+
+ div#stationlist > div:not(.category) > span:first-of-type > span {
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  transition: background-color 0.2s linear;
+ }
+ 
+ div#stationlist > div:not(.category) > span:first-of-type > span:hover {
+  background-color: #99bbce;
+ }
+ 
+ div#stationlist > div:not(.category) > span:first-of-type {
+  overflow: hidden;
+ }
+ 
+ div#stationlist > div.category {
+  padding-left: 10px;
+  color: #009688;
+  background-color: gainsboro;
+  cursor: default;
+ }
+ 
+ div#stationlist > div.category > span:first-of-type:not(.dialog) {
+  position: absolute;
+  top: 0px; 
+  right: 0px;
+  width: 40px;
+  height: 100%;
+  padding: 5px 0px 0px 0px;
+  border-radius: 5px;
+  background-color: #99bbce;
+  text-align: center;
+  cursor: pointer;
+  background-image:url("../fold.png");
+  background-size:contain;
+  background-position:center center;
+ }
+ 
+ div#stationlist > div.category > span:first-of-type.folded {
+  background-image:url("../expand.png");
+ }
+ 
+ div#stationlist > div {
+  transition: height 0.2s linear;
+ }
+ 
+ div#stationlist > div.hidden {
+  height: 0px;
+  display: none;
+ }
+ 
+ span.button {margin-left:5px;}

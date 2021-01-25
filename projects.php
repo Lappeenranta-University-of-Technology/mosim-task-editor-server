@@ -15,7 +15,7 @@
   if ($_SESSION['projectid']==0) 
    if ($result=$db->query('SELECT projectid FROM userroles WHERE  userid='.$_SESSION['userid'].';'))
     if ($row=$result->fetch_assoc())
-    $_SESSION['projectid']=$row['projectid'];  
+    $_SESSION['projectid']=$row['projectid'];
   
 ?>
 <!DOCTYPE html>
@@ -23,12 +23,13 @@
 <title>MOSIM task list editor - projects</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="w3.css">
+<link rel="stylesheet" href="css/w3.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/projects.css">
 <script>
 
  function editProjectName(obj,projectid) {
@@ -36,8 +37,8 @@
 	return;
 	obj.dataset.saved=obj.nextSibling.innerHTML;
 	obj.nextSibling.innerHTML='<input style="display: block;" type="text" />'+
-	'<br><span class="w3-tag w3-teal w3-round button" onclick="saveProjectName(this,'+projectid+');">Save changes</span>'+
-	'<span class="w3-tag w3-teal w3-round button" style="margin-left:20px;" onclick="cancelProjectDescription(this);">Cancel</span>';
+	'<br><span class="w3-tag w3-round button" onclick="saveProjectName(this,'+projectid+');">Save changes</span>'+
+	'<span class="w3-tag w3-round button" style="margin-left:20px;" onclick="cancelProjectDescription(this);">Cancel</span>';
 	obj.nextSibling.firstChild.value=obj.dataset.saved;
 	obj.nextSibling.firstChild.focus();
  }
@@ -47,8 +48,8 @@
 	return;
 	obj.dataset.saved=obj.nextSibling.innerHTML;
 	obj.nextSibling.innerHTML='<textarea style="width:100%; height:300px;"></textarea>'+
-	'<br><span class="w3-tag w3-teal w3-round button" onclick="saveProjectDescription(this,'+projectid+');">Save changes</span>'+
-	'<span class="w3-tag w3-teal w3-round button" style="margin-left:20px;" onclick="cancelProjectDescription(this);">Cancel</span>';
+	'<br><span class="w3-tag w3-round button" onclick="saveProjectDescription(this,'+projectid+');">Save changes</span>'+
+	'<span class="w3-tag w3-round button" style="margin-left:20px;" onclick="cancelProjectDescription(this);">Cancel</span>';
 	obj.nextSibling.firstChild.innerHTML=obj.dataset.saved;
 	obj.nextSibling.firstChild.focus();
 	 
@@ -146,87 +147,20 @@
 	//displaying parameters relevant to specific actions
 	 if (obj.dataset.action=="clone")
 	 params.innerHTML="Clone project name: <input id=\"clone_name\" type=\"text\" value=\""+projectName+" - clone\"/><p>Content to clone:"+actions+"</p><p>"+
-	 "<span class=\"w3-tag w3-teal w3-round button\" onclick=\"cloneProject('clone_name','"+params.id+"');\">Create duplicate</span></p>";
+	 "<span class=\"w3-tag w3-round button\" onclick=\"cloneProject('clone_name','"+params.id+"');\">Create duplicate</span></p>";
 	 else
 	 if (obj.dataset.action=="backup")
 	  params.innerHTML="Backup remarks: <textarea id=\"backup_desc\" style=\"width:100%;\"></textarea><p>Content to backup:"+actions+"</p><p>"+
-	 "<span class=\"w3-tag w3-teal w3-round button\" onclick=\"backupProject('backup_desc','"+params.id+"');\">Create backup</span></p>";
+	 "<span class=\"w3-tag w3-round button\" onclick=\"backupProject('backup_desc','"+params.id+"');\">Create backup</span></p>";
 	 else
 	 if (obj.dataset.action=="export")
 	  params.innerHTML="Content to export:"+actions+"</p><p>"+
-	 "<span class=\"w3-tag w3-teal w3-round button\" onclick=\"backupProject('backup_desc','"+params.id+"');\">Export</span></p>";
+	 "<span class=\"w3-tag w3-round button\" onclick=\"backupProject('backup_desc','"+params.id+"');\">Export</span></p>";
 	 else
 		 params.innerHTML=obj.innerHTML+" action is not yet implemented.";
  }
  
 </script>
-
-<style>
- input[type="text"] {width:100%}
- p#new_projecterror {color: red; display:none;}
- table.users {
-	width:100%;	
-	margin-bottom:20px;
- }
- table.users th {
-    border: 1px solid #009688;
-    background-color: #009688;
-	color: white;
-	padding: 2px;
- }
- table.users td {
-    border: 1px solid gainsboro;
-	background-color: gainsboro;
-	padding: 5px;
-	cursor: pointer;
- }
- table.users td > select {
-    width: calc(100% - 85px);
- }
- table.users td > span {
-	width: 40px;  
-	padding: 5px;
-    margin-left: 2px;
- }
- table.users td:first-child {
-    width: 55px;	 
- }
- table.users.results td:first-child {
-   width: auto;	 
- }
- input.hidden {display: none; width: 0px !important;}
- input.searchbox {transition: width 1s linear; width: 50%; margin-right:5px;}
- 
- table.results tr {
-   cursor: pointer;	 
- }
- 
- table.results tr td.error {
-   color: red;	 
- }
- 
- ul#projectactions li span {
-	 color: rgb(117, 117, 117);
-	 cursor: pointer;
-	 transition: color 0.4s linear;
- }
- 
- ul#projectactions li span:hover {
-	 color: black;
- }
- 
- ul#projectactions li span.chosen {
-   color: goldenrod;
-   font-size: larger;
-   text-decoration: underline;
- }
- 
- div#projectactionsparams label {
-	 margin-left:10px;
-	 cursor: pointer;
- }
-</style>
-
 
 <?php
  $stationid=1;
@@ -260,7 +194,7 @@
 	 $sql='SELECT u.id, u.name, u.email, ur.role FROM `userroles` ur, `users` u WHERE u.id=ur.userid and ur.projectid='.$_SESSION['projectid'].' and u.enabled=1';                                                           
 	  if ($result=$db->query($sql))
 	   while ($row=$result->fetch_assoc())
-       echo '<tr data-project="'.$_SESSION['projectid'].'" data-id="'.$row['id'].'"><td><span class="w3-tag w3-teal w3-round button" onclick="removeUserFromProject(this);">X</span></td><td>'.                       htmlentities($row['name']).'</td><td>'.htmlentities($row['email']).'</td><td onclick="editUserRole(this);">'.htmlentities($row['role']).'</td></tr>';
+       echo '<tr data-project="'.$_SESSION['projectid'].'" data-id="'.$row['id'].'"><td><span class="w3-tag w3-round button" onclick="removeUserFromProject(this);">X</span></td><td>'.                       htmlentities($row['name']).'</td><td>'.htmlentities($row['email']).'</td><td onclick="editUserRole(this);">'.htmlentities($row['role']).'</td></tr>';
      echo '</table>';
 	}		
  }
@@ -320,15 +254,15 @@
     
       <div class="w3-white w3-text-grey w3-card-4">
         <?php include('header.php'); ?>
-        <div class="w3-container">
+        <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?> 
           <hr>
 
-          <p id="newproject" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right w3-text-teal"></i>New project</b></p>
+          <p id="newproject" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right iconback"></i>New project</b></p>
 		  <p id="new_projecterror"></p>
           <p>Name: <input type="text" id="new_projectname"/></p>
 		  <p>Description: <textarea id="new_description" style="width:100%"></textarea></p>
-          <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="addProject();">Create</span></p>
+          <p style="text-align: center"><span class="w3-tag w3-round button" onclick="addProject();">Create</span></p>
           <br>
         </div>
       </div><br>
@@ -340,16 +274,16 @@
     <div class="w3-twothird">
     
       <div id="tasklist" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeProject(this);" id="projects"><?php loadProjects(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
+        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeProject(this);" id="projects"><?php loadProjects(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
 		<?php
 		loadProjectDetails();
 		?>
-		<p><input type="text" class="searchbox hidden" onKeyPress="searchUsers(this,event,'searchUsers');" /><span class="w3-tag w3-teal w3-round button" onclick="addUser('searchUsers');">Add user</span>
+		<p><input type="text" class="searchbox hidden" onKeyPress="searchUsers(this,event,'searchUsers');" /><span class="w3-tag w3-round button" onclick="addUser('searchUsers');">Add user</span>
 	    <div id="searchUsers"></div>
       </div>
 	  
 	  <div id="tasklist" class="w3-container w3-card w3-white w3-margin-bottom">
-	  <h2><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge w3-text-teal"></i>Project actions</h2>
+	  <h2><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge iconback"></i>Project actions</h2>
 	  <ul id="projectactions">
 	  <li><span onclick="projectActions('projectactions', this);" data-action="clone">Duplicate</span>
 	  <li><span onclick="projectActions('projectactions', this);" data-action="backup">Create backup</span>
@@ -368,7 +302,7 @@
   <!-- End Page Container -->
 </div>
 
-<footer class="w3-container w3-teal w3-center w3-margin-top">
+<footer class="w3-container banner w3-center w3-margin-top">
 <!--  <p>Find me on social media.</p> -->
 <!--  <i class="fa fa-facebook-official w3-hover-opacity"></i>
   <i class="fa fa-instagram w3-hover-opacity"></i>

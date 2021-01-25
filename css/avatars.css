@@ -1,0 +1,93 @@
+div#avatarlist > div {
+ display: inline-block;
+ position: relative;
+ box-sizing: border-box;
+ width: 100%;
+ padding: 5px 40px 5px 40px;
+ margin-bottom: 5px;
+ color: white;
+ border: none;
+ background-color: #3a97b9;
+ cursor: pointer;
+ transition: border-top 0.2s linear;
+}
+
+div#avatarlist > div > div.mark::before {
+ content: "\003E";
+}
+
+div#avatarlist > div > div.mark {
+ position: absolute;
+ left: -13px;
+ top: 2px;
+ width: 30px;
+ color: #213864;
+ font-size: 20px;
+ font-weight: bold;
+}
+
+div#avatarlist > div > span {
+ position: absolute;
+ top: 0px;
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #213864;
+ background-size: contain;
+ background-position: center center;
+ background-repeat: no-repeat;
+ text-align: center;
+}
+
+div#avatarlist > div > span:nth-of-type(2) {
+ right: 135px;
+}
+
+div#avatarlist > div > span:nth-of-type(3) {
+ right: 90px;
+}
+
+div#avatarlist > div > span:nth-of-type(4) {
+ right: 45px;
+}
+
+div#avatarlist > div > span:first-of-type {
+ left: 3px;
+ width: 30px;
+ height: calc(100% - 6px);
+ top: 3px;
+ color: white;
+ background-color: #213864;
+ padding-top: 3px;
+ transition: background-color 0.4s linear, width 0.6s linear;
+ cursor: pointer;
+ overflow: hidden;
+}
+
+div#avatarlist > div > span:first-of-type:not(.clicked):hover {
+ background-color: #99bbce;
+}
+
+div#avatarlist > div > span.clicked {
+ width: 50%;
+}
+
+div#avatarlist > div > span:first-of-type > span {
+ margin-left: 10px;
+ margin-right: 10px;
+ padding: 3px 10px;
+ border-radius: 5px;
+ transition: background-color 0.2s linear;
+}
+
+div#avatarlist > div > span:nth-of-type(3) {
+ margin-right:0px;
+}
+ 
+div#avatarlist > div > span:first-of-type > span:hover {
+ background-color: #99bbce;
+}
+
+span.button {margin-left:5px;}

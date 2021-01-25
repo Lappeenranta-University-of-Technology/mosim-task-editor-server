@@ -8,14 +8,15 @@
 <title>MOSIM avatar editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="w3.css">
-<link rel="stylesheet" href="windows.css">
+<link rel="stylesheet" href="css/w3.css">
+<link rel="stylesheet" href="css/windows.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/avatars.css">
 <script>
  function windowShow(obj) {
   var w=document.getElementsByClassName("modalwindow")[0];	 
@@ -166,101 +167,6 @@
  }
  
 </script>
-<style>
- div#avatarlist > div {
-  display: inline-block;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px 40px 5px 40px;
-  margin-bottom: 5px;
-  color: white;
-  border: none;
-  background-color: #009688;
-  cursor: pointer;
-  transition: border-top 0.5s linear;
- }
- 
- div#avatarlist > div > div.mark::before {
-	 content: "\003E";
- }
- 
- div#avatarlist > div > div.mark {
-    position: absolute;
-    left: -13px;
-    top: 2px;
-    width: 30px;
-    color: darkgreen;
-    font-size: 20px;
-    font-weight: bold;
- }
- 
- div#avatarlist > div > span {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
-  text-align: center;
- }
-
- div#avatarlist > div > span:nth-of-type(2) {
-  right: 135px;	 
- }
- 
- div#avatarlist > div > span:nth-of-type(3) {
-  right: 90px;	 
- }
- 
- div#avatarlist > div > span:nth-of-type(4) {
-  right: 45px;	 
- }
- 
- div#avatarlist > div > span:first-of-type {
-  left: 3px;
-  width: 30px;
-  height: calc(100% - 6px);
-  top: 3px;
-  color: crimson;
-  background-color: darkslategray;
-  padding-top: 3px;
-  transition: background-color 0.4s linear, width 0.6s linear;
-  cursor: pointer;
-  overflow: hidden;
- }
- 
- div#avatarlist > div > span:first-of-type:hover {
-  background-color: antiquewhite;	 
- }
- 
- div#avatarlist > div > span.clicked {
-  width: 50%;  
- }
- 
- div#avatarlist > div > span:first-of-type > span {
-  margin-left: 10px;
-  margin-right: 10px;
-  padding: 3px 10px;
-  border-radius: 5px;
-  transition: background-color 0.4s linear;
- }
- 
- div#avatarlist > div > span:nth-of-type(3) {
-  margin-right:0px;	 
- }
- 
- div#avatarlist > div > span:first-of-type > span:hover {
-  background-color: gold;
- }
-  
- span.button {margin-left:5px;}
-</style>
 </head>
 
 <?php
@@ -297,7 +203,7 @@
     
       <div class="w3-white w3-text-grey w3-card-4">
         <?php include('header.php'); ?>
-        <div class="w3-container">
+        <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?>
           <br>
         </div>
@@ -322,7 +228,7 @@
 		<p>Height: <input id="new_avatarheight" type="text" /> cm</p>
 		<p>Weight: <input id="new_avatarweight" type="text" /> kg</p>
 		<p>Gender: <select id="new_avatargender"><option value="male">Male</option><option value="female">Female</option></select></p>
-		<p class="right"><span class="w3-tag w3-teal w3-round button" onclick="addAvatar();">Add avatar</span></p>
+		<p class="right"><span class="w3-tag w3-round button" onclick="addAvatar();">Add avatar</span></p>
       </div>
 		
       <div id="avatardetails" class="w3-container w3-card w3-white w3-margin-bottom">
@@ -331,7 +237,7 @@
 	  <p>Height: <input id="avatarheight" type="text" /></p>
 	  <p>Weight: <input id="avatarweight" type="text" /></p>
 	  <p>Gender: <select id="avatargender"><option value="male">Male</option><option value="female">Female</option></select></p>
-	  <p class="right"><span class="w3-tag w3-teal w3-round button" onclick="saveAvatar();">Save changes</span></p>
+	  <p class="right"><span class="w3-tag w3-round button" onclick="saveAvatar();">Save changes</span></p>
 	  </div>
     <!-- End Right Column -->
     </div>
@@ -342,7 +248,7 @@
   <!-- End Page Container -->
 </div>
 
-<footer class="w3-container w3-teal w3-center w3-margin-top">
+<footer class="w3-container banner w3-center w3-margin-top">
 <!--  <p>Find me on social media.</p> -->
 <!--  <i class="fa fa-facebook-official w3-hover-opacity"></i>
   <i class="fa fa-instagram w3-hover-opacity"></i>

@@ -17,7 +17,7 @@ div.modalwindow {
 }
 
 div.modalwindow.show {
- display: block;	
+ display: block;
 }
 
 div.modalwindow > div:first-child {
@@ -40,7 +40,7 @@ div.modalwindow div:not(.modalbutton) > div {
  background-size: contain;
  background-repeat: no-repeat;
  cursor: pointer;
- transition: background-color 0.4s linear;
+ transition: background-color 0.2s linear;
 }
 
 div.modalwindow div > div.chosen {
@@ -57,19 +57,24 @@ div.modalwindow > div > div#new_partpreview:hover {
 }	
 
 div.modalwindow > div > div:hover:not(#new_partpreview), 
-div.modalwindow > div > div.chosen:hover,
+div.modalwindow > div > div.chosen:hover {
+ background-color: #32779c;
+}
+
 .modalbutton:hover {
-    background-color: darkorange;
+ background-color: #99bbce;
 }
 
 .modalbutton {
  width: 25%;
  height: 40px;
- border: 1px solid green;
+ border: 1px solid #213864;
  border-radius: 10px;
  position: absolute;
  bottom: 5px;
- transition: background-color 0.4s linear;
+ transition: background-color 0.2s linear;
+ background-color: #213864;
+ color: white;
  font-size: 20px;
  line-height: 40px;
  text-align: center;
@@ -87,7 +92,7 @@ div.modalwindow > div > div.chosen:hover,
 .modalbutton:nth-child(4) {
  right: 20px;
  width: 15%;
- background-image: url('file-upload-solid.svg');
+ background-image: url('../file-upload-solid.svg');
  background-size: contain;
  background-position: center center;
  background-repeat: no-repeat;
@@ -114,7 +119,7 @@ div.modaltoolbar {
  padding-top: 5px;
  width: 100%;
  overflow: hidden;
- background-color: green;
+ background-color: #213864;
  padding-bottom: 5px;
  color: white;
  border-bottom: 2px solid black;

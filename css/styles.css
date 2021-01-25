@@ -1,29 +1,29 @@
 
 div.modalwindow > div > p {
-	text-align:left;
+ text-align:left;
 }
 
 div.modalwindow > div > p > span:first-of-type {
-	display:inline-block;
-	width:200px;
-	margin-right:10px;
+ display:inline-block;
+ width:200px;
+ margin-right:10px;
 }
 
 div.modalwindow > div > p > select {
-	width: auto;
+ width: auto;
 }
 
 div.hidden {
-	 display: none;
+ display: none;
  }
 
 p.right {
-	text-align: right;
+ text-align: right;
 }
 
 hr.grey {
-	height: 2px;
-    background-color: lightgrey;
+ height: 2px;
+ background-color: lightgrey;
 }
 
 html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif}
@@ -32,20 +32,30 @@ select {
  padding-left: 10px;
  padding-right: 10px;
  width: 70%;
+ background-color: #f1f1f1;
+}
+
+.menuitems a {
+ text-decoration: none;
+ color: #676464;
+}
+
+.iconback {
+ color: #42b6d4;
 }
 
 .pointer {
-	cursor: pointer;
+ cursor: pointer;
 }
 
 p.warning {
-	color: firebrick;
-	font-weight: bold;
+ color: firebrick;
+ font-weight: bold;
 }
 
 h5.w3-opacity.task.editmode {
  display: inline-block;
- width: calc(100% - 135px);	
+ width: calc(100% - 135px);
  cursor: default;
 }
 
@@ -54,69 +64,59 @@ h5.w3-opacity.task
  border: 2px solid transparent;
  padding: 5px;
  border-radius: 5px; 
- transition: background-color 0.5s linear;
+ transition: background-color 0.2s linear;
  cursor: pointer;
 }
 h5.w3-opacity.task:not(.editmode):hover
 {
- background-color: darkseagreen;
+ background-color: #99bbce;
 }
 h5.w3-opacity.task.selected
 {
- border-color: green;	
+ border-color: #213864;
 }
 
 h5.w3-opacity.task.editmode > span.tagicon {
- cursor: pointer;	
- transition: background-color 0.4s linear;
+ cursor: pointer;
+ transition: background-color 0.2s linear;
 }
 
 h5.w3-opacity.task.editmode > span.tagicon:hover {
- background-color: orange !important;	
+ background-color: orange !important;
+}
+
+.banner {
+ background-color: #213864;
+ color: white;
 }
 
 div[data-type="taskitem"] p select {
-    width: 30%;
-	margin-right: 10px;
+ width: 30%;
+ margin-right: 10px;
 }
 
 div[data-type="taskitem"] p span:not(.button) {
-    margin-right: 10px;
-}
-
-span.w3-tag.tagicon.part {
-    background-color: brown;
-}
-
-span.w3-tag.tagicon.tools {
-    background-color: blueviolet;
-}
-
-span.subassembly {
-   margin-left: 10px;
-}
-
-span.w3-tag.tagicon.position {
-    background-color: steelblue;
+ margin-right: 10px;
 }
 
 span.button {
- cursor: pointer;                         
- padding:5px 15px; 5px; 15px;                           
+ cursor: pointer;
+ padding:5px 15px 5px 15px;
  border-radius: 5px;
- transition: background-color 0.4s linear;
+ background-color: #213864;
+ transition: background-color 0.2s linear;
 }
 
 span.button:hover {
- background-color: orange !important;	
+ background-color: #99bbce !important;
 }
 
 div.position {
-	background-position:center center;
-	background-size: contain;
-	background-repeat: no-repeat;
-	position:relative;
-	width: 100%;
+ background-position:center center;
+ background-size: contain;
+ background-repeat: no-repeat;
+ position:relative;
+ width: 100%;
 }
 
 div.position > div {
@@ -196,7 +196,7 @@ div.position > div.selected {
  border-color: orange;
  border-width: 2px;
  background-color: yellow;
- opacity: 0.8;	
+ opacity: 0.8;
 }
 
 h6.time {
@@ -209,7 +209,7 @@ h6.time {
 }
 
 h6.time > input {
- width: 80px;	
+ width: 80px;
 }
 
 div.logout {
@@ -220,7 +220,7 @@ div.logout {
  height: 30px;
  background-position: center center;
  background-repeat: no-repeat;
- background-image: url('logout.png');
+ background-image: url('../logout.png');
  background-size: contain;
  cursor: pointer;
 }

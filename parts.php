@@ -8,14 +8,16 @@
 <title>MOSIM part editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="w3.css">
-<link rel="stylesheet" href="windows.css">
+<link rel="stylesheet" href="css/w3.css">
+<link rel="stylesheet" href="css/windows.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/parts.css">
+
 <script>
  function windowShow(obj) {
   var w=document.getElementsByClassName("modalwindow")[0];	 
@@ -205,204 +207,6 @@
  }
  
 </script>
-<style>
- div#partcatlist > div {
-  display: inline-block;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px 40px 5px 40px;
-  margin-bottom: 5px;
-  color: white;
-  border: none;
-  background-color: #009688;
-  cursor: pointer;
-  transition: border-top 0.5s linear;
- }
- 
- div#partcatlist > div > span {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
-  text-align: center;
- }
- 
- div#partcatlist > div > span:nth-of-type(2) {
-  right: 45px;	 
- }
- 
- div#partcatlist > div > span:first-of-type {
-  left: 3px;
-  width: 30px;
-  height: calc(100% - 6px);
-  top: 3px;
-  color: crimson;
-  background-color: darkslategray;
-  padding-top: 3px;
-  transition: background-color 0.4s linear, width 0.6s linear;
-  cursor: pointer;
-  overflow: hidden;
- }
- 
- div#partcatlist > div > span:first-of-type:hover {
-  background-color: antiquewhite;	 
- }
- 
- div#partcatlist > div > span.clicked {
-  width: 50%;  
- }
- 
- div#partcatlist > div > span:first-of-type > span {
-  margin-left: 10px;
-  margin-right: 10px;
-  padding: 3px 10px;
-  border-radius: 5px;
-  transition: background-color 0.4s linear;
- }
- 
- div#partcatlist > div > span:nth-of-type(2) {
-  margin-right:0px;	 
- }
- 
- div#partcatlist > div > span:first-of-type > span:hover {
-  background-color: gold;
- }
- 
- div#partlist > div, div#partstationlist > div {
-  display: inline-block;
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px 40px 5px 40px;
-  margin-bottom: 5px;
-  color: white;
-  border: none;
-  background-color: #009688;
-  cursor: pointer;
-  transition: border-top 0.5s linear;
- }
- 
- div#partlist > div > span, div#partstationlist > div > span {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  text-align: center;
-  background-position:center center;
-  background-size:contain;
- }
- 
- div#partlist > div > span.check, div#partstationlist > div > span.check {
-  background-image:url('ok.png');	 
- }
- 
- div#partlist > div > span.dialog, div#partstationlist > div > span.dialog {
-  display:inline-block;
-  width: calc(100% - 84px);  
-  left:40px;
- }
- 
- div#partlist > div > span.dialog > span, div#partstationlist > div > span.dialog > span {
-  display:inline-block;
-  border-radius: 5px;
-  box-sizing:border-box;
-  margin-left: 5px;
-  margin-right: 5px;  
-  width: calc(33% - 15px);
-  transition: background-color 0.4s linear;
-  cursor: pointer;
- }
- 
- div#partlist > div > span.dialog > span:hover, div#partstationlist > div > span.dialog > span:hover {
-  background-color: gold;	 
- }
- 
- div#partlist > div:not(.category) > span:first-of-type, div#partstationlist > div:not(.category) > span:first-of-type {
-  left: 3px;
-  width: 30px;
-  height: calc(100% - 6px);
-  top: 3px;
-  color: crimson;
-  background-color: darkslategray;
-  padding-top: 3px;
-  transition: background-color 0.4s linear, width 0.6s linear;
-  cursor: pointer;
- }
- 
- div#partlist > div > span:first-of-type:hover {
-  background-color: antiquewhite;	 
- }
- 
- div#partlist > div:not(.category) > span.clicked, div#partstationlist > div:not(.category) > span.clicked {
-  width: 50%;  
- }
-
- div#partlist > div:not(.category) > span:first-of-type > span, div#partstationlist > div:not(.category) > span:first-of-type > span {
-  margin-left: 10px;
-  margin-right: 10px;
-  padding: 3px 10px;
-  border-radius: 5px;
-  transition: background-color 0.4s linear;
- }
- 
- div#partlist > div:not(.category) > span:first-of-type > span:hover, div#partstationlist > div:not(.category) > span:first-of-type > span:hover {
-  background-color: gold;
- }
- 
- div#partlist > div:not(.category) > span:first-of-type, div#partstationlist > div:not(.category) > span:first-of-type {
-  overflow: hidden;	 
- }
- 
- div#partlist > div.category, div#partstationlist > div.category {
-  padding-left: 10px;
-  color: #009688;
-  background-color: gainsboro;
-  cursor: default;  
- }
- 
- div#partlist > div.category > span:first-of-type:not(.dialog), div#partstationlist > div.category > span:first-of-type:not(.dialog) {
-  position: absolute;
-  top: 0px; 
-  right: 0px;
-  width: 40px;
-  height: 100%;
-  padding: 5px 0px 0px 0px;
-  border-radius: 5px;
-  background-color: darkseagreen;
-  text-align: center;	 
-  cursor: pointer;
-  background-image:url("fold.png");
-  background-size:contain;
-  background-position:center center;
- }
- 
- div#partlist > div.category > span:first-of-type.folded, div#partstationlist > div.category > span:first-of-type.folded {
-  background-image:url("expand.png"); 	 
- }
- 
- div#partlist > div, div#partstationlist > div {
-  transition: height 0.4s linear; 	 
- }
- 
- div#partlist > div.hidden, div#partstationlist > div.hidden {
-  height: 0px;
-  display: none;  
- }
- 
- span.button {margin-left:5px;}
-</style>
 </head>
 
 <?php
@@ -412,7 +216,7 @@
    if ($result=$db->query($sql))
 	while($row=$result->fetch_assoc())
     {
-       echo '<div data-icon="'.$row['icon'].'" data-catname="'.htmlentities($row['name']).'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteToolCat(this);">X</span><span onclick="windowShow(this);" style="background-image:url(\'icons/'.$row['icon'].'\')"></span><span>'.$row['howmany'].'</span></div>';
+       echo '<div data-icon="'.$row['icon'].'" data-catname="'.htmlentities($row['name']).'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteToolCat(this);"><span>X</span></span><span onclick="windowShow(this);" style="background-image:url(\'icons/'.$row['icon'].'\')"></span><span>'.$row['howmany'].'</span></div>';
 	}		
   echo '<script>makeDraggable(\'partcatlist\');</script>';	
  }
@@ -436,8 +240,8 @@
 		 echo '<div class="category" data-id="'.$row['tcid'].'">'.htmlentities($row['tcname']).'<span onclick="foldTools(this);"></span></div>';  
 		 $lastname=$row['tcid'];
 	   }		
-       if ($row['id']!=0)                                       	   
-       echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);">X</span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
+       if ($row['id']!=0)
+       echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);"><span>X</span></span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
 	}		
   echo '<script>makeDraggableTool(\'partlist\');</script>';	
  }
@@ -460,7 +264,7 @@
 		 $lastname=$row['stationid'];
 	   }		
        if ($row['id']!=0)
-       echo '<div data-cat="'.$row['stationid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);">X</span><span></span></div>';
+       echo '<div data-cat="'.$row['stationid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);"><span>X</span></span><span></span></div>';
 	}		
   echo '<script>makeDraggableTool(\'partstationlist\');</script>';	
  }
@@ -485,10 +289,10 @@
     
       <div class="w3-white w3-text-grey w3-card-4">
         <?php include('header.php'); ?>
-        <div class="w3-container">
+        <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?>
           <hr>
-		  <p style="text-align: center"><span class="w3-tag w3-teal w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync parts with scene</span></p>
+		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync parts with scene</span></p>
 		  <p id="importpartsmsg"></p>
           <br>
         </div>
@@ -507,7 +311,7 @@
 		<?php
 		 loadPartCategories();
 		?>
-		<p><input id="newPartCatName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPartCat('newPartCatName');">Add part category</span>
+		<p><input id="newPartCatName" type="text" /><span class="w3-tag w3-round button" onclick="addPartCat('newPartCatName');">Add part category</span>
       </div>
 
 	  <div id="partlist" class="w3-container w3-card w3-white w3-margin-bottom">
@@ -515,7 +319,7 @@
 		<?php
 		 loadParts();
 		?>
-		<p><input id="newPartName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addPart('newPartName');">Add part</span>
+		<p><input id="newPartName" type="text" /><span class="w3-tag w3-round button" onclick="addPart('newPartName');">Add part</span>
       </div>
 	  
 	  <div id="partstationlist" class="w3-container w3-card w3-white w3-margin-bottom">
@@ -523,7 +327,7 @@
 		<?php
 		 loadPartsForStations();
 		?>
-		<p><input id="newStationName" type="text" /><span class="w3-tag w3-teal w3-round button" onclick="addStation('newStationName');">Add station</span>
+		<p><input id="newStationName" type="text" /><span class="w3-tag w3-round button" onclick="addStation('newStationName');">Add station</span>
       </div>
     <!-- End Right Column -->
     </div>
@@ -534,7 +338,7 @@
   <!-- End Page Container -->
 </div>
 
-<footer class="w3-container w3-teal w3-center w3-margin-top">
+<footer class="w3-container banner w3-center w3-margin-top">
 <!--  <p>Find me on social media.</p> -->
 <!--  <i class="fa fa-facebook-official w3-hover-opacity"></i>
   <i class="fa fa-instagram w3-hover-opacity"></i>

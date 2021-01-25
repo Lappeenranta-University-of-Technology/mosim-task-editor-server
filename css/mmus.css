@@ -1,0 +1,190 @@
+ div#mmulist > div {
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px 40px 5px 40px;
+  margin-bottom: 5px;
+  color: white;
+  border: none;
+  background-color: #3a97b9;
+  cursor: pointer;
+  transition: border-top 0.2s linear;
+ }
+ 
+ div#mmulist > div > span {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 40px;
+  height: 100%;
+  padding: 5px 0px 0px 0px;
+  border-radius: 5px;
+  background-color: #213864;
+  color: white;
+  text-align: center;
+  background-position:center center;
+  background-size:contain;
+  transition: background-color 0.2s linear;
+ }
+ 
+ div#mmulist > div > span.check {
+  background-image:url('../ok-w.png');
+  background-position: center center;
+  background-repeat: no-repeat;
+ }
+ 
+ div#mmulist > div > span:hover {
+  background-color: #99bbce;
+ }
+ 
+ div#mmulist > div > span.dialog {
+  display:inline-block;
+  width: calc(100% - 84px);
+  left:40px;
+ }
+ 
+ div#mmulist > div > span.dialog > span {
+  display:inline-block;
+  border-radius: 5px;
+  box-sizing:border-box;
+  margin-left: 5px;
+  margin-right: 5px;  
+  width: calc(33% - 15px);
+  transition: background-color 0.2s linear;
+  cursor: pointer;
+ }
+ 
+ div#mmulist > div > span.dialog > span:hover {
+  background-color: #99bbce;
+ }
+ 
+ div#mmulist > div:not(.category) > span:first-of-type {
+  left: 3px;
+  width: 30px;
+  height: calc(100% - 6px);
+  top: 3px;
+  color: white;
+  background-color: #213864;
+  padding-top: 3px;
+  transition: background-color 0.4s linear, width 0.6s linear;
+  cursor: pointer;
+ }
+ 
+ div#mmulist > div > span:first-of-type:not(.clicked):hover {
+  background-color: #99bbce;
+ }
+ 
+ div#mmulist > div:not(.category) > span.clicked {
+  width: 50%;  
+ }
+ 
+div#mmulist > div:not(.category) > span.clicked:first-of-type > span {
+  margin-left: 10px;
+}
+
+ div#mmulist > div:not(.category) > span:first-of-type > span {
+  
+  margin-right: 10px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  transition: background-color 0.2s linear;
+  position: absolute;
+  top: 50%;
+ }
+ 
+ div#mmulist > div:not(.category) > span:first-of-type > span:nth-child(1) {
+  left: 0%;
+  transform: translateY(-50%);
+ }
+
+ div#mmulist > div:not(.category) > span:first-of-type > span:nth-child(2) {
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+ } 
+
+ div#mmulist > div:not(.category) > span:first-of-type > span:nth-child(3) {
+  right: 0%;
+  transform: translateY(-50%);
+ }  
+ 
+ div#mmulist > div:not(.category) > span:first-of-type > span:not(:first-child):hover {
+  background-color: #99bbce;
+ }
+ 
+ div#mmulist > div:not(.category) > span:first-of-type {
+  overflow: hidden;
+ }
+ 
+ div#mmulist > div.category {
+  padding-left: 10px;
+  color: #009688;
+  background-color: gainsboro;
+  cursor: default;
+ }
+ 
+ div#mmulist > div.category > span:first-of-type:not(.dialog) {
+  position: absolute;
+  top: 0px; 
+  right: 0px;
+  width: 40px;
+  height: 100%;
+  padding: 5px 0px 0px 0px;
+  border-radius: 5px;
+  background-color: #99bbce;
+  text-align: center;
+  cursor: pointer;
+  background-image:url("../fold-w.png");
+  background-size:contain;
+  background-position:center center;
+ }
+ 
+ div#mmulist > div.category > span:first-of-type.folded {
+  background-image:url("../expand-w.png");
+ }
+ 
+ div#mmulist > div {
+  transition: height 0.2s linear;
+ }
+ 
+ div#mmulist > div.hidden {
+  height: 0px;
+  display: none;
+ }
+ 
+ span.button {margin-left:5px;}
+ 
+ span.progress.hide {
+  display:none;
+ }
+ 
+ span.progress {
+  width: calc(100% - 400px);
+  background-color: white;
+  display: inline-block;
+  height: 22px;
+  top: 5px;
+  position: relative;
+  text-align: center;
+  border: 1px solid black;
+  float: right;
+ }
+ 
+ span.progress> span:first-child {
+  position: absolute;
+  left: 0px;
+  display: inline-block;
+  background-color: greenyellow;
+  width: 0%;
+  height: 100%;
+ }
+ 
+ span.progress> span:nth-child(2) {
+  background-color: transparent;
+  color: black;
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+ }

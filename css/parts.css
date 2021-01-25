@@ -1,0 +1,239 @@
+div#partcatlist > div {
+ display: inline-block;
+ position: relative;
+ box-sizing: border-box;
+ width: 100%;
+ padding: 5px 40px 5px 40px;
+ margin-bottom: 5px;
+ color: white;
+ border: none;
+ background-color: #3a97b9;
+ cursor: pointer;
+ transition: border-top 0.2s linear;
+}
+
+div#partcatlist > div > span {
+ position: absolute;
+ top: 0px;
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #213864;
+ background-size: contain;
+ background-position: center center;
+ background-repeat: no-repeat;
+ text-align: center;
+}
+ 
+div#partcatlist > div > span:nth-of-type(2) {
+ right: 45px;
+}
+
+div#partcatlist > div > span:first-of-type {
+ left: 3px;
+ width: 30px;
+ height: calc(100% - 6px);
+ top: 3px;
+ color: white;
+ background-color: #213864;
+ padding-top: 3px;
+ transition: background-color 0.4s linear, width 0.6s linear;
+ cursor: pointer;
+ overflow: hidden;
+}
+ 
+div#partcatlist > div > span:first-of-type:not(.clicked):hover {
+ background-color: #99bbce;
+}
+
+div#partcatlist > div > span.clicked {
+ width: 50%;
+}
+
+div#partcatlist > div > span:first-of-type > span {
+ margin-right: 10px;
+ padding: 3px 10px;
+ border-radius: 5px;
+ transition: background-color 0.2s linear;
+}
+
+div#partcatlist > div > span:nth-of-type(2) {
+ margin-right:0px;
+}
+
+div#partlist > div, div#partstationlist > div {
+ display: inline-block;
+ position: relative;
+ box-sizing: border-box;
+ width: 100%;
+ padding: 5px 40px 5px 40px;
+ margin-bottom: 5px;
+ color: white;
+ border: none;
+ background-color: #3a97b9;
+ cursor: pointer;
+ transition: border-top 0.2s linear;
+}
+
+div#partlist > div > span, div#partstationlist > div > span {
+ position: absolute;
+ top: 0px;
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #3a97b9;
+ text-align: center;
+ background-position:center center;
+ background-size:contain;
+}
+
+div#partlist > div > span.check,
+div#partstationlist > div > span.check {
+ background-image:url('../ok-w.png');
+ background-position: center center;
+ background-repeat: no-repeat;
+}
+
+div#partlist > div > span.dialog,
+div#partstationlist > div > span.dialog {
+ display:inline-block;
+ width: calc(100% - 84px);
+ left:40px;
+}
+
+div#partlist > div > span.dialog > span,
+div#partstationlist > div > span.dialog > span {
+ display:inline-block;
+ border-radius: 5px;
+ box-sizing:border-box;
+ margin-left: 5px;
+ margin-right: 5px;
+ width: calc(33% - 15px);
+ transition: background-color 0.2s linear;
+ cursor: pointer;
+}
+
+div#partlist > div > span.dialog > span:hover,
+div#partstationlist > div > span.dialog > span:hover {
+ background-color: #99bbce;
+}
+
+div#partlist > div:not(.category) > span:first-of-type,
+div#partstationlist > div:not(.category) > span:first-of-type {
+ left: 3px;
+ width: 30px;
+ height: calc(100% - 6px);
+ top: 3px;
+ color: white;
+ background-color: #213864;
+ padding-top: 3px;
+ transition: background-color 0.4s linear, width 0.6s linear;
+ cursor: pointer;
+}
+
+div#partlist > div > span:not(.clicked):not(.dialog):not(.check):hover,
+div#partstationlist > div > span:first-of-type:not(.clicked):not(.dialog):hover {
+ background-color: #99bbce;
+}
+
+div#partlist > div:not(.category) > span.clicked, 
+div#partstationlist > div:not(.category) > span.clicked {
+ width: 50%;
+}
+
+div#partlist > div:not(.category) > span.clicked:first-of-type > span, 
+div#partstationlist > div:not(.category) > span.clicked:first-of-type > span,
+div#partcatlist > div:not(.category) > span.clicked:first-of-type > span {
+ margin-left: 10px;
+}
+
+ div#partlist > div:not(.category) > span:first-of-type > span,
+ div#partstationlist > div:not(.category) > span:first-of-type > span {
+ margin-right: 10px;
+ padding: 3px 10px;
+ border-radius: 5px;
+ transition: background-color 0.2s linear;
+ position: absolute;
+ top: 50%;
+}
+
+div#partlist > div:not(.category) > span:first-of-type > span:nth-child(1),
+div#partstationlist > div:not(.category) > span:first-of-type > span:nth-child(1),
+div#partcatlist > div:not(.category) > span:first-of-type > span:nth-child(1) {
+  left: 0%;
+  transform: translateY(-50%);
+}
+
+div#partlist > div:not(.category) > span:first-of-type > span:nth-child(2),
+div#partstationlist > div:not(.category) > span:first-of-type > span:nth-child(2),
+div#partcatlist > div:not(.category) > span:first-of-type > span:nth-child(2) {
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+}
+
+div#partlist > div:not(.category) > span:first-of-type > span:nth-child(3),
+div#partstationlist > div:not(.category) > span:first-of-type > span:nth-child(3),
+div#partcatlist > div:not(.category) > span:first-of-type > span:nth-child(3) {
+  right: 0%;
+  transform: translateY(-50%);
+}
+
+div#partlist > div:not(.category) > span:first-of-type > span:not(:first-child):hover,
+div#partstationlist > div:not(.category) > span:first-of-type > span:not(:first-child):hover,
+div#partcatlist > div > span:first-of-type > span:not(:first-child):hover {
+ background-color: #99bbce;
+}
+
+div#partlist > div:not(.category) > span:first-of-type,
+div#partstationlist > div:not(.category) > span:first-of-type {
+ overflow: hidden;
+}
+
+div#partlist > div.category, div#partstationlist > div.category {
+ padding-left: 10px;
+ color: #213864;
+ background-color: #e2e2e2;
+ cursor: default;
+}
+
+div#partlist > div.category > span:first-of-type:not(.dialog), div#partstationlist > div.category > span:first-of-type:not(.dialog) {
+ position: absolute;
+ top: 0px; 
+ right: 0px;
+ width: 40px;
+ height: 100%;
+ padding: 5px 0px 0px 0px;
+ border-radius: 5px;
+ background-color: #213864;
+ text-align: center;
+ cursor: pointer;
+ background-image:url("../fold-w.png");
+ background-size:contain;
+ background-position:center center;
+ transition: background 0.2s linear;
+}
+
+div#partlist > div.category > span:first-of-type:not(.dialog):hover,
+div#partstationlist > div.category > span:first-of-type:not(.dialog):hover {
+ background-color: #99bbce;
+}
+
+div#partlist > div.category > span:first-of-type.folded,
+div#partstationlist > div.category > span:first-of-type.folded {
+ background-image:url("../expand-w.png");
+}
+
+div#partlist > div, div#partstationlist > div {
+ transition: height 0.2s linear;
+}
+
+div#partlist > div.hidden, div#partstationlist > div.hidden {
+ height: 0px;
+ display: none;
+}
+
+span.button {margin-left:5px;}
