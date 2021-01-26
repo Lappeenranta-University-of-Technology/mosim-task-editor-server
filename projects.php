@@ -29,6 +29,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/projects.css">
 <script>
 
@@ -256,7 +257,9 @@
         <?php include('header.php'); ?>
         <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?> 
-          <hr>
+		</div>
+		<div class="w3-container">
+		<hr />
 
           <p id="newproject" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right iconback"></i>New project</b></p>
 		  <p id="new_projecterror"></p>

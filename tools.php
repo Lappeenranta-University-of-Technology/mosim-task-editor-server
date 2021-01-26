@@ -16,6 +16,7 @@
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/tools.css">
 
 <script>
@@ -248,7 +249,9 @@ var accessToken="";
         <?php include('header.php'); ?>
         <div class="w3-container menuitems">
 		 <?php include('menu.php'); ?>
-          <hr>
+		</div>
+		<div class="w3-container">
+		<hr />
 		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="syncToolsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync tools with scene</span></p>
 		  <p id="importtoolsmsg"></p>
           <br>

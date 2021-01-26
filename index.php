@@ -22,6 +22,7 @@
 <script src="babylon.stlFileLoader.min.js"></script>
 <!-- End of Babylon.js -->
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/index.css">
 <script>
  
@@ -173,7 +174,7 @@
 	refreshTaskIDs();
   $.post("update.php",
   {
-   action: "taskIDNumberToggle",                                     
+   action: "taskIDNumberToggle",
    value: obj.dataset.show
   },
   function(data, status){ 	
@@ -198,7 +199,7 @@
 	 var i=1;	
 	  while (document.getElementById(obj.parentNode.id+"."+i)!=null)
 	  {
-	   document.getElementById(obj.parentNode.id+"."+i).style.display="none";	  
+	   document.getElementById(obj.parentNode.id+"."+i).style.display="none";
 	   i++;	 
 	  }
 	  document.getElementById(obj.parentNode.id+".end").style.display="none";
@@ -212,7 +213,7 @@
 	 var i=1;	
 	  while (document.getElementById(obj.parentNode.id+"."+i)!=null)
 	  {
-	   document.getElementById(obj.parentNode.id+"."+i).style.display="";	  
+	   document.getElementById(obj.parentNode.id+"."+i).style.display="";
 	   i++;	 
 	  }
 	  document.getElementById(obj.parentNode.id+".end").style.display="";
@@ -241,16 +242,16 @@
 		if (obj.parentNode.nextElementSibling==null)
 	    obj.parentNode.parentNode.appendChild(b);   
 		else
-        obj.parentNode.parentNode.insertBefore(b,obj.parentNode.nextElementSibling);   
+        obj.parentNode.parentNode.insertBefore(b,obj.parentNode.nextElementSibling);
 		var mainid=obj.parentNode.dataset.order;
-		var count = getTagValue(data,'count');                         
+		var count = getTagValue(data,'count');
 		data1=getTagValue(data,'data');
 		if (count>0)
-		for (var i=count-1; i>=0; i--)                                      
+		for (var i=count-1; i>=0; i--)
 		{	
 		 data2=getTagValue(data1,'task'+i);	
 		 var item=document.createElement('div');
-		 item.id=obj.parentNode.id+"." + ( i + 1 );                
+		 item.id=obj.parentNode.id+"." + ( i + 1 );
 		 item.className="w3-container assembly";
 		 item.dataset.type="assembly";
 		 item.dataset.level=level+1;
@@ -270,7 +271,7 @@
 		 html+="<span id=\"subassembly_"+getTagValue(data2,'stationid')+'_part'+"\" data-id=\""+getTagValue(data2,'partid')+"\" onclick=\"clickPart(this);\" style=\"background-image:url('icons/"+getTagValue(data2,'particon')+"');\" class=\"w3-tag w3-round tagicon part\">"+getTagValue(data2,'partname')+"</span>";
 		 html+="<span id=\"subassembly_"+getTagValue(data2,'stationid')+'_position'+"\" onclick=\"clickPosition(this);\" data-id=\""+getTagValue(data2,'positionid')+"\" style=\"background-image:url('icons/"+getTagValue(data2,'toolicon')+"');\" class=\"w3-tag w3-round tagicon position\">"+getTagValue(data2,'positionname')+"</span>";
 		 }
-	     else		                             
+	     else
 		 {
 	     html+="<span id=\"task_"+getTagValue(data2,'id')+'_operation' + "\" onclick=\"clickTaskType(this);\" style=\"background-image:url('icons/"+getTagValue(data2,'tticon')+"');\" class=\"w3-tag w3-round tagicon operation\" data-id=\""+getTagValue(data2,'tasktypeid')+"\">"+getTagValue(data2,'tasktype')+"</span>";
 		 html+="<span id=\"task_"+getTagValue(data2,'id')+'_part'+"\" data-id=\""+getTagValue(data2,'partid')+"\" onclick=\"clickPart(this);\" style=\"background-image:url('icons/"+getTagValue(data2,'particon')+"');\" class=\"w3-tag w3-round tagicon part\">"+getTagValue(data2,'partname')+"</span>";
@@ -282,15 +283,15 @@
 		 obj.parentNode.parentNode.insertBefore(item, obj.parentNode.nextElementSibling);
 		 
 		}
-		obj.parentNode.dataset.loaded=1;		                                  
+		obj.parentNode.dataset.loaded=1;
 		obj.className='fold';   
 		makeToolDraggable();
 	   }
 	   else
-	   console.debug("Load Sub assemblies: "+getTagValue(data,'result'));	   
-      });	
+	   console.debug("Load Sub assemblies: "+getTagValue(data,'result'));
+      });
 	}
-	  
+
   }
  }
 </script>
@@ -384,10 +385,10 @@
  
  function insertStations($selectCurrent=true)
  {
-  global $stations;	 
+  global $stations;
   
   if ($selectCurrent)
-  echo $stations;	  
+  echo $stations;
   else
   echo str_ireplace('<option selected="" value=','<option value=',$stations);	  
  }	 
@@ -506,7 +507,9 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
         
         <div class="w3-container menuitems">
         <?php include('menu.php'); ?>
-		  <hr>
+		</div>
+		<div class="w3-container">
+		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="#newstation">New station</a></p>
 		  <hr>
           <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a<span class="pointer" onclick="showAddTaskWindow();">New task</span></p>
@@ -557,7 +560,9 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 
     <!-- Right Column -->
     <div class="w3-twothird">
-    
+      <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <h2 id="projectname"><?php projectName(); ?></h2>
+	  </div>
       <div id="tasklist" style="position:relative;" class="w3-container w3-card w3-white w3-margin-bottom">
         <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeStation(this);" id="stations"><?php insertStations(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
 		<?php

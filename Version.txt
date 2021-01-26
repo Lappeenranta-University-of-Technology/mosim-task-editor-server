@@ -1,3 +1,6 @@
+2.5.5
+ - Main menu reorganized and restyled
+ - Added project name header to task editor
 2.5.4
  - Styles update to mosim theme
  - All css files are now grouped in css folder
