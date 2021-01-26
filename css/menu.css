@@ -1,0 +1,39 @@
+div.menuitems > a {
+ display: inline-block;
+ text-align: center;
+ width: calc(50% - 5px);
+ border-radius: 10px;
+ padding: 5px;
+ margin-bottom: 10px;
+ margin-top: 0px;
+ transition: background-color 0.2s linear;
+ box-sizing: border-box;
+}
+
+div.menuitems > a:nth-child(2n+1) {
+ margin-right: 10px;
+}
+
+div.menuitems > a > i {
+ display: block;
+ width: 100%;
+ height: 25px;
+}
+
+.menuitems a {
+ text-decoration: none;
+ color: #676464;
+}
+
+.menuitems > a.selected {
+ border-left: 6px solid #99bbce;
+ border-right: 6px solid #99bbce;
+}
+
+div.menuitems > a:hover {
+ background-color: #99bbce;
+}
+
+div.menuitems > a > span {
+ display:block;
+}

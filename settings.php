@@ -29,6 +29,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/settings.css">
 
 <script>
@@ -243,7 +244,9 @@
 		
         <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?> 
-          <hr>
+		</div>
+		<div class="w3-container">
+		<hr />
 		<?php
 		 $usermanager=isUserManager();
 		 if ($usermanager)

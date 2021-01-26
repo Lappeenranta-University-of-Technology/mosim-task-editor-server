@@ -17,11 +17,14 @@
  $menuitems[6]=array('url'=>'mmus.php','icon'=>'fa-briefcase','caption'=>'MMU library');
  $menuitems[7]=array('url'=>'settings.php','icon'=>'fa-gear','caption'=>'Settings');
  
- for ($i=0; $i<count($menuitems); $i++)                            
-  if (($menuitems[$i]['url']!=$currentfile) || 
-      ((strlen($menuitems[$i]['url'])>strlen($currentfile)) && (parse_url($menuitems[$i]['url'],PHP_URL_PATH)==$currentfile)))	 
-  {
-   echo '<p><i class="fa '.$menuitems[$i]['icon'].' fa-fw w3-margin-right w3-large iconback pointer"></i><a href="'.$menuitems[$i]['url'].'">'.$menuitems[$i]['caption'].'</a></p>';	 
-  }
+ for ($i=0; $i<count($menuitems); $i++)
+ {
+  $current=!(($menuitems[$i]['url']!=$currentfile) || 
+   ((strlen($menuitems[$i]['url'])>strlen($currentfile)) && (parse_url($menuitems[$i]['url'],PHP_URL_PATH)==$currentfile)));
+
+	echo '<a href="'.$menuitems[$i]['url'].'"'.($current?' class="selected"':'').'><i class="fa '.$menuitems[$i]['icon'].' fa-fw w3-margin-right w3-large iconback pointer"></i><span>'.$menuitems[$i]['caption'].'</span></a>';
+   //echo '<p'.($current?' class="selected"':'').'><i class="fa '.$menuitems[$i]['icon'].' fa-fw w3-margin-right w3-large iconback pointer"></i><a href="'.$menuitems[$i]['url'].'">'.$menuitems[$i]['caption'].'</a></p>';
+
+ }
 ?>
  

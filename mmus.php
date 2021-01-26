@@ -17,6 +17,7 @@
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
 <link rel="stylesheet" href="css/mmus.css">
+<link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/styles.css">
 <script>
  function windowShow(obj) {
@@ -228,7 +229,9 @@
         <?php include('header.php'); ?>
         <div class="w3-container menuitems">
 		  <?php include('menu.php'); ?>
-          <hr>
+		</div>
+		<div class="w3-container">
+		<hr />
 		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="syncMMUsWithLauncher(<?php echo $_SESSION['projectid']; ?>);">Sync MMUs with launcher</span></p>
 		  <p id="importpartsmsg"></p>
           <br>
