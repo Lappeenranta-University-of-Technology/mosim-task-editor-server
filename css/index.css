@@ -179,6 +179,10 @@ div#newtaskwindow {
 	height: 600px;
 }
 
+div#tasksettingswindow {
+	height: auto;
+}
+
 /* TODO: make responsive for small screens*/
 
 div.modalwindow > div > div:first-of-type {

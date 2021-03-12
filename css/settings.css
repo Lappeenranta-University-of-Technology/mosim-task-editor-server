@@ -1,3 +1,35 @@
+ div.modalwindow > div:first-child {
+	padding: 20px;
+	font-size: 18px;
+}
+
+div.modalwindow {
+	height:auto !important;
+}
+
+div.w3-container.actions > p > span[data-action="newuser"] {
+ background-image: url('../ui/user.png');
+}
+
+div.w3-container.actions > p > span {
+ background-size: contain;
+ background-position: left center;
+ padding-left: 35px;
+ background-repeat: no-repeat;
+ height: 30px;
+ display: block;
+ line-height: 30px;
+ cursor: pointer;
+ transition: background-color 0.2s linear, border-radius 0.2s linear;
+}
+
+div.w3-container.actions > p > span:hover
+{
+ background-color: #213864;
+ color: white;
+ border-radius: 10px;
+}
+ 
  input[type="text"] {width:100%}
  p#new_projecterror {color: red; display:none;}
  table.users {

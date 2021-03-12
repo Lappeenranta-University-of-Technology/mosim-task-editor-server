@@ -1,0 +1,8 @@
+div#mmutasks > div {
+	border: 1px solid #213864;
+	border-radius:10px;
+	padding:5px;
+	display:inline-block;
+	width:100%;
+	margin-bottom:3px;
+}

@@ -461,8 +461,9 @@
  }
  
  function moveSelected() {
-  var tostation=document.getElementById("tostation").value;	 
-  var fromstation=document.getElementById("stations").value;	 
+  var tostation=document.getElementById("tostation").value;
+  var toworker=document.getElementById("toworker").value;
+  var fromstation=document.getElementById("stations").value;
   var tasks=document.getElementById("tasklist").children;
   var S='';
   var Subs='';
@@ -471,7 +472,7 @@
 	if (tasks[i].tagName=="DIV") 
 	{
      if ((tasks[i].dataset.type=="taskitem") &&
-         (tasks[i].children[2].className.indexOf("selected")>-1))	
+         (tasks[i].children[2].className.indexOf("selected")>-1))
 	{
 	 S=S+tasks[i].dataset.id+',';
 	 From+=fromstation+',';
@@ -504,7 +505,8 @@
 	  task_ids: S,
 	  subassembly_id: Subs,
 	  fromstation: From,
-	  tostation: tostation
+	  tostation: tostation,
+	  toworker: toworker
     },
     function(data, status){ 	
 	 if (getTagValue(data,'result')=='OK')
@@ -517,7 +519,7 @@
 	 else
 	 {
 	  windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
-      windowShow(null);		 
+      windowShow(null);
 	 }
 	});
  }
@@ -872,10 +874,15 @@
     },
     function(data, status){
 		if (getTagValue(data,'result')=='OK')
-		document.location.reload();
+		{
+		 document.location.reload();
+		  if (document.getElementById("newProject")!=null)
+		  document.getElementById("newProject").className=
+		  document.getElementById("newProject").className.split(' show').join('');
+		}
 	    else
 		{
-		 perror.innerHTML=getTagValue(data,'result');	
+		 perror.innerHTML=getTagValue(data,'result');
 		 perror.style.display="inline";
 		}
 	});
@@ -926,7 +933,7 @@
  }
  
  function addTask() {
-  var subassemblies = [];	 
+  var subassemblies = [];
   var tasks=document.getElementById("tasklist");
    for (var i=0; i<tasks.children.length; i++)
     if (tasks.children[i].tagName=='DIV')
@@ -935,7 +942,7 @@
 	   if ((tasks.children[i].children[3].className.indexOf('editmode')==-1) &&
           (tasks.children[i].children[3].className.indexOf('selected')>-1)) 
        subassemblies.push(i);
-	  
+  var workerid = document.getElementById("workers").value;
   var ntype = document.getElementById("new_subtype");
   var npart = document.getElementById("partselector");
   var ntool = document.getElementById("new_tool");
@@ -950,6 +957,7 @@
     {
         action: "addTask",
 		stationid: stationid,
+		workerid: workerid,
 		type: ntype.value,
 		part: npart.value,
 		tool: ntool.value,
@@ -1132,6 +1140,10 @@
  function changeStation(obj) {
   document.location.href='?station='+obj.value;	 
  }
+ 
+ function changeWorker(obj) {
+  document.location.href='?worker='+obj.value;	 
+ } 
  
  function cancelTaskEdit(e) {
   var task = e.target.parentNode.parentNode;
@@ -1519,7 +1531,7 @@
   
   if (buttons.length==1)
   {
-   w.children[2].innerHTML=buttons[0];	  	  
+   w.children[2].innerHTML=buttons[0];
    if (w.children[1].className.indexOf("single")==-1)
    w.children[1].className=w.children[1].className+" single";
    if (w.children[2].className.indexOf("single")==-1)
@@ -1527,10 +1539,9 @@
   }
   else
   {
-	w.children[1].innerHTML=buttons[0];	  	    
-	w.children[2].innerHTML=buttons[1];	    
-	w.children[1].className=w.children[1].className.split(' single').join('');  
-	w.children[2].className=w.children[2].className.split(' single').join('');  
+	w.children[1].innerHTML=buttons[0];
+	w.children[2].innerHTML=buttons[1];
+	w.children[1].className=w.children[1].className.split(' single').join('');
+	w.children[2].className=w.children[2].className.split(' single').join('');
   }
  }
- 

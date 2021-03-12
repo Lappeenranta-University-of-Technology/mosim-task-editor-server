@@ -1,3 +1,7 @@
+div.modalwindow.mediumwindow {
+ height: 400px;
+}
+
 div.modalwindow {
  width: 80%;
  height: 500px;
@@ -14,6 +18,10 @@ div.modalwindow {
  box-shadow: 5px 5px 10px black;
  border-radius: 20px;
  display:none;
+}
+
+div.modalwindow select {
+ margin-left: 10px;
 }
 
 div.modalwindow.show {

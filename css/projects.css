@@ -1,3 +1,77 @@
+label {
+	margin-left: 10px;
+	cursor:pointer;
+}
+
+div.w3-container.actions > p > span[data-action="new"] {
+ background-image: url('../ui/nproject.png');
+}
+
+div.w3-container.actions > p > span[data-action="clone"] {
+ background-image: url('../ui/copy.png');
+}
+
+div.w3-container.actions > p > span[data-action="backup"] {
+ background-image: url('../ui/backup.png');
+}
+
+div.w3-container.actions > p > span[data-action="restore"] {
+ background-image: url('../ui/restore.png');
+}
+
+div.w3-container.actions > p > span[data-action="import"] {
+ background-image: url('../ui/import.png');
+}
+
+div.w3-container.actions > p > span[data-action="export"] {
+ background-image: url('../ui/export.png');
+}
+
+div.w3-container.actions > p > span[data-action="delete"] {
+ background-image: url('../ui/delproject.png');
+}
+
+p#errorlist {
+ color: red;
+}
+
+div.w3-container.actions > p > span {
+ background-size: contain;
+ background-position: left center;
+ padding-left: 35px;
+ background-repeat: no-repeat;
+ height: 30px;
+ display: block;
+ line-height: 30px;
+ cursor: pointer;
+ transition: background-color 0.2s linear, border-radius 0.2s linear;
+}
+
+div.w3-container.actions > p > span:hover
+{
+ background-color: #213864;
+ color: white;
+ border-radius: 10px;
+}
+
+p#new_projecterror {
+	color: red;
+}
+
+div.modalwindow > div:first-child {
+	padding: 20px;
+	font-size: 18px;
+}
+
+div.modalwindow {
+	height:auto !important;
+}
+
+div.modalwindow > div > p > textarea {
+	width:100%;
+	clear:both;
+}
+
 input[type="text"] {width:100%}
  p#new_projecterror {color: red; display:none;}
  table.users {

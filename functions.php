@@ -14,7 +14,27 @@
   for ($i=0; $i<count($ikony); $i++)
    if (!is_dir($ikony[$i]) && in_array(pathinfo($ikony[$i], PATHINFO_EXTENSION),array('png','svg','jpg')))   
    echo '<div data-icon="'.$ikony[$i].'" style="background-image:url(\'icons/'.$ikony[$i].'\');"></div>';
- }           
+ }
+ 
+ function array_part_or_assembly($val)
+ {
+	if (is_array($val))
+	{
+		$ok=true;
+		for ($i=0; ($i<count($val)) && $ok; $i++)
+			if (!ctype_digit($val[$i]))
+				if (!((ctype_digit(substr($val[$i],1)) && (substr($val[$i],0,1)=='S'))))
+				$ok=false;
+	return $ok;
+	}
+	else
+	{
+	 if (ctype_digit($val))
+		return true;
+	 else
+	 return ((ctype_digit(substr($val,1)) && (substr($val,0,1)=='S')));
+	}
+ }
 
  function insertSubTypes($maintype = 1)
  {

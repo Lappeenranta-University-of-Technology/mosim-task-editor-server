@@ -1,3 +1,23 @@
+2.6.0
+ - First implementation of assembly sequence generation toolbox
+ - Changed user interface to one with 4 main categories
+ - Support for markers, stations, and MMU sequences import from Unity/AJAN
+ - MMU sequences first implementation
+ - Minor bug fixes
+ - Settings are divided to multiple independent files
+ - Project can now be deleted using user interface
+2.5.6
+ + Task list page has now the following dialog boxes: 
+   - New station
+   - Move task
+   - New subassmbly
+ + Task list actions are all span elements and not links
+ + Update database:
+	ALTER TABLE `highleveltasks` ADD `workerid` BIGINT UNSIGNED NOT NULL DEFAULT '1' AFTER `stationid`;
+	CREATE TABLE `mosim`.`workers` ( `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT ,  `name` TINYTEXT NOT NULL ,  `description` TEXT NOT NULL ,  `avatarid` BIGINT UNSIGNED NOT NULL ,    PRIMARY KEY  (`id`)) ENGINE = MyISAM;
+	ALTER TABLE `workers` CHANGE `avatarid` `avatarid` BIGINT(20) UNSIGNED NOT NULL DEFAULT '0'; 
+	ALTER TABLE `workers` ADD `stationid` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `description`;
+	ALTER TABLE `workers` ADD `projectid` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `stationid`;
 2.5.5
  - Main menu reorganized and restyled
  - Added project name header to task editor

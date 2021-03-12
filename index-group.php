@@ -32,20 +32,8 @@
  function removeStationDialog(stationid) {
   var w=document.getElementById("msgwindow");
   w.dataset.stationid=stationid;
-  w.dataset.okaction='delstation';
   w.className=w.className+" show";  
   windowUpdate('Delete confirmation','Are you sure you want to delete the current station with all the tasks?<br>This action is irreversable!',Array('Delete','Cancel'));
- }
- 
- function removeWorkerDialog() {
-  var w=document.getElementById("msgwindow");
-  var stationid=document.getElementById('stations').value;
-  var workerid=document.getElementById('workers').value;
-  w.dataset.stationid=stationid;
-  w.dataset.workerid=workerid;
-  w.dataset.okaction='delworker';
-  w.className=w.className+" show";
-  windowUpdate('Delete confirmation','Are you sure you want to delete the current worker with all the tasks?<br>This action is irreversable!',Array('Delete','Cancel'));
  }
 
  function windowShow(obj) {
@@ -114,37 +102,18 @@
  }
  
  function windowOK(obj) {
-  if (!obj.parentNode.hasAttribute('data-okaction'))
-	  return;
-
-  if (obj.parentNode.dataset.okaction=='delstation')
-   $.post("update.php",
-   {
-    action: "deleteStation",
-    stationid: obj.parentNode.dataset.stationid
-   },
-   function(data, status){ 	
-    if (getTagValue(data,'result')=='OK')
-    document.location.href='index.php';
+  $.post("update.php",
+  {
+   action: "deleteStation",
+   stationid: obj.parentNode.dataset.stationid
+  },
+  function(data, status){ 	
+   if (getTagValue(data,'result')=='OK')
+   document.location.href='index.php';
    //windowCancel(obj);	 
-    else
-    windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
-   });  
-
-  if (obj.parentNode.dataset.okaction=='delworker')
-   $.post("update.php",
-   {
-    action: "deleteWorker",
-    stationid: obj.parentNode.dataset.stationid,
-    workerid: obj.parentNode.dataset.workerid
-   },
-   function(data, status){
-    if (getTagValue(data,'result')=='OK')
-    document.location.href='index.php';
-   //windowCancel(obj);
-    else
-    windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
-   });
+   else
+   windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
+  });  
  }
  
  function windowCancel(obj) {
@@ -590,24 +559,18 @@
 		<div class="w3-container">
 		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newstationwindow');">New station</span></p>
-	    <?php
-		 if ($stationid>0)
-		 {
-			 ob_start();
-		 ?>
 		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeStationDialog(<?php echo $stationid; ?>);">Remove current station</span></p>
 		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newworkerwindow');">New worker</span></p>
+		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeWorkerDialog(<?php echo $stationid; ?>);">Remove worker</span></p>
+		  <hr />
+		  
 		  
 		  <?php
-		   if ($workerid>0)
-		   {
-			 ob_start();
-			?>
-		   <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeWorkerDialog();">Remove worker</span></p>
+		  echo '<p><i class="fa fa-eye fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" id="taskidshowhide" onclick="showTaskID(this);" data-show="'.($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs').'</span></p>';
+		  ?>
 		  <hr />
-		  <p><i class="fa fa-eye fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" id="taskidshowhide" onclick="showTaskID(this);" data-show="<?php echo ($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs'); ?></span></p>
-		  <hr />
+		  
           <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showAddTaskWindow();">New task</span></p>
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="editTask();">Edit task</span></p>
 		  <p><i class="fa fa-copy fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="cloneTask();">Duplicate task</span></p>
@@ -616,14 +579,11 @@
 		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newsubassemblywindow');">New subassembly</span></p>
 		  <hr />
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="api.php?action=getTaskList&station=<?php echo $stationid; ?>&format=XML">Export tasks to XML</a></p>
 		  
-		<?php 
-		    echo ob_get_clean(); 
-		   }
-		   echo ob_get_clean(); 
-		 }
-		 ?>
+		  <?php		  
+		   if ($stationid>0)
+		   echo '<p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="api.php?action=getTaskList&station='.$stationid.'&format=XML">Export tasks to XML</a></p>';
+		  ?>
 		  
           <hr>
 		  

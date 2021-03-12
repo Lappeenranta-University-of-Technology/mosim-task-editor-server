@@ -1,7 +1,7 @@
 <?php
  session_start();
  
- include('db.php'); 
+ include('db.php');
  
  if (!connectDB())
  exit();
@@ -24,7 +24,7 @@
   return $out;
  }
  
- function stationInCurrentProject($station)                        
+ function stationInCurrentProject($station)
  {
 	global $db;
 	$sql='SELECT count(*) as ile FROM userroles ur, stations s WHERE ur.userid='.
@@ -70,6 +70,76 @@
 	if ($row=$result->fetch_assoc())
 	return $row['projectid'];
 	return 0;
+ }
+
+ function getNextResultSet($token)
+ {
+  global $db;
+  $projectid=tokenToProjectId($token);
+  if ($projectid==0)
+	  return array('status'=>false,'msg'=>'No project found for given token');
+  $sql='SELECT IFNULL(MAX(resultset),0)+1 as nextid FROM mmutasks WHERE projectid='.$projectid;
+  if ($result=$db->query($sql))
+	  if ($row=$result->fetch_assoc())
+		  return array('status'=>true,'msg'=>$row['nextid']);
+  return array('status'=>false,'msg'=>'Database access error');
+ }
+ 
+ function saveMMUList($token,$data)
+ {
+  global $db;
+  $projectid=tokenToProjectId($token);
+  if ($projectid==0)
+	  return 'No project found for given token';
+  if (is_string($data))
+   $data=json_decode($data,true); //decodig into array
+  
+  if (!array_key_exists('ID',$data) || !array_key_exists('Name',$data) || 
+      !array_key_exists('MotionType',$data) || !array_key_exists('Properties',$data) || 
+	  !array_key_exists('Constraints',$data) || !array_key_exists('StartCondition',$data) || 
+	  !array_key_exists('EndCondition',$data) || !array_key_exists('SortOrder',$data) || 
+	  !array_key_exists('ResultSet',$data) || !array_key_exists('Success',$data)) 
+	  return 'Incomplete parameter set. Missing: '.
+		 (!array_key_exists('ID',$data)?'ID ':'').
+		 (!array_key_exists('Name',$data)?'Name ':'').
+		 (!array_key_exists('MotionType',$data)?'MotionType ':'').
+		 (!array_key_exists('Properties',$data)?'Properties ':'').
+		 (!array_key_exists('Constraints',$data)?'Constraints ':'').
+		 (!array_key_exists('StartCondition',$data)?'StartCondition ':'').
+		 (!array_key_exists('EndCondition',$data)?'EndCondition ':'').
+		 (!array_key_exists('SortOrder',$data)?'SortOrder ':'').
+		 (!array_key_exists('ResultSet',$data)?'ResultSet ':'').
+		 (!array_key_exists('Success',$data)?'Success ':'');
+  
+  if (in_array($data['ID'],array(NULL,'null'))) $data['ID']='';
+  if (in_array($data['Name'],array(NULL,'null'))) $data['Name']='';  
+  if (in_array($data['Properties'],array(NULL,'null'))) $data['Properties']='';
+  if (in_array($data['Constraints'],array(NULL,'null'))) $data['Constraints']='';
+  if (in_array($data['StartCondition'],array(NULL,'null'))) $data['StartCondition']='';
+  if (in_array($data['EndCondition'],array(NULL,'null'))) $data['EndCondition']='';
+  $mmuid='\''.$db->real_escape_string($data['ID']).'\'';
+  $name='\''.$db->real_escape_string($data['Name']).'\'';
+  $motiontype='\''.$db->real_escape_string($data['MotionType']).'\'';
+  $properties='\''.$db->real_escape_string($data['Properties']!=''?json_encode($data['Properties']):'').'\'';
+  $constraints='\''.$db->real_escape_string($data['Constraints']!=''?json_encode($data['Constraints']):'').'\'';
+  $start='\''.$db->real_escape_string($data['StartCondition']).'\'';
+  $end='\''.$db->real_escape_string($data['EndCondition']).'\'';
+   if (!ctype_digit(strval($data['SortOrder'])))
+	   return 'Incorrect SortOrder parameter value. Must be unsigned integer';
+   if (!ctype_digit(strval($data['ResultSet'])))
+	   return 'Incorrect ResultSet parameter value. Must be unsigned integer';
+   if (!in_array($data['Success'],array(-1,0,1)))
+	   return 'Incorrect Success parameter value. Must be -1, 0, or 1 for undetermined, failure, and success respectively.';
+  $sortorder=$data['SortOrder'];
+  $resultset=$data['ResultSet'];
+  $success=$data['Success'];
+  
+  $sql='INSERT INTO `mmutasks`(`mmuid`, `name`, `motiontype`, `properties`, `constraints`, `startrule`, `endrule`, `projectid`, `sortorder`, `resultset`, `success`) VALUES ('.$mmuid.','.$name.','.$motiontype.','.$properties.','.$constraints.','.$start.','.$end.','.$projectid.','.$sortorder.','.$resultset.','.$success.')';
+  //TODO: add checking if exactly the same entry is not already in the database before inserting.
+  if ($db->query($sql))
+	  return 'OK';
+  else
+	  return 'ERR';
  }
  
  function getSettings($token)
@@ -219,7 +289,6 @@
  
  function addPartsFromScene($token) {
   global $db;
-  
   $projectid=tokenToProjectId($token);  
   if ($projectid==0)
   return '<result>Error - insufficient user privileges</result>';
@@ -301,7 +370,7 @@
 	 if (!$unityFound[$i])  
 	 {
 	  $decamelled=deCamel($_POST['partsNames'][$i]);
-	  $sql.='('.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsIDs'][$i].'),';  
+	  $sql.='('.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
 	 }
    
    $ok=true;
@@ -339,6 +408,243 @@
    }
    
   return $result;
+ }
+ 
+ function getEnumValues($table,$field) {
+	global $db;
+	$sql = "SHOW FIELDS FROM `{$table}` LIKE '{$field}'";
+	$result = $db->query($sql);
+	if ($row = $result->fetch_assoc())
+	{
+	 preg_match('#^enum\((.*?)\)$#ism', $row['Type'], $matches);
+	 $enum = str_getcsv($matches[1], ",", "'");
+	 return $enum;
+	}
+	return array();
+ }
+ 
+ function listStations($projectid)
+ {
+  global $db;
+  $sql='SELECT id, name, engineid FROM `stations` WHERE parent=0 and projectid='.$projectid.' ORDER BY name, engineid';
+  $stations=[];
+  if ($result=$db->query($sql))
+   while ($row=$result->fetch_assoc())
+   {
+	$row['name']=camel($row['name']);
+    $stations[]=$row;
+   }
+  header('Content-Type: application/json');	
+  echo json_encode($stations);
+ }
+ 
+ function addStationsFromScene($token) {
+  global $db;
+  $projectid=tokenToProjectId($token);
+  if ($projectid==0)
+  return '<result>Error - insufficient user privileges</result>'; 
+
+  if (!(isset($_POST['stationNames']) && isset($_POST['stationIDs']) && 
+        isset($_POST['stationMMIIDs'])))
+	{
+	 listStations($projectid);
+	 return '';
+	}
+
+  if (!((count($_POST['stationNames'])==count($_POST['stationIDs'])) &&
+	   (count($_POST['stationNames'])==count($_POST['stationMMIIDs']))))
+	return '<result>Dataset error, expected stationNames, stationIDs, and stationMMIIDs as arrays. of the same length</result>';
+
+   $sql='SELECT id, name, engineid FROM `stations` WHERE parent=0 and projectid='.$projectid.' ORDER BY name, engineid';
+  $parts=[];
+  if ($result=$db->query($sql))
+   while ($row=$result->fetch_assoc())
+   {
+	$row['changed']=false;
+    $parts[]=$row;
+   }
+  $result='';
+  
+  $sql='INSERT INTO stations (projectid, name, engineid) VALUES ';
+  $sqlu='INSERT INTO stations (id, projectid, name, engineid) VALUES ';
+  $unityFound=array_fill(0,count($_POST['stationIDs']),false);
+  
+  for ($i=0; $i<count($_POST['stationIDs']); $i++)
+     {
+	  $found=false;
+	  if ($_POST['stationIDs'][$i]!=0)
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+	    if ((!$parts[$j]['changed']) && ($parts[$j]['id']==$_POST['stationIDs'][$i]))
+	    {
+		 $decamelled=deCamel($_POST['stationNames'][$i]);
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+	      if (($parts[$j]['engineid']!=$_POST['stationMMIIDs'][$i]) || 
+		      ($parts[$j]['name']!=$decamelled))
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$decamelled.'\','.$_POST['stationMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+	 }
+	
+	for ($i=0; $i<count($_POST['stationIDs']); $i++)
+	  if (!$unityFound[$i])
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+	    if ((!$parts[$j]['changed']) && ($parts[$j]['engineid']==$_POST['stationMMIIDs'][$i]))
+	    {
+		 $decamelled=deCamel($_POST['stationNames'][$i]);
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true; 
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$decamelled.'\','.$_POST['stationMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+	
+	for ($i=0; $i<count($_POST['stationIDs']); $i++)
+	   if (!$unityFound[$i])
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+		$decamelled=deCamel($_POST['stationNames'][$i]);
+	    if ((!$parts[$j]['changed']) && (mb_strtoupper($parts[$j]['name'],'UTF-8')==mb_strtoupper($decamelled,'UTF-8')))
+	    {
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$decamelled.'\','.$_POST['stationMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+	   
+	for ($i=0; $i<count($_POST['stationIDs']); $i++)
+	 if (!$unityFound[$i])  
+	 {
+	  $decamelled=deCamel($_POST['stationNames'][$i]);
+	  $sql.='('.$projectid.',\''.$decamelled.'\','.$_POST['stationMMIIDs'][$i].'),';  
+	 }
+	 
+	$ok=true;
+   if (substr($sql,-1)==',')
+   {   
+    $sql=substr($sql,0,-1);
+	$ok=($db->query($sql));
+   }
+   
+   if ($sqlu[strlen($sqlu)-1]==',') 
+   {
+    $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE name=values(name), engineid=values(engineid);';
+	$ok=$ok && ($db->query($sqlu));
+   }
+   
+  listStations($projectid);
+ }
+ 
+ function addMarkersFromScene($token) {
+  global $db;
+  $projectid=tokenToProjectId($token);  
+  if ($projectid==0)
+  return '<result>Error - insufficient user privileges</result>';
+
+  if (!(isset($_POST['markerNames']) && isset($_POST['markersIDs']) && isset($_POST['markersMMIIDs']) && isset($_POST['markersType']) && 
+      (count($_POST['markerNames'])==count($_POST['markersIDs'])) &&
+	  (count($_POST['markerNames'])==count($_POST['markersMMIIDs'])) &&
+	  (count($_POST['markerNames'])==count($_POST['markersType']))))
+	return '<result>Dataset error 1</result>';
+
+  $allowedTypes=getEnumValues('markers','type');
+  for ($i=0; $i<count($_POST['markersIDs']); $i++)
+	  if (!in_array($_POST['markersType'][$i],$allowedTypes))
+		return '<result>Dataset error 2</result>';
+  
+  $sql='SELECT id, name, engineid FROM `markers` WHERE projectid='.$projectid.' ORDER BY name, engineid';
+  $parts=[];
+  if ($result=$db->query($sql))
+   while ($row=$result->fetch_assoc())
+   {
+	$row['changed']=false;
+    $parts[]=$row;
+   }
+  $result='';
+
+  $sql='INSERT INTO markers (projectid, type, name, engineid) VALUES ';
+  $sqlu='INSERT INTO markers (id, projectid, type, name, engineid) VALUES ';
+  $unityFound=array_fill(0,count($_POST['markersIDs']),false);
+   
+	for ($i=0; $i<count($_POST['markersIDs']); $i++)
+     {
+	  $found=false;
+	  if ($_POST['markersIDs'][$i]!=0)
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+	    if ((!$parts[$j]['changed']) && ($parts[$j]['id']==$_POST['markersIDs'][$i]))
+	    {
+		 $decamelled=deCamel($_POST['markerNames'][$i]);
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+	      if (($parts[$j]['engineid']!=$_POST['markersMMIIDs'][$i]) || 
+		      ($parts[$j]['name']!=$decamelled))
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+	 }
+	 
+	  for ($i=0; $i<count($_POST['markersIDs']); $i++)
+	   if (!$unityFound[$i])
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+	    if ((!$parts[$j]['changed']) && ($parts[$j]['engineid']==$_POST['markersMMIIDs'][$i]))
+	    {
+		 $decamelled=deCamel($_POST['markerNames'][$i]);
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true; 
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+	   
+	  for ($i=0; $i<count($_POST['markersIDs']); $i++)
+	   if (!$unityFound[$i])
+	   for ($j=0; $j<count($parts); $j++)
+	   {
+		$decamelled=deCamel($_POST['markerNames'][$i]);
+		//echo 'ByName: '.$parts[$j]['name'].'?='.$decamelled."<br>";
+	    if ((!$parts[$j]['changed']) && (mb_strtoupper($parts[$j]['name'],'UTF-8')==mb_strtoupper($decamelled,'UTF-8')))
+	    {
+	     $found=true;
+		 $unityFound[$i]=true;
+	     $parts[$j]['changed']=true;
+	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';
+         break;	
+	    }
+	   }
+    
+	for ($i=0; $i<count($_POST['markersIDs']); $i++)
+	 if (!$unityFound[$i])  
+	 {
+	  $decamelled=deCamel($_POST['markerNames'][$i]);
+	  $sql.='('.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';  
+	 }
+   
+   $ok=true;
+   if (substr($sql,-1)==',')
+   {   
+    $sql=substr($sql,0,-1);
+	$ok=($db->query($sql));
+   }
+   
+   if ($sqlu[strlen($sqlu)-1]==',') 
+   {
+    $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE name=values(name), engineid=values(engineid);';
+	$ok=$ok && ($db->query($sqlu));
+   }
+  
  }
  
  function outputJSON($result) {
@@ -504,6 +810,12 @@ XML;
   echo getMMUList($_POST['token']);
  }
  
+ if (($_POST['action']=='syncGroupsAndStations') && isset($_POST['token']))
+ {
+  echo addStationsFromScene($_POST['token']);                             
+   //sd fsd gsr gsrg srg srg sg s
+ }
+ 
  if (($_POST['action']=='getSettings') && isset($_POST['token']))
  echo getSettings($_POST['token']);
  
@@ -538,15 +850,33 @@ XML;
 	 echo testConnection($_POST['token']);
   }
  
+  if ($_POST['action']=='syncMarkers')
+	echo addMarkersFromScene($_POST['token']);
+ 
+  if ($_POST['action']=='saveMMUTask')
+  {
+	header('Content-Type: application/json; charset=utf-8');  
+	if (isset($_POST['ID']) && isset($_POST['Name']) && isset($_POST['MotionType']) && isset($_POST['Properties']) && isset($_POST['Constraints']) && isset($_POST['StartCondition']) && isset($_POST['EndCondition']) && isset($_POST['SortOrder']) && isset($_POST['ResultSet']) && isset($_POST['Success']))
+	{
+	 echo json_encode(array("result"=>saveMMUList($_POST['token'],array('ID'=>$_POST['ID'], 'Name'=>$_POST['Name'], 'MotionType'=>$_POST['MotionType'], 'Properties'=>$_POST['Properties'],'Constraints'=>$_POST['Constraints'], 'StartCondition'=>$_POST['StartCondition'], 'EndCondition'=>$_POST['EndCondition'], 'SortOrder'=>$_POST['SortOrder'], 'ResultSet'=>$_POST['ResultSet'],'Success'=>$_POST['Success']))));
+	}
+	else
+	if (isset($_POST['data']))
+    {
+	 $data=json_decode($_POST['data'],true);
+	 echo json_encode(array("result"=>saveMMUList($_POST['token'],$_POST['data'])));
+    }
+  }
+ 
  } //action issset (POST)
  
  //POST requests end
- //GET requests begin
+ //POST requests begin
  
  if (isset($_GET['action']) && (!isset($_GET['token'])))
  {
-	if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))                             
-	if (stationInCurrentProject($_GET['station']))                   
+	if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))
+	if (stationInCurrentProject($_GET['station']))
 	{
 	 $sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
 	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
@@ -600,8 +930,8 @@ XML;
 		echo '<result>Incorrect project token</result>';
   }
 	 
-  if (($_GET['action']=='getSettings'))
-  echo getSettings($_GET['token']);	 
+  if ($_GET['action']=='getSettings')
+  echo getSettings($_GET['token']);
 	 
   if (($_GET['action']=='getMMUList'))
   {
@@ -609,10 +939,39 @@ XML;
     echo getMMUList($_GET['token']);
   }
  
-  if (($_GET['action']=='testConnection'))
+  if ($_GET['action']=='testConnection')
   {
 	 header('Content-Type: application/json; charset=utf-8');
 	 echo testConnection($_GET['token']);
+  }
+  
+  if ($_GET['action']=='getNextMMUTaskSet')
+  {
+	 header('Content-Type: application/json; charset=utf-8');	  
+	 echo json_encode(getNextResultSet($_GET['token'])); //dfsdfsdg gfs gfsg sfg
+  }
+  
+  if ($_GET['action']=='markerTypes') //just checking what are the marker types allowed
+  { 
+   echo '<p>Allowed values are: '.implode(", ",getEnumValues('markers','type'));
+   if (isset($_GET['test']))
+   echo '<p>In array: '.(in_array($_GET['test'],getEnumValues('markers','type'))?'yes':'no');
+  }
+  
+  if ($_GET['action']=='saveMMUTask')
+  {
+	header('Content-Type: application/json; charset=utf-8');  
+	if (isset($_GET['ID']) && isset($_GET['Name']) && isset($_GET['MotionType']) && isset($_GET['Properties']) && isset($_GET['Constraints']) && isset($_GET['StartCondition']) && isset($_GET['EndCondition']) && isset($_GET['SortOrder']) && isset($_GET['ResultSet']) && isset($_GET['Success']))
+	{
+	 //echo 'NewMMU task (GET)'."\r\n";
+	 echo json_encode(array("result"=>saveMMUList($_GET['token'],array('ID'=>$_GET['ID'], 'Name'=>$_GET['Name'], 'MotionType'=>$_GET['MotionType'], 'Properties'=>$_GET['Properties'],'Constraints'=>$_GET['Constraints'], 'StartCondition'=>$_GET['StartCondition'], 'EndCondition'=>$_GET['EndCondition'], 'SortOrder'=>$_GET['SortOrder'], 'ResultSet'=>$_GET['ResultSet'],'Success'=>$_GET['Success']))));
+	}
+	else
+	if (isset($_GET['data']))
+    {
+	 $data=json_decode($_GET['data'],true);
+	 echo json_encode(array("result"=>saveMMUList($_GET['token'],$_GET['data'])));
+    }
   }
  } //GET requests end
  

@@ -17,35 +17,153 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script language="javascript" src="scripts.js"></script>
 <script language="javascript" src="dragdrop.js"></script>
-<!-- Babylon.js -->
-<script src="https://preview.babylonjs.com/babylon.js"></script>
-<script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
-<script src="babylon.stlFileLoader.min.js"></script>
-<!-- End of Babylon.js -->
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/index.css">
 
+<style>
+#partlist {
+ line-height: 1.2em;
+}
+
+#partlist div, h5 {
+ line-height: 1.2;
+ margin-top: 2px;
+ margin-bottom: 2px;
+}
+
+.movepanel {
+ position: absolute;
+ width: 40px;
+ right: -20px;
+ z-index: 1;
+ padding: 2px;
+}
+
+.movepanel > span {
+ width: 100%;
+ display: block;
+ height: 30px;
+ background-color: white;
+ margin-bottom: 2px;
+ background-position: center center;
+ background-repeat: no-repeat;
+ background-size: contain;
+ line-height: 30px;
+ text-align: center;
+ border-radius: 8px;
+ opacity: 0.65;
+ font-size: 20px;
+ font-weight: bold;
+ transition: background-color 0.2s linear;
+ cursor: pointer;
+}
+
+.movepanel > span:hover {
+ background-color: #99bbce;
+}
+
+div.w3-container[data-used] .w3-opacity.task {
+ background-color: darkgrey;
+}
+
+div.w3-container[data-used] .w3-opacity.task:hover {
+ background-color: #99bbce;
+}
+
+
+</style>
+
 <script>
+ 
+ var savedTaskSettings={type:-1, subtype:-1, tooltype:-1, tool: -1, subtypes:'', tools: ''};
+ 
+ function saveTaskSettings() {
+	 savedTaskSettings.type = document.getElementById("new_type").value;
+	 savedTaskSettings.subtype = document.getElementById("new_subtype").value;
+	 savedTaskSettings.tooltype = document.getElementById("new_tooltype").value;
+	 savedTaskSettings.tool = document.getElementById("new_tool").value;
+	 savedTaskSettings.subtypes=document.getElementById("new_subtype").innerHTML;
+	 savedTaskSettings.tools=document.getElementById("new_tool").innerHTML;
+ }
+ 
+ function loadTaskSettings() {
+	 document.getElementById("new_type").value=savedTaskSettings.type;
+	 document.getElementById("new_subtype").innerHTML=savedTaskSettings.subtypes;
+	 document.getElementById("new_subtype").value=savedTaskSettings.subtype;
+	 document.getElementById("new_tooltype").value=savedTaskSettings.tooltype;
+	 document.getElementById("new_tool").innerHTML=savedTaskSettings.tools;
+	 document.getElementById("new_tool").value=savedTaskSettings.tool;
+ }
+ 
+ function saveNewTaskSettings() { //saving settings for future use
+	$.post("update.php",
+	{
+        action: "saveNewTaskSettings",
+		task: document.getElementById("new_subtype").value,
+		tool: document.getElementById("new_tool").value
+	},
+	function(data, status){
+		
+	}); 
+ }
+  
+ function addTaskSimple() {
+	 var partids = [];
+	 var parts = document.getElementById("partlist");
+	 for (var i=0; i<parts.children.length; i++)
+	  if (parts.children[i].hasAttribute("data-type") && 
+	     (parts.children[i].dataset.type=="part") && 
+		  parts.children[i].firstChild.classList.contains("selected"))
+		partids.push(parts.children[i].dataset.id);
+	if (partids.length>0)
+	{
+	 var subassemblies = [];
+	 var tasks=document.getElementById("tasklist");
+	 for (var i=0; i<tasks.children.length; i++)
+	  if (tasks.children[i].tagName=='DIV')
+	   if (tasks.children[i].hasAttribute('data-type'))
+        if ((tasks.children[i].dataset.type=="assembly") && (tasks.children[i].children.length>=4))
+	     if ((tasks.children[i].children[3].className.indexOf('editmode')==-1) &&
+          (tasks.children[i].children[3].className.indexOf('selected')>-1)) 
+	     subassemblies.push(i);
+	 var workerid = document.getElementById("workers").value;
+	 var ntype = document.getElementById("new_subtype");
+	 var ntool = document.getElementById("new_tool");
+	 var stationid = document.getElementById("stations").value;
+	 if (subassemblies.length==1)
+	 stationid=tasks.children[subassemblies[0]].dataset.assembly;
+    //if more than two are selected show dialog to pick which one is important
+	   
+	$.post("update.php",
+	{
+        action: "addTask",
+		stationid: stationid,
+		workerid: workerid,
+		type: ntype.value,
+		part: partids,
+		tool: ntool.value,
+		position: "",
+		time: "",
+		desc: ""
+	},
+	function(data, status){
+		if (getTagValue(data,'result')=='OK')
+		document.location.reload();
+		else
+		{
+		 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
+		 windowShow(null);
+		}
+	});
+	}
+ }
  
  function removeStationDialog(stationid) {
   var w=document.getElementById("msgwindow");
   w.dataset.stationid=stationid;
-  w.dataset.okaction='delstation';
   w.className=w.className+" show";  
   windowUpdate('Delete confirmation','Are you sure you want to delete the current station with all the tasks?<br>This action is irreversable!',Array('Delete','Cancel'));
- }
- 
- function removeWorkerDialog() {
-  var w=document.getElementById("msgwindow");
-  var stationid=document.getElementById('stations').value;
-  var workerid=document.getElementById('workers').value;
-  w.dataset.stationid=stationid;
-  w.dataset.workerid=workerid;
-  w.dataset.okaction='delworker';
-  w.className=w.className+" show";
-  windowUpdate('Delete confirmation','Are you sure you want to delete the current worker with all the tasks?<br>This action is irreversable!',Array('Delete','Cancel'));
  }
 
  function windowShow(obj) {
@@ -114,37 +232,18 @@
  }
  
  function windowOK(obj) {
-  if (!obj.parentNode.hasAttribute('data-okaction'))
-	  return;
-
-  if (obj.parentNode.dataset.okaction=='delstation')
-   $.post("update.php",
-   {
-    action: "deleteStation",
-    stationid: obj.parentNode.dataset.stationid
-   },
-   function(data, status){ 	
-    if (getTagValue(data,'result')=='OK')
-    document.location.href='index.php';
+  $.post("update.php",
+  {
+   action: "deleteStation",
+   stationid: obj.parentNode.dataset.stationid
+  },
+  function(data, status){ 	
+   if (getTagValue(data,'result')=='OK')
+   document.location.href='index.php';
    //windowCancel(obj);	 
-    else
-    windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
-   });  
-
-  if (obj.parentNode.dataset.okaction=='delworker')
-   $.post("update.php",
-   {
-    action: "deleteWorker",
-    stationid: obj.parentNode.dataset.stationid,
-    workerid: obj.parentNode.dataset.workerid
-   },
-   function(data, status){
-    if (getTagValue(data,'result')=='OK')
-    document.location.href='index.php';
-   //windowCancel(obj);
-    else
-    windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
-   });
+   else
+   windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
+  });  
  }
  
  function windowCancel(obj) {
@@ -349,6 +448,21 @@
   return ($data==''?'':' style="background-image:url(\'icons/'.$data.'\');" ');
  }
  
+ function loadParts()
+ {
+   global $db;
+   $sql='SELECT p.`id`, p.`name`, count(hlt.id) as used FROM `parts` p LEFT JOIN highleveltasks hlt ON (hlt.partid=p.id) WHERE projectid='.$_SESSION['projectid'].' GROUP BY p.id ORDER by name ASC;';
+   $j=0;
+    if ($result=$db->query($sql))
+    while ($row=$result->fetch_assoc())
+	{
+	$j=$j+1;
+	 echo '<div id="part'.$j.($row['used']>0?'" data-used="'.$row['used'].'"':'').' data-level="0" data-order="'.$j.'" data-type="part" data-id="'.$row['id'].'" class="w3-container">';
+	 echo '<h5 class="w3-opacity task"  onclick="clickSel(this);">'.$row['name'].'</h5>';
+	 echo '</div>';
+	}
+ }
+ 
  function loadTasks()
  {
   global $db, $stationid, $workerid;
@@ -382,25 +496,20 @@
 	 if ($row['tasktypeid']==0)
 	 echo '<div class="unfold" onclick="unFoldSubAssembly(this);"></div>';
 	 echo "<h6 class=\"iconback time\"><i class=\"fa fa-hourglass fa-fw w3-margin-right\"></i>".$row['esttime']."</h6>";
-	                                         
      echo "<h5 onclick=\"clickSel(this);\" class=\"w3-opacity task\"><b>".
 	 ($_SESSION['showTaskID']?"ID ".$row['id']:"Task $j")."</b>";
 	 
 	 if ($row['tasktypeid']==0) //subassembly header/footer
 	 {
 	 echo "<span id=\"subassembly_".$row['stationid']."\" onclick=\"clickTaskType(this);\" class=\"subassembly\" data-id=\"".$row['stationid']."\">".htmlentities($row['tasktype'])."</span>";
-	 echo "<span id=\"subassembly_".$row['stationid'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])."class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";
-	 echo "<span id=\"subassembly_".$row['stationid'].'_position'."\" onclick=\"clickPosition(this);\" data-id=\"".$row['positionid']."\" ".notBlankIcon($row['toolicon'])." class=\"w3-tag w3-round tagicon position\">".htmlentities($row['positionname'])."</span></h5>";
 	 }
 	 else//tasks
 	 {
-	 echo "<span id=\"task_".$row['id'].'_operation'."\" onclick=\"clickTaskType(this);\" ".notBlankIcon($row['tticon'])." class=\"w3-tag w3-round tagicon operation\" data-id=\"".$row['tasktypeid']."\">".htmlentities($row['tasktype'])."</span>";
-	 echo "<span id=\"task_".$row['id'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])." class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";                              
-	 echo "<span id=\"task_".$row['id'].'_tool'."\" onclick=\"clickTool(this);\" data-id=\"".$row['toolid']."\" ".notBlankIcon($row['toolicon'])." class=\"w3-tag w3-round tagicon tools\">".htmlentities($row['toolname'])."</span></h5>";
+	 echo "<span id=\"task_".$row['id'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])." class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";
      }
 	 //TODO: add position id to the query
 	 
-     echo "<p>".str_replace("\n","<br>",htmlentities($row['description']))."</p>";
+    // echo "<p>".str_replace("\n","<br>",htmlentities($row['description']))."</p>";
      //echo '<hr>';
      echo '</div>';
    }
@@ -540,20 +649,10 @@
 <div class="modaltoolbar">Create subassembly</div>
 </div>
 
-<div id="newtaskwindow" class="modalwindow"><div>
-<canvas id="renderCanvas" touch-action="none"></canvas><!-- touch-action="none" for best results from PEP -->
-<div id="new_partpreview" style="background-image: url('car.jpg'); display:none;"></div>
+<div id="tasksettingswindow" class="modalwindow"><div>
 <p><span>Operation type:</span><select id="new_type" data-sub="new_subtype" onchange="getSubTypes(event);"><?php insertTypes(); ?></select></p>
 <p><span>Operation:</span><select id="new_subtype" onchange="getDefaultTool(event);"><?php insertSubTypes(); ?></select></p>
-<p><span>Part type:</span><select id="new_parttype" data-sub="partselector" onchange="getSubParts(event);"><?php $selPartType=insertPartTypes($stationid); ?></select></p>
-<p><span>Part:</span><select id="partselector" onchange="partChange();">
-  <?php 
-   if ($selPartType==-2)
-   insertUncategorizedParts();
-   else
-   insertParts($selPartType); 
-  ?></select></p>
-  <p><span>Tool type:</span><select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
+<p><span>Tool type:</span><select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
 <p><span>Tool:</span><select id="new_tool">
  <?php 
    if ($selToolType==-2)
@@ -561,16 +660,12 @@
    else
    insertTools($selToolType); 
   ?></select></p>
-<p><span>Time estimate:</span><input id="new_time" onchange="timeEstimate(this);" type="text" placeholder="00:00:00" value="" /></p>
-<p><span>Description:</span><textarea id="new_description" style="width:100%"></textarea></p>
 </div>
-<div class="modalbutton" onclick="addTask(); windowCancel(this);">Add</div>
-<div class="modalbutton" onclick="windowCancel(this);">Cancel</div>
-<div class="modaltoolbar">New task</div>
+<div class="modalbutton" onclick="saveNewTaskSettings(); windowCancel(this);">OK</div>
+<div class="modalbutton" onclick="windowCancel(this); loadTaskSettings();">Cancel</div>
+<div class="modaltoolbar">Task creation settings</div>
 </div>
-<script>
-<?php include('babylon.js'); ?>
-</script>
+
 <!-- Page Container -->
 <div class="w3-content w3-margin-top" style="max-width:1400px;">
 
@@ -590,44 +685,28 @@
 		<div class="w3-container">
 		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newstationwindow');">New station</span></p>
-	    <?php
-		 if ($stationid>0)
-		 {
-			 ob_start();
-		 ?>
 		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeStationDialog(<?php echo $stationid; ?>);">Remove current station</span></p>
 		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newworkerwindow');">New worker</span></p>
-		  
+		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeWorkerDialog(<?php echo $stationid; ?>);">Remove worker</span></p>
+		  <hr />
+		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('tasksettingswindow'); saveTaskSettings();">New task settings</span></p>
 		  <?php
-		   if ($workerid>0)
-		   {
-			 ob_start();
-			?>
-		   <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeWorkerDialog();">Remove worker</span></p>
+		  echo '<p><i class="fa fa-eye fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" id="taskidshowhide" onclick="showTaskID(this);" data-show="'.($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs').'</span></p>';
+		  ?>
 		  <hr />
-		  <p><i class="fa fa-eye fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" id="taskidshowhide" onclick="showTaskID(this);" data-show="<?php echo ($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs'); ?></span></p>
-		  <hr />
-          <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showAddTaskWindow();">New task</span></p>
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="editTask();">Edit task</span></p>
 		  <p><i class="fa fa-copy fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="cloneTask();">Duplicate task</span></p>
-          <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeTask();">Remove task</span></p>
-          <p><i class="fa fa-sort fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('movetostationwindow');">Move task to other station</span></p>
+		  <p><i class="fa fa-sort fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('movetostationwindow');">Move task to other station</span></p>
 		  <hr />
 		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newsubassemblywindow');">New subassembly</span></p>
 		  <hr />
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="api.php?action=getTaskList&station=<?php echo $stationid; ?>&format=XML">Export tasks to XML</a></p>
-		  
-		<?php 
-		    echo ob_get_clean(); 
-		   }
-		   echo ob_get_clean(); 
-		 }
-		 ?>
-		  
+
+		  <?php	
+		   if ($stationid>0)
+		   echo '<p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><a href="api.php?action=getTaskList&station='.$stationid.'&format=XML">Export tasks to XML</a></p>';
+		  ?>
           <hr>
-		  
-          
+
 <!--		  <p id="newstation" class="w3-large"><b><i class="fa fa-gear fa-fw w3-margin-right iconback"></i>New station</b></p>
 		  <p>Name: <input id="new_stationname" type="text" /></p>
 		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="addStation();">Create station</span></p> -->
@@ -648,15 +727,30 @@
 
     <!-- End Left Column -->
     </div>
-
-    <!-- Right Column -->
+	
+	<!-- Right two collumn header -->
     <div class="w3-twothird">
       <div class="w3-container w3-card w3-white w3-margin-bottom">
         <h2 id="projectname"><?php projectName(); ?></h2>
-	  </div>
+     </div>
+	</div>
+
+    <!-- Middle Column -->
+    <div class="w3-third" style="position: relative;">
+	 <div class="w3-container w3-card w3-white w3-margin-bottom">
+	  <h2>Available parts</h2>
+	 </div>
+	 <div class="w3-container w3-card w3-white w3-margin-bottom movepanel"><span onclick="addTaskSimple();">&gt;</span><span onclick="removeTask();"><i class="fa fa-trash fa-fw w3-large iconback pointer"></i></span></div>
+	 <div id="partlist" style="position:relative;" class="w3-container w3-card w3-white w3-margin-bottom">
+	  <?php loadParts(); ?>
+	 </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="w3-third">
       <div id="tasklist" style="position:relative;" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2 class="w3-text-grey w3-padding-16"><i class="fa fa-gear fa-fw w3-margin-right w3-xxlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeStation(this);" id="stations"><?php insertStations(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h2>
-		<h2 class="w3-text-grey w3-padding-16"><i class="fa fa-user fa-fw w3-margin-right w3-xxlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevWorkerClick();"></span><select onchange="changeWorker(this);" id="workers"><?php insertWorkers(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextWorkerClick();"></span></h2>
+        <h6 class="w3-text-grey"><i class="fa fa-gear fa-fw w3-margin-right w3-xlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevClick();"></span><select onchange="changeStation(this);" id="stations"><?php insertStations(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextClick();"></span></h6>
+		<h6 class="w3-text-grey"><i class="fa fa-user fa-fw w3-margin-right w3-xlarge iconback"></i><span class="fa fa-angle-left w3-margin-right pointer" onclick="prevWorkerClick();"></span><select onchange="changeWorker(this);" id="workers"><?php insertWorkers(); ?></select><span class="fa fa-angle-right w3-margin-left pointer" onclick="nextWorkerClick();"></span></h6>
 		<?php
 		loadTasks();
 		?>
