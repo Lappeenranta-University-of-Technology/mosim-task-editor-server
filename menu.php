@@ -5,8 +5,9 @@ $menuitems[0]=array('url'=>'projects.php','icon'=>'itemproject','caption'=>'Proj
  $menuitems[0]['submenu'][0]=array('url'=>'projects.php','icon'=>'fa-user','caption'=>'Projects');
  $menuitems[0]['submenu'][1]=array('url'=>'stations.php','icon'=>'fa-user','caption'=>'Stations');
  $menuitems[0]['submenu'][2]=array('url'=>'parts.php','icon'=>'fa-user','caption'=>'Parts');
- $menuitems[0]['submenu'][3]=array('url'=>'tools.php','icon'=>'fa-user','caption'=>'Tools');
- $menuitems[0]['submenu'][4]=array('url'=>'avatars.php','icon'=>'fa-user','caption'=>'Avatars');
+ $menuitems[0]['submenu'][3]=array('url'=>'markers.php','icon'=>'fa-user','caption'=>'Markers');
+ $menuitems[0]['submenu'][4]=array('url'=>'tools.php','icon'=>'fa-user','caption'=>'Tools');
+ $menuitems[0]['submenu'][5]=array('url'=>'avatars.php','icon'=>'fa-user','caption'=>'Avatars');
 $menuitems[1]=array('url'=>'index.php','icon'=>'itemtask','caption'=>'Tasks');
  $menuitems[1]['submenu'][0]=array('url'=>'index-asem.php','icon'=>'fa-user','caption'=>'Assembly');
  $menuitems[1]['submenu'][1]=array('url'=>'index.php','icon'=>'fa-user','caption'=>'Workers');

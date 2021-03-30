@@ -5,7 +5,7 @@
 
 <!DOCTYPE html>
 <html>
-<title>MOSIM part editor</title>
+<title>MOSIM marker editor</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/w3.css">
@@ -17,9 +17,32 @@
 <script language="javascript" src="dragdrop.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/menu.css">
-<link rel="stylesheet" href="css/parts.css">
+<link rel="stylesheet" href="css/markers.css">
 
 <script>
+
+ function changeTypeOK(e) {
+	 e.stopPropagation();
+	 e.target.parentNode.parentNode.className=e.target.className.replace("selected","").trim();
+	e.target.parentNode.parentNode.innerHTML="";
+ }
+
+ function changeType(obj) {
+	var isempty = (obj.innerHTML=="");
+	var list = document.getElementById("markerlist");
+	for (var i=0; i<list.children.length; i++)
+		if (list.children[i].tagName=='DIV' && list.children[i].hasAttribute('data-id'))
+		list.children[i].lastChild.innerHTML="";
+	var values=document.getElementById("newMarkerType");
+	if (isempty)
+	{
+	var menu="";
+	 for (var i=0; i<values.options.length; i++)
+	 menu+='<span class="'+values.options[i].value+(values.options[i].value==obj.className?' selected':'')+'" onclick="changeTypeOK(event);"></span>';
+	obj.innerHTML="<div>"+menu+"</div>";
+	}
+ }
+
  function windowShow(obj) {
   var w=document.getElementsByClassName("modalwindow")[0];	 
   w.dataset.catid=obj.parentNode.dataset.id;
@@ -211,6 +234,23 @@
 </head>
 
 <?php
+ function deCamel($str) {
+  $out='';
+  for ($i=0; $i<mb_strlen($str,'UTF-8'); $i++)
+  {
+   if (($i>0) && (preg_match('~^\p{Lu}~u', mb_substr($str,$i,1,'UTF-8'))))
+   $out.=' ';
+   $out.= mb_substr($str,$i,1,'UTF-8');
+  }
+  return $out;
+ }
+
+ function insertMarkerTypes() {
+  $markertypes=getEnumValues('markers','type');
+  for ($i=0; $i<count($markertypes); $i++)
+	  echo '<option value="'.$markertypes[$i].'">'.htmlentities(deCamel($markertypes[$i])).'</option>';
+ }
+
  function loadPartCategories() {
   global $db;
   $sql='SELECT tc.id, tc.name, tc.sortorder, tc.icon, count(t_c.cat) as howmany FROM partcat tc LEFT JOIN (`part_cat` t_c, parts p) ON (tc.id=t_c.cat and p.id=t_c.part and p.projectid='.$_SESSION['projectid'].') WHERE tc.projectid='.$_SESSION['projectid'].' and  tc.language=\'mosim\' and tc.grouptype=\'parttype\' GROUP BY tc.id ORDER BY sortorder;';
@@ -222,39 +262,21 @@
   echo '<script>makeDraggable(\'partcatlist\');</script>';	
  }
  
- function loadParts() {
+ function loadMarkers() {
   global $db;
-  $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart FROM '.
-  '(SELECT id, name, sortorder, language, defaultpart FROM `partcat` WHERE grouptype=\'parttype\' and projectid='.$_SESSION['projectid'].') tc '.
-  ' LEFT JOIN (part_cat t_c, parts t) ON (t_c.cat=tc.id and t_c.part=t.id and t.projectid='.$_SESSION['projectid'].') '.
-  ' UNION ALL '.
-  'SELECT 0, \'Uncategorized\', 0, t.id, t.name, 0, 0 FROM parts t '.
-  'LEFT JOIN part_cat t_c ON (t_c.part=t.id) '.
-  'WHERE (isnull(t_c.cat) or t_c.cat=0) and t.projectid='.$_SESSION['projectid'].' '.
-  'ORDER BY sortorder, tcid, sortorder1';
-  $lastname=-1;
+  $sql='SELECT id, stationid, name, constraintName, type FROM `markers` WHERE projectid='.$_SESSION['projectid'].' ORDER BY type, name, constraintName;';
    if ($result=$db->query($sql))
 	while($row=$result->fetch_assoc())
-    {
-	   if ($row['tcid']!=$lastname)
-       {
-		 echo '<div class="category" data-id="'.$row['tcid'].'">'.htmlentities($row['tcname']).'<span onclick="foldTools(this);"></span></div>';  
-		 $lastname=$row['tcid'];
-	   }		
-       if ($row['id']!=0)
-       echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);"><span>X</span></span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
-	}		
-  echo '<script>makeDraggableTool(\'partlist\');</script>';	
+       echo '<div data-id="'.$row['id'].'">'.htmlentities($row['name']).
+       ($row['constraintName']!=''?' / '.htmlentities($row['constraintName']):'').'<span onclick="deleteTool(this);"><span>X</span></span><span onclick="changeType(this);" class="'.$row['type'].'"></span></div>';
  }
  
-  function loadPartsForStations() {
+  function loadMarkersForStations() {
   global $db;
-  $sql='SELECT p.id, p.name, ifnull(s.id,0) as stationid, ifnull(s.name,\'Uncategorized\') as stationname, ifnull(s.sortorder,-1) as sortorder, ifnull(ps.sortorder,-1) as sortorder1 '.
-  'FROM parts p '.
-  'LEFT JOIN (`part_station` ps, stations s) ON ps.part=p.id and ps.station=s.id WHERE p.projectid='.$_SESSION['projectid'].' '.
+  $sql='SELECT m.id, m.stationid, if(m.stationid=0,\'Undefined\',s.name) as stationname, m.name, m.constraintName, m.type FROM `markers` m LEFT JOIN stations  s ON (s.id=m.stationid) WHERE m.projectid='.$_SESSION['projectid'].' '.                        
   'UNION ALL '.
-  'SELECT 0, \'\', s.id, s.name, s.sortorder, -1 FROM stations s LEFT JOIN `part_station` ps ON ps.station=s.id WHERE isnull(ps.station) and s.projectid='.$_SESSION['projectid'].' '.
-  'ORDER BY sortorder, sortorder1, stationname, name;';
+  'SELECT 0, s.id, s.name, \'\', \'\', \'\' FROM stations s LEFT JOIN `markers` m ON m.stationid=s.id WHERE isnull(m.id) and s.projectid='.$_SESSION['projectid'].' '.
+  'ORDER BY stationid, type, name, constraintName;';
   $lastname=-1;
    if ($result=$db->query($sql))
 	while($row=$result->fetch_assoc())
@@ -265,9 +287,10 @@
 		 $lastname=$row['stationid'];
 	   }		
        if ($row['id']!=0)
-       echo '<div data-cat="'.$row['stationid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);"><span>X</span></span><span></span></div>';
+       echo '<div data-cat="'.$row['stationid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).
+       ($row['constraintName']!=''?' / '.htmlentities($row['constraintName']):'').'<span onclick="deleteTool(this);"><span>X</span></span><span></span></div>';
 	}		
-  echo '<script>makeDraggableTool(\'partstationlist\');</script>';	
+  echo '<script>makeDraggableTool(\'markerstationlist\');</script>';
  }
 ?>
 
@@ -295,7 +318,7 @@
 		</div>
 		<div class="w3-container">
 		<hr />
-		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync parts with scene</span></p>
+		  <p style="text-align: center"><span class="w3-tag w3-round button" onclick="syncPartsWithScene(<?php echo $_SESSION['projectid']; ?>);">Sync markers with scene</span></p>
 		  <p id="importpartsmsg"></p>
           <br>
         </div>
@@ -309,26 +332,18 @@
 	  <div class="w3-container w3-card w3-white w3-margin-bottom">
         <h2 id="projectname"><?php projectName(); ?></h2>
 	  </div>
-      <div id="partcatlist" class="w3-container w3-card w3-white w3-margin-bottom">
-        <h2>Part categories</h2>
+	  <div id="markerlist" class="w3-container w3-card w3-white w3-margin-bottom">
+		<h2>Markers in the scene</h2>
 		<?php
-		 loadPartCategories();
+		 loadMarkers();
 		?>
-		<p><input id="newPartCatName" type="text" /><span class="w3-tag w3-round button" onclick="addPartCat('newPartCatName');">Add part category</span>
-      </div>
-
-	  <div id="partlist" class="w3-container w3-card w3-white w3-margin-bottom">
-		<h2>Parts to categories assignment</h2>
-		<?php
-		 loadParts();
-		?>
-		<p><input id="newPartName" type="text" /><span class="w3-tag w3-round button" onclick="addPart('newPartName');">Add part</span>
+		<p><input id="newMarkerName" type="text" /><select id="newMarkerType"><?php insertMarkerTypes(); ?></select><span class="w3-tag w3-round button" onclick="addMarker('newMarkerName','newMarkerType');">Add Marker</span>
       </div>
 	  
-	  <div id="partstationlist" class="w3-container w3-card w3-white w3-margin-bottom">
-		<h2>Parts to stations assignment</h2>
+	  <div id="markerstationlist" class="w3-container w3-card w3-white w3-margin-bottom">
+		<h2>Markers to stations assignment</h2>
 		<?php
-		 loadPartsForStations();
+		 loadMarkersForStations();
 		?>
 		<p><input id="newStationName" type="text" /><span class="w3-tag w3-round button" onclick="addStation('newStationName');">Add station</span>
       </div>

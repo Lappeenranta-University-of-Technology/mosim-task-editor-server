@@ -111,6 +111,22 @@
  }
  
  }; //end of MMUS namespace
+
+ function addMarker(val,mtype) {
+  val=document.getElementById(val).value;
+  mtype=document.getElementById(mtype).value;
+  if (val!='')
+   $.post("update.php",
+    {
+      action: "addMarker",
+	  name: val,
+	  type: mtype
+    },
+    function(data, status){
+     if (getTagValue(data,'result')=='OK')
+     document.location.reload();
+	});  
+ }
  
  function addPart(val) {
   val=document.getElementById(val).value;
@@ -172,26 +188,41 @@
   e.stopPropagation();
   var action='delToolCat';
    if (e.target.parentNode.parentNode.parentNode.id=='partcatlist')
-   action='delPartCat';	   
-  var val=e.target.parentNode.parentNode.dataset.id;	 
+   action='delPartCat';	
+  var val=e.target.parentNode.parentNode.dataset.id;
   $.post("update.php",
     {
       action: action,
 	  id: val
     },
-    function(data, status){ 	
+    function(data, status){
      if (getTagValue(data,'result')=='OK')
-     document.location.reload();		 
+     document.location.reload();
      else
-	 e.target.parentNode.innerHTML="Error: Cannot delete entry";	 
+	 e.target.parentNode.innerHTML="Error: Cannot delete entry";
 	});   	 
+ }
+ 
+ function removeUserFromProject(obj)
+ {
+  if (obj.className.indexOf("clicked")>-1)
+  {
+   obj.className=obj.dataset.lastclass;
+   obj.innerHTML="X";
+  }
+  else
+  {
+	obj.dataset.lastclass=obj.className;
+	obj.className="clicked";
+    obj.innerHTML="Delete? <span onclick=\"removeUserFromProjectYes(event);\">Yes</span><span>Cancel</span>";
+  }
  }
  
  function deleteStation(obj) {
   if (obj.className.indexOf("clicked")>-1)
   {
-   obj.className="";	  
-   obj.innerHTML="X";	  
+   obj.className="";
+   obj.innerHTML="X";
   }
   else
   {
@@ -551,14 +582,15 @@
 	 else
 	 {
 	  windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
-      windowShow(null);		 
+      windowShow(null);
 	 }
 	});
  }
 
- function removeUserFromProject(obj) {
-   var projectid=obj.parentNode.parentNode.dataset.project;
-   var userid=obj.parentNode.parentNode.dataset.id;
+ function removeUserFromProjectYes(e) {
+   e.stopPropagation(); 
+   var projectid=e.target.parentNode.parentNode.parentNode.dataset.project;
+   var userid=e.target.parentNode.parentNode.parentNode.dataset.id;
     $.post("update.php",
     {
       action: "removeUserFromProject",
@@ -566,8 +598,10 @@
 	  projectid: projectid
     },
     function(data, status){
-		
-     obj.parentNode.parentNode.parentNode.deleteRow(obj.parentNode.parentNode.rowIndex);
+	 if (getTagValue(data,'result')=='OK')
+     e.target.parentNode.parentNode.parentNode.parentNode.deleteRow(e.target.parentNode.parentNode.parentNode.rowIndex);
+	 else
+	 e.target.parentNode.innerHTML=getTagValue(data,'result');
 	});
  }
  
@@ -1134,15 +1168,16 @@
  }
  
  function changeProject(obj) {
-  document.location.href='?project='+obj.value;	 
+  document.location.href='?project='+obj.value;
  }
  
  function changeStation(obj) {
-  document.location.href='?station='+obj.value;	 
+  document.location.href='?station='+obj.value;
  }
  
  function changeWorker(obj) {
-  document.location.href='?worker='+obj.value;	 
+  var station=document.getElementById('stations').value;
+  document.location.href='?worker='+obj.value+'&station='+station;
  } 
  
  function cancelTaskEdit(e) {
@@ -1524,6 +1559,12 @@
  }
  
  //windows
+ function windowSetContext(atrib, value)
+ {
+	var w=document.getElementsByClassName("modalwindow")[0]; 
+	w.setAttribute('data-'+atrib,value);
+ }
+ 
  function windowUpdate(title,content,buttons) {
   var w=document.getElementsByClassName("modalwindow")[0];
   w.firstChild.innerHTML=content;

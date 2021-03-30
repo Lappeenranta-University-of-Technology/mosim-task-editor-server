@@ -1,3 +1,7 @@
+span.w3-tag.tagicon.tools[data-id="0"] {
+ display: none; /*hide tools for tasks that do not require them */
+}
+
 div.brackettop {
  background-position: left 3px, left bottom;
  background-repeat: no-repeat, no-repeat;

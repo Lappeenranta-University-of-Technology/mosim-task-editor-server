@@ -1,3 +1,13 @@
+2.6.1
+ - Confirmation dialog for deleting avatars
+ - Confirmation dialog for removing users from projects
+ - Fixed bug with overriding project setting whenever project page was visited
+ - Hiding tools for high-level tasks that do not require tools at all
+ - Syncing markers (inluding information about station to which they belong)
+ - Markers editor
+ - Issue with worker selection causing reset of the station selection is now fixed
+ - Avatar to worker assignment, worker name, and worker description can now be edited
+ - Export XML and JSON formats have been updated to include Worker division of the tasks
 2.6.0
  - First implementation of assembly sequence generation toolbox
  - Changed user interface to one with 4 main categories

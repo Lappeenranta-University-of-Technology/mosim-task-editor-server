@@ -1,4 +1,18 @@
 <?php
+
+ function getEnumValues($table,$field) {
+	global $db;
+	$sql = "SHOW FIELDS FROM `{$table}` LIKE '{$field}'";
+	$result = $db->query($sql);
+	if ($row = $result->fetch_assoc())
+	{
+	 preg_match('#^enum\((.*?)\)$#ism', $row['Type'], $matches);
+	 $enum = str_getcsv($matches[1], ",", "'");
+	 return $enum;
+	}
+	return array();
+ }
+
  function projectName() {
   global $db;
   if ($_SESSION['projectid']==0)
@@ -23,7 +37,7 @@
 		$ok=true;
 		for ($i=0; ($i<count($val)) && $ok; $i++)
 			if (!ctype_digit($val[$i]))
-				if (!((ctype_digit(substr($val[$i],1)) && (substr($val[$i],0,1)=='S'))))
+				if (!((ctype_digit(substr($val[$i],1)) && in_array(substr($val[$i],0,1),array('S','M')))))
 				$ok=false;
 	return $ok;
 	}
@@ -32,7 +46,7 @@
 	 if (ctype_digit($val))
 		return true;
 	 else
-	 return ((ctype_digit(substr($val,1)) && (substr($val,0,1)=='S')));
+	 return ((ctype_digit(substr($val,1)) && in_array(substr($val,0,1),array('S','M'))));
 	}
  }
 
@@ -90,13 +104,18 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
     if ($row=$result->fetch_assoc())
      if ($row['ile']>0)
 	 {
-      echo '<option value="-1">Subassemblies</option>'; 		
+      echo '<option value="-1">Subassemblies</option>';
 	   if ($i==0)
 	   $selid=-2;
 	 }
    }
    if ($stationid==0)
 	echo '<option value="-3">Station output</option>';
+	$sql='SELECT count(*) as num FROM `markers` WHERE projectid='.$_SESSION['projectid'].' and type=\'WalkTarget\';';
+	if ($result=$db->query($sql))
+	 if ($row=$result->fetch_assoc())
+		if ($row['num']>0)
+		echo '<option value="-4">Markers</option>';
   return $selid;
  } 
 
@@ -105,7 +124,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
   global $db;
    if ($result=$db->query('SELECT p.id, p.name, (p.id=pc.defaultpart) as selected FROM parts p, part_cat p_c, partcat pc WHERE pc.id=p_c.cat and p_c.cat='.$parttype.' and p_c.part=p.id and p.projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
 	while ($row=$result->fetch_assoc())
-	echo '<option '.($row['selected']?'selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	echo '<option '.($row['selected']?'selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
  }
  
  function insertUncategorizedParts()
@@ -116,6 +135,15 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 	while ($row=$result->fetch_assoc())
 	echo '<option '.($i++==0?' selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
  }
+ 
+  function insertWalkTargetMarkers()
+  {
+	global $db;
+	if ($result=$db->query('SELECT id, name FROM markers WHERE projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
+	$i=0;
+	while ($row=$result->fetch_assoc())
+	echo '<option '.($i++==0?' selected="selected" ':'').'value="M'.$row['id'].'">'.$row['name'].'</option>';
+  }
  
  function insertTools($tooltype = 0)
  {

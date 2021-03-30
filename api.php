@@ -9,11 +9,13 @@
 //functions
  
  function camel($str) {
+  return $str; //switch off this function
   $str=mb_convert_case(trim($str),MB_CASE_TITLE,'UTF-8');
   return str_replace(' ','',$str);
  }
  
  function deCamel($str) {
+	 return $str; //switch off this function
   $out='';
   for ($i=0; $i<mb_strlen($str,'UTF-8'); $i++)
   {
@@ -287,9 +289,51 @@
   return json_encode($reply);
  }
  
+ function syncSceneToDB($token) {
+	global $db;
+	$projectid=tokenToProjectId($token);
+	if ($projectid==0)
+	return '<result>Error - insufficient user privileges</result>';
+	$sql='INSERT INTO `scene_temp`(`id`, `engineid`, `parent`, `name`, `type`, `projectid`) VALUES ';
+	var_dump($_POST);
+	if (!(isset($_POST['names']) && isset($_POST['IDs']) && isset($_POST['MMIIDs']) && isset($_POST['parents']) && isset($_POST['stations']) && isset($_POST['types']) &&
+      (count($_POST['names'])==count($_POST['IDs'])) &&
+	  (count($_POST['names'])==count($_POST['MMIIDs'])) &&
+	  (count($_POST['names'])==count($_POST['stations'])) &&
+	  (count($_POST['names'])==count($_POST['types'])) &&
+	  (count($_POST['names'])==count($_POST['parents']))))
+	return '<result>Scene sync: Dataset error</result>';
+	
+	$types=getEnumValues('scene_temp','type');
+	$itemscount=0;
+	
+	for ($i=0; $i<count($_POST['IDs']); $i++)
+	{
+		$_POST['names'][$i]=$db->real_escape_string($_POST['names'][$i]);
+		if (in_array($_POST['types'][$i],$types) &&
+			ctype_digit(strval($_POST['IDs'][$i])) &&
+			ctype_digit(strval($_POST['MMIIDs'][$i])) &&
+			ctype_digit(strval($_POST['stations'][$i])) &&
+			ctype_digit(strval($_POST['parents'][$i])))
+		{
+		$_POST['types'][$i]=$db->real_escape_string($_POST['types'][$i]);
+		$sql.='('.$_POST['IDs'][$i].','.$_POST['MMIIDs'][$i].','.$_POST['parents'][$i].',\''.$_POST['names'][$i].'\',\''.$_POST['types'][$i].'\','.$projectid.'),';
+		$itemscount++;
+		}
+	}
+	
+	if ($itemscount>0) //update scene_temp table only if there are objects in the scene
+	{
+	 $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE parent=VALUES(parent), name=VALUES(name), type=VALUES(type), changed=CURRENT_TIMESTAMP();';
+	 $db->query($sql);
+	 return '<resultsql>'.$sql.'</returnsql>';
+	}
+
+ }
+ 
  function addPartsFromScene($token) {
   global $db;
-  $projectid=tokenToProjectId($token);  
+  $projectid=tokenToProjectId($token);
   if ($projectid==0)
   return '<result>Error - insufficient user privileges</result>';
   $sql='SELECT id, name, engineid FROM `parts` WHERE projectid='.$projectid.' ORDER BY name, engineid';
@@ -302,12 +346,14 @@
    }
   $result='';
 
-  if (!(isset($_POST['partsNames']) && isset($_POST['partsIDs']) && isset($_POST['partsMMIIDs']) && 
+  if (!(isset($_POST['partsNames']) && isset($_POST['partsIDs']) && isset($_POST['partsMMIIDs']) && isset($_POST['partsStation']) &&
       (count($_POST['partsNames'])==count($_POST['partsIDs'])) &&
+	  (count($_POST['partsNames'])==count($_POST['partsStation'])) &&
 	  (count($_POST['partsNames'])==count($_POST['partsMMIIDs']))))
 	return '<result>Dataset error</result>';
   
    $sql='INSERT INTO parts (projectid, description, name, engineid) VALUES ';
+   $sqls='INSERT INTO part_station (part, station) VALUES ';
    $sqlu='INSERT INTO parts (id, projectid, description, name, engineid) VALUES ';
    $unityFound=array_fill(0,count($_POST['partsIDs']),false);
    
@@ -326,7 +372,10 @@
 	     $parts[$j]['changed']=true;
 	      if (($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i]) || 
 		      ($parts[$j]['name']!=$decamelled))
+		 {
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
+		  $sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
+		 }
          break;	
 	    }
 	   }
@@ -345,6 +394,7 @@
 	     $parts[$j]['changed']=true;
 	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])		      
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
+	      $sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -362,6 +412,7 @@
 	     $parts[$j]['changed']=true;
 	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
+	      $sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -384,6 +435,13 @@
    {
     $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE name=values(name), engineid=values(engineid);';
 	$ok=$ok && ($db->query($sqlu));
+   }
+   
+   if ($sqls[strlen($sqls)-1]==',') 
+   {
+    $sqls=substr($sqls,0,-1).' ON DUPLICATE KEY UPDATE station=values(station);';
+	echo '<sqls>'.$sqls.'</sqls>';
+	$ok=$ok && ($db->query($sqls));
    }
    
    //echo '<sql>'.$sql.'</sql>'."\r\n"; //this is only for debug purposes
@@ -544,13 +602,14 @@
  
  function addMarkersFromScene($token) {
   global $db;
-  $projectid=tokenToProjectId($token);  
+  $projectid=tokenToProjectId($token);
   if ($projectid==0)
   return '<result>Error - insufficient user privileges</result>';
 
-  if (!(isset($_POST['markerNames']) && isset($_POST['markersIDs']) && isset($_POST['markersMMIIDs']) && isset($_POST['markersType']) && 
+  if (!(isset($_POST['markerNames']) && isset($_POST['markersIDs']) && isset($_POST['markersMMIIDs']) && isset($_POST['markersType']) && isset($_POST['parentStation']) && 
       (count($_POST['markerNames'])==count($_POST['markersIDs'])) &&
 	  (count($_POST['markerNames'])==count($_POST['markersMMIIDs'])) &&
+	  (count($_POST['markerNames'])==count($_POST['parentStation'])) &&
 	  (count($_POST['markerNames'])==count($_POST['markersType']))))
 	return '<result>Dataset error 1</result>';
 
@@ -569,8 +628,8 @@
    }
   $result='';
 
-  $sql='INSERT INTO markers (projectid, type, name, engineid) VALUES ';
-  $sqlu='INSERT INTO markers (id, projectid, type, name, engineid) VALUES ';
+  $sql='INSERT INTO markers (projectid, type, name, engineid, stationid) VALUES ';
+  $sqlu='INSERT INTO markers (id, projectid, type, name, engineid, stationid) VALUES ';
   $unityFound=array_fill(0,count($_POST['markersIDs']),false);
    
 	for ($i=0; $i<count($_POST['markersIDs']); $i++)
@@ -587,7 +646,7 @@
 	     $parts[$j]['changed']=true;
 	      if (($parts[$j]['engineid']!=$_POST['markersMMIIDs'][$i]) || 
 		      ($parts[$j]['name']!=$decamelled))
-		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].','.$_POST['parentStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -603,7 +662,7 @@
 	     $found=true;
 		 $unityFound[$i]=true;
 	     $parts[$j]['changed']=true; 
-		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].','.$_POST['parentStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -620,7 +679,7 @@
 		 $unityFound[$i]=true;
 	     $parts[$j]['changed']=true;
 	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])
-		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';
+		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].','.$_POST['parentStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -629,7 +688,7 @@
 	 if (!$unityFound[$i])  
 	 {
 	  $decamelled=deCamel($_POST['markerNames'][$i]);
-	  $sql.='('.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].'),';  
+	  $sql.='('.$projectid.',\''.$_POST['markersType'][$i].'\',\''.$decamelled.'\','.$_POST['markersMMIIDs'][$i].','.$_POST['parentStation'][$i].'),';  
 	 }
    
    $ok=true;
@@ -641,17 +700,31 @@
    
    if ($sqlu[strlen($sqlu)-1]==',') 
    {
-    $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE name=values(name), engineid=values(engineid);';
+    $sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE name=values(name), engineid=values(engineid), stationid=values(stationid);';
 	$ok=$ok && ($db->query($sqlu));
    }
   
  }
  
- function outputJSON($result) {
+ function outputJSON($result,$token) {
+  $workertasks=[];
   $output=[];
   $i=0;	
+  $workerid=0;
+  $avatarid=0;
   while ($row=$result->fetch_assoc())
   {
+	if ($workerid!=$row['workerid'])
+	{
+		if ($workerid!=0)
+		{
+		 $workertasks[]=array('workerid'=>$workerid,'avatarid'=>$avatarid,'tasks'=>$output);
+		 $output=[];
+		}
+		$workerid=$row['workerid'];
+		$avatarid=$row['avatarid'];
+		$i=0;
+	}
    $output[]=array('step'=>$i,
                    'operation'=>camel($row['operation']),
 	   		       'part'=>array('type'=>camel($row['partname']),
@@ -662,13 +735,16 @@
 				                     'id'=>"NULL"));
    $i++;
   }
+  //at least one worker there is always
+  if ($workerid!=0)
+  $workertasks[]=array('workerid'=>$workerid,'avatarid'=>$avatarid,'tasks'=>$output);
   header('Content-Type: application/json');	
   echo                  	
   json_encode(array('callback'=>array('url'=>'https://taskeditor.mosim.eu/api.php',
-                    'token'=>'mosim2020-983456/'.$_GET['station']),
+                    'token'=>$token), //.'/'.$_GET['station'])
                     'scene'=>array('type'=>'default','id'=>"NULL"),
                     'avatars'=>array('type'=>'default','id'=>"NULL"),
-                    'tasks'=>$output)); 
+                    'workers'=>$workertasks)); 
  }
  
  function outputXML($result) {
@@ -684,6 +760,8 @@ XML;
    $xml->addChild('task','');
    $xml->task[$i]->addChild('task',($i+1));
    $xml->task[$i]->addChild('taskid',$row['id']);
+   $xml->task[$i]->addChild('workerid',$row['workerid']);
+   $xml->task[$i]->addChild('avatarid',$row['avatarid']);
    $xml->task[$i]->addChild('operation',camel($row['operation']));
    $xml->task[$i]->addChild('partname',camel($row['partname']));
    $xml->task[$i]->addChild('partid',$row['engineid']);
@@ -868,6 +946,11 @@ XML;
     }
   }
  
+  if ($_POST['action']=='syncScene')
+  {
+	 echo syncSceneToDB($_POST['token']);
+  }
+ 
  } //action issset (POST)
  
  //POST requests end
@@ -878,12 +961,12 @@ XML;
 	if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))
 	if (stationInCurrentProject($_GET['station']))
 	{
-	 $sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
-	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
-	     ' WHERE ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
-	     'ORDER BY ht.sortorder, ht.id;';
+	 $sql='SELECT ht.id, ht.workerid, w.avatarid, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
+	     'FROM highleveltasks ht, workers w, parts p, tools t, tasktypes tt'.
+	     ' WHERE w.stationid=ht.stationid and w.id=ht.workerid and ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
+	     'ORDER BY ht.workerid, ht.sortorder, ht.id;';
 	 if ($result=$db->query($sql))
-	  if (	isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
+	  if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
 	  outputXML($result);
       else 
   	  outputJSON($result);
@@ -897,15 +980,15 @@ XML;
 	$projectid=tokenToProjectId($_GET['token']);
 	if ($projectid>0)
 	{
-	$sql='SELECT ht.id, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
-	     'FROM highleveltasks ht, parts p, tools t, tasktypes tt'.
-	     ' WHERE ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
-	     'ORDER BY ht.sortorder, ht.id;';
+	$sql='SELECT ht.id, ht.workerid, w.avatarid, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
+	     'FROM highleveltasks ht, workers w, parts p, tools t, tasktypes tt'.
+	     ' WHERE w.stationid=ht.stationid and w.id=ht.workerid and ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
+	     'ORDER BY ht.workerid, ht.sortorder, ht.id;';
 	if ($result=$db->query($sql))
 	 if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
-	 outputXML($result);	
-     else 
-  	 outputJSON($result);
+	 outputXML($result);
+	 else 
+	 outputJSON($result,$_GET['token']);
 	}
   }
 

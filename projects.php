@@ -2,7 +2,7 @@
  include('common.php');
  $projidset=false;
  
-  if (isset($_GET['project']) && ctype_digit($_GET['project']))
+  if (isset($_GET['project']) && ctype_digit(strval($_GET['project'])))
   {  
    if ($result=$db->query('SELECT count(*) as ile FROM userroles ur WHERE ur.projectid='.$_GET['project'].' and ur.userid='.$_SESSION['userid'].';'))
 	 if ($row=$result->fetch_assoc())
@@ -12,6 +12,13 @@
 	   $_SESSION['projectid']=$_GET['project'];
 	   $db->query('UPDATE users SET lastprojectid='.$_GET['project'].' WHERE id='.$_SESSION['userid'].';');
 	  }
+  }
+  else //if get request does not point to specific project it needs to be checked if the project if that is in session does not lead to an empty project.
+  {
+	if ($result=$db->query('SELECT count(*) as ile FROM userroles ur WHERE ur.projectid='.$_SESSION['projectid'].' and ur.userid='.$_SESSION['userid'].';'))
+	 if ($row=$result->fetch_assoc())
+	  if ($row['ile']==1)
+	  $projidset=true;
   }
 
   if (($_SESSION['projectid']==0) || ($projidset==false))
@@ -269,15 +276,15 @@
    if ($result=$db->query($sql))
 	if ($row=$result->fetch_assoc())
     {
-	echo '<p><span style="cursor:pointer;" onclick="editProjectName(this,'.$_SESSION['projectid'].');">Name:</span><span style="margin-left:20px; font-weight:bold;">'.htmlentities($row['name']).'</span></p>';         
-	 echo '<p style="cursor:pointer;" onclick="editProjectDescription(this,'.$_SESSION['projectid'].');">Description:	</p><p style="white-space: pre;">'.htmlentities($row['description']).'</p>';         
+	echo '<p><span style="cursor:pointer;" onclick="editProjectName(this,'.$_SESSION['projectid'].');">Name:</span><span style="margin-left:20px; font-weight:bold;">'.htmlentities($row['name']).'</span></p>';
+	 echo '<p style="cursor:pointer;" onclick="editProjectDescription(this,'.$_SESSION['projectid'].');">Description:	</p><p style="white-space: pre;">'.htmlentities($row['description']).'</p>';
 	 echo '<p>Users:</p><table class="users" data-project="'.$_SESSION['projectid'].'"><tr><th colspan="2">Name</th><th>E-mail</th><th>Role</th></tr>';
-	 $sql='SELECT u.id, u.name, u.email, ur.role FROM `userroles` ur, `users` u WHERE u.id=ur.userid and ur.projectid='.$_SESSION['projectid'].' and u.enabled=1';                                                           
+	 $sql='SELECT u.id, u.name, u.email, ur.role FROM `userroles` ur, `users` u WHERE u.id=ur.userid and ur.projectid='.$_SESSION['projectid'].' and u.enabled=1';
 	  if ($result=$db->query($sql))
 	   while ($row=$result->fetch_assoc())
-       echo '<tr data-project="'.$_SESSION['projectid'].'" data-id="'.$row['id'].'"><td><span class="w3-tag w3-round button" onclick="removeUserFromProject(this);">X</span></td><td>'.                       htmlentities($row['name']).'</td><td>'.htmlentities($row['email']).'</td><td onclick="editUserRole(this);">'.htmlentities($row['role']).'</td></tr>';
+       echo '<tr data-project="'.$_SESSION['projectid'].'" data-id="'.$row['id'].'"><td><span class="w3-tag w3-round button" onclick="removeUserFromProject(this);">X</span></td><td>'.htmlentities($row['name']).'</td><td>'.htmlentities($row['email']).'</td><td onclick="editUserRole(this);">'.htmlentities($row['role']).'</td></tr>';
      echo '</table>';
-	}		
+	}
  }
  
  function insertStations($selectCurrent=true, $projectid=1)
@@ -294,7 +301,7 @@
   global $db;
    if ($result=$db->query('SELECT id, name FROM partcat ORDER BY sortorder, name ASC'))
 	while ($row=$result->fetch_assoc())
-	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';	
+	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
  } 
  */
  function insertToolTypes()
@@ -302,22 +309,22 @@
   global $db;
    if ($result=$db->query('SELECT id, name, sortorder FROM toolcat WHERE language="mosim" order by sortorder, id'))
 	while ($row=$result->fetch_assoc())
-	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';	
+	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
  }
  
  function insertPositions()
  {
   global $positions;
    for ($i=0; $i<count($positions); $i++)
-	echo '<option>'.$positions[$i].'</option>';   
+	echo '<option>'.$positions[$i].'</option>';
  }
  
  function insertTypes()
  {
-  global $db;  
+  global $db;
    if ($result=$db->query('SELECT id, name, sortorder FROM `tasktypes` WHERE parent=0 and language="mosim"'))
 	while ($row=$result->fetch_assoc())
-	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';		 
+	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
  }
  
 ?>

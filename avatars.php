@@ -19,17 +19,43 @@
 <link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/avatars.css">
 <script>
- function windowShow(obj) {
-  var w=document.getElementsByClassName("modalwindow")[0];	 
+ function windowShow() {
+  var w=document.getElementsByClassName("modalwindow")[0];
   w.className=w.className+" show";
  }
 
  function windowOK(obj) {
-  windowCancel(obj);	 
+  $.post("update.php",
+    {
+        action: "delAvatar",
+		workersids: (obj.parentNode.hasAttribute('data-workerids')?obj.parentNode.dataset.workerids.split(','):''), //zero array to make sure it passes validation through isset
+		avatarid: obj.parentNode.dataset.avatarid
+    },
+    function(data, status){
+		obj.parentNode.removeAttribute('data-workerids');
+		if (getTagValue(data,'result')=='OK')
+		document.location.reload();
+		else
+		 if (getTagValue(data,'ids')!='')
+		 {
+			windowUpdate('Avatar reassignment confirmation',getTagValue(data,'result'),Array('Delete','Cancel'));
+			obj.parentNode.dataset.workerids=getTagValue(data,'ids');
+		 }
+		 else
+		 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
+	});
  }
  
  function windowCancel(obj) {
-  obj.parentNode.className=obj.parentNode.className.split(' show').join('');	 
+  obj.parentNode.className=obj.parentNode.className.split(' show').join('');
+  obj.parentNode.removeAttribute('data-workerids');
+ }
+  
+  
+ function deleteAvatar(obj) {
+	windowShow();
+	windowSetContext('avatarid', obj.parentNode.dataset.id);
+	windowUpdate('Avatar removal confirmation','Do you want to remove avatar \''+obj.parentNode.dataset.name+'\'?',Array('Delete','Cancel'));
  }
   
  var accessToken="";
@@ -191,7 +217,7 @@
 <div class="modalwindow"><div></div>
 <div class="modalbutton" onclick="windowOK(this);">OK</div>
 <div class="modalbutton" onclick="windowCancel(this);">Cancel</div>
-<div class="modaltoolbar">Cutting tool icon</div>
+<div class="modaltoolbar">Delete avatar confirmation</div>
 </div>
 <!-- Page Container -->
 <div class="w3-content w3-margin-top" style="max-width:1400px;">

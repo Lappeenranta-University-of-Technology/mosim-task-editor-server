@@ -77,6 +77,17 @@
 	}
  }
  
+ function editWorkerDialog() {
+	showDialog('editworkerwindow');
+	var wname=document.getElementById("workers");
+	var wavatar=wname.options[wname.options.selectedIndex].dataset.avatar;
+	var wdesc=wname.options[wname.options.selectedIndex].dataset.desc;
+	wname=wname.options[wname.options.selectedIndex].innerHTML;
+	document.getElementById('edit_workernameWin').value=wname;
+	document.getElementById('edit_workerdescWin').value=wdesc;
+	document.getElementById('edit_workeravatarWin').value=wavatar;
+ }
+ 
  function windowOKworker(obj) {
   //addWorker("new_workernameWin");
   var wname=document.getElementById("new_workernameWin").value;
@@ -88,6 +99,25 @@
       action: "addWorker",
       name: wname,
 	  station: wstation,
+      description: wdescription,
+	  avatar: wavatar
+    },
+    function(data, status){
+     if (getTagValue(data,'result')=='OK')
+     document.location.reload();
+	}); 
+ }
+ 
+  function windowOKworkerE(obj) {
+  var wname=document.getElementById("edit_workernameWin").value;
+  var wdescription=document.getElementById("edit_workerdescWin").value;
+  var wavatar = document.getElementById("edit_workeravatarWin").value
+  var wworkers = document.getElementById("workers").value;
+   $.post("update.php",
+    {
+      action: "editWorker",
+	  id: wworkers,
+      name: wname,
       description: wdescription,
 	  avatar: wavatar
     },
@@ -354,7 +384,6 @@
   global $db, $stationid, $workerid;
    
    $j=0;
-/*   $sql='SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, pc.icon as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, parts p, tasktypes tt, partcat pc, part_cat p_c WHERE t_c.tool=t.id and t_c.cat=tc.id and p_c.part=hlt.partid and p_c.cat=pc.id and tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.partid>0 and hlt.stationid='.$stationid.' '.*/
    $sql='SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, '.
    '(SELECT pc.icon FROM partcat pc, part_cat p_c WHERE p_c.cat=pc.id and p_c.part=hlt.partid LIMIT 1) as particon, '.
    '(SELECT tc.icon FROM toolcat tc, tool_cat t_c WHERE t_c.cat=tc.id and t_c.tool=hlt.toolid LIMIT 1) as toolicon, '.
@@ -382,7 +411,6 @@
 	 if ($row['tasktypeid']==0)
 	 echo '<div class="unfold" onclick="unFoldSubAssembly(this);"></div>';
 	 echo "<h6 class=\"iconback time\"><i class=\"fa fa-hourglass fa-fw w3-margin-right\"></i>".$row['esttime']."</h6>";
-	                                         
      echo "<h5 onclick=\"clickSel(this);\" class=\"w3-opacity task\"><b>".
 	 ($_SESSION['showTaskID']?"ID ".$row['id']:"Task $j")."</b>";
 	 
@@ -395,7 +423,7 @@
 	 else//tasks
 	 {
 	 echo "<span id=\"task_".$row['id'].'_operation'."\" onclick=\"clickTaskType(this);\" ".notBlankIcon($row['tticon'])." class=\"w3-tag w3-round tagicon operation\" data-id=\"".$row['tasktypeid']."\">".htmlentities($row['tasktype'])."</span>";
-	 echo "<span id=\"task_".$row['id'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])." class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";                              
+	 echo "<span id=\"task_".$row['id'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])." class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";
 	 echo "<span id=\"task_".$row['id'].'_tool'."\" onclick=\"clickTool(this);\" data-id=\"".$row['toolid']."\" ".notBlankIcon($row['toolicon'])." class=\"w3-tag w3-round tagicon tools\">".htmlentities($row['toolname'])."</span></h5>";
      }
 	 //TODO: add position id to the query
@@ -428,12 +456,12 @@
   $workers='';
   $projectid=$_SESSION['projectid'];
   $i=0;
-  $sql='SELECT id, name FROM workers WHERE projectid='.$projectid.
+  $sql='SELECT id, name, description, avatarid FROM workers WHERE projectid='.$projectid.
        ' and stationid in (0, '.$stationid.') ORDER BY name';
    if ($result=$db->query($sql))
 	while ($row=$result->fetch_assoc())	
 	{
-	 $workers.='<option '.((($row['id']==$workerid) || (($workerid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	 $workers.='<option '.((($row['id']==$workerid) || (($workerid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'" data-desc="'.str_replace('"','\"',$row['description']).'" data-avatar="'.$row['avatarid'].'">'.$row['name'].'</option>';	
 	 if (($workerid==0) && ($i==0))
 	 $workerid=$row['id'];
 	 $i++;
@@ -520,6 +548,17 @@
 <div class="modaltoolbar">New worker</div>
 </div>
 
+<!-- Edit worker input message window -->
+<div id="editworkerwindow" class="modalwindow mediumwindow"><div>
+<p>Worker name: <input type="text" id="edit_workernameWin"></p>
+<p>Description: <input type="text" id="edit_workerdescWin"></p>
+<p>Avatar: <select id="edit_workeravatarWin"><?php insertAvatars(); ?></select></p>
+</div>
+<div class="modalbutton" onclick="windowOKworkerE(this);">Save</div>
+<div class="modalbutton" onclick="windowCancel(this);">Cancel</div>
+<div class="modaltoolbar">Edit worker</div>
+</div>
+
 <!-- Move task to other station message window -->
 <div id="movetostationwindow" class="modalwindow"><div><p>Destination station:<select id="tostation"><?php insertStations(false); ?></select></p><p>Destination worker:<select id="toworker"><?php insertWorkers(false); ?></select></p></div>
 <div class="modalbutton" onclick="windowOKmoveToStation(this);">Move</div>
@@ -597,13 +636,14 @@
 		 ?>
 		  <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeStationDialog(<?php echo $stationid; ?>);">Remove current station</span></p>
 		  <hr />
-		  <p><i class="fa fa-gear fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newworkerwindow');">New worker</span></p>
+		  <p><i class="fa fa-user fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="showDialog('newworkerwindow');">New worker</span></p>
 		  
 		  <?php
 		   if ($workerid>0)
 		   {
 			 ob_start();
 			?>
+		   <p><i class="fa fa-user fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="editWorkerDialog();">Edit worker</span></p>
 		   <p><i class="fa fa-trash fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" onclick="removeWorkerDialog();">Remove worker</span></p>
 		  <hr />
 		  <p><i class="fa fa-eye fa-fw w3-margin-right w3-large iconback pointer"></i><span class="pointer" id="taskidshowhide" onclick="showTaskID(this);" data-show="<?php echo ($_SESSION['showTaskID']?'1':'0').'">'.($_SESSION['showTaskID']?'Show task numbers':'Show task IDs'); ?></span></p>

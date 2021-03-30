@@ -142,7 +142,7 @@
   global $db;
     if (trim($name)=='')
 		return '<result>ERR</result><message>Could not create worker, worker\'s name cannot be empty</message>';
-	if (!(ctype_digit($station) && ctype_digit($avatar) && ($project)))
+	if (!(ctype_digit($station) && ctype_digit($avatar) && ctype_digit($project)))
 		return '<result>ERR</result><message>Could not create worker due to data form error.</message>';
 	if (($_SESSION['userid']>0) && isset($_SESSION['projectid']) && ($_SESSION['projectid']==$project))
 	{
@@ -153,6 +153,26 @@
 		  return '<result>OK</result>';
 	   else
 		  return '<result>ERR</result><message>Could not create worker due to database error 1.</message>';
+	}
+	return '<result>ERR</result><message>Not enough privileges do create worker.</message>';
+ }
+ 
+ function editWorker($name, $description, $id, $avatar, $project)
+ {//TODO: user privileges check
+  global $db;
+    if (trim($name)=='')
+		return '<result>ERR</result><message>Could not change worker\'s name, worker\'s name cannot be empty</message>';
+	if (!(ctype_digit(strval($id)) && ctype_digit(strval($avatar)) && ctype_digit(strval($project))))
+		return '<result>ERR</result><message>Could not edit worker due to data form error.</message>';
+	if (($_SESSION['userid']>0) && isset($_SESSION['projectid']) && ($_SESSION['projectid']==$project))
+	{
+	 $name="'".$db->real_escape_string(trim($name))."'";
+	 $description="'".$db->real_escape_string(trim($description))."'";
+	 $sql='UPDATE workers SET `name`='.$name.', `description`='.$description.', `avatarid`='.$avatar.' WHERE id='.$id.' and projectid='.$project;
+	  if ($db->query($sql))
+		  return '<result>OK</result>';
+	   else
+		  return '<result>ERR</result><message>Could not modify worker due to database error 1.</message>';
 	}
 	return '<result>ERR</result><message>Not enough privileges do create worker.</message>';
  }
@@ -338,25 +358,41 @@
 	 {
 		$sql='INSERT INTO `userroles` (`userid`, `projectid`, `laststation`, `role`) SELECT `userid`, '.$newId.', `laststation`, `role` FROM `userroles` WHERE projectid='.$id;
 		$result['users']=($db->query($sql));
-		echo '<p>User roles SQL: '.htmlentities($sql).'</p>'; 
+		echo '<p>User roles SQL: '.htmlentities($sql).'</p>';
 	 }
 	 
 	return true;
  }
 
+ function addMarker($name,$type) {
+  global $db;
+   if (!isset($_SESSION['projectid']))
+   return 'ERROR: No active project';
+  $markertypes=getEnumValues('markers','type');
+   if (!in_array($type,$markertypes))
+   return 'ERROR: Unsupported marker type';
+  $name=$db->real_escape_string($name);
+  $sql='INSERT INTO markers (projectid,name,type) VALUES ('.$_SESSION['projectid'].',\''.$name.'\',\''.$type.'\');';
+  echo '<sql>'.$sql.'</sql>';
+  $db->query($sql);
+   if ($db->affected_rows>0)
+   return 'OK';
+  return 'ERROR';
+ }
+
  function addPart($name) {
   global $db;
   if (!isset($_SESSION['projectid']))
-  return 'ERROR: No active project';	  
+  return 'ERROR: No active project';
   $name=$db->real_escape_string($name);
   $sql='INSERT INTO parts (projectid,name,description) VALUES ('.$_SESSION['projectid'].',\''.$name.'\',\'\');';
   echo '<sql>'.$sql.'</sql>';
   $db->query($sql);
    if ($db->affected_rows>0)
-   return 'OK';	   
-  return 'ERROR'; 
+   return 'OK';
+  return 'ERROR';
  }
- 
+
  function addTool($name) {
   global $db;
   $name=$db->real_escape_string($name);
@@ -650,7 +686,7 @@
 	 echo '<result>OK</result>';
      else
      echo '<result>Nothing to change</result>';
-	return true;;
+	return true;
    }
   echo '<result>You are not a project owner</result>';
   return false;
@@ -828,7 +864,7 @@
   global $db;
   if ($_SESSION['role']!='owner')
   {
-   echo '<result>Only owner can delete users</result>';	  
+   echo '<result>Only owners can delete users</result>';
    return;
   }	  
   $sql='SELECT count(*) as ile, role FROM userroles WHERE userid<>'.$userid.' and projectid='.$projectid.' and role=\'owner\';';
@@ -841,10 +877,10 @@
        if ($db->affected_rows>0)
    	   echo '<result>OK</result>';
        else
-       echo '<result>Error</result>';		   
+       echo '<result>Database error</result>';
 	 }
      else
-     echo '<result>You cannot remove the last owner</result>';		 
+     echo '<result>You cannot remove the last owner</result>';
  }
  
  function searchUser($find) {
@@ -924,15 +960,17 @@
   if (!isUsersProject($_SESSION['projectid']))
   return 'You do not have rights to edit this project';
   $time=normalizeTime($_POST['time']);
-  $partsubpart=$part.',0';
+  $partsubpart=$part.',0,0';
    if (substr($part,0,1)=='S')
-   $partsubpart='0,'.substr($part,1);
+   $partsubpart='0,'.substr($part,1).',0';
+   if (substr($part,0,1)=='M')
+   $partsubpart='0,0,'.substr($part,1);
   $sql='SELECT sum(ile)+1 as ile FROM (SELECT count(*) as ile FROM highleveltasks WHERE stationid='.$_POST['stationid'].' UNION ALL SELECT count(*) as ile FROM stations WHERE parent='.$_POST['stationid'].') dane;';
   $nextorder=1000;
     if ($result=$db->query($sql))
 	  if ($row=$result->fetch_assoc())
 	  $nextorder=$row['ile'];
-  $sql='INSERT INTO `highleveltasks` (`workerid`, `stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `toolid`,`esttime`, `positionname`, `description`) VALUES ('.$_POST['workerid'].','.$_POST['stationid'].','.$_POST['type'].','.$nextorder.','.$partsubpart.','.$_POST['tool'].',\''.$db->real_escape_string($time).'\',\''.
+  $sql='INSERT INTO `highleveltasks` (`workerid`, `stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `markerid`,`toolid`,`esttime`, `positionname`, `description`) VALUES ('.$_POST['workerid'].','.$_POST['stationid'].','.$_POST['type'].','.$nextorder.','.$partsubpart.','.$_POST['tool'].',\''.$db->real_escape_string($time).'\',\''.
   $db->real_escape_string($_POST['position']).'\',\''.
   $db->real_escape_string($_POST['desc']).'\');';
   if ($db->query($sql))
@@ -1091,6 +1129,16 @@
 		if (!in_array($row['role'],array('owner','editor')))
 			 return false;
 	return true;
+ }
+ 
+ function isUsersAvatar($avatarid)
+ {
+	global $db;
+	$sql='SELECT count(*) as ile, a.projectid, u.role FROM `avatars` a, userroles u WHERE a.id='.$avatarid.' and role in (\'owner\',\'editor\') and u.userid='.$_SESSION['userid'].' and u.projectid=a.projectid';
+	if ($result=$db->query($sql))
+		if ($row=$result->fetch_assoc())
+			return ($row['ile']>0);
+	return false;
  }
 
  function isinUsersProject($tasks) {
@@ -1506,8 +1554,37 @@
   return 'You do not have permissions to edit this project.';
  }
  
+ function delAvatar($avatarid, $workersids) {
+	global $db;
+	if ((!isset($_SESSION['userid'])) || (!isset($_SESSION['projectid'])))
+	return '<result>You do not have permissions to edit this project.</result>';
+	if (!isUsersProject($_SESSION['projectid']))
+	return '<result>You do not have rights to edit this project</result>';
+	if (!isUsersAvatar($avatarid))
+	return '<result>You do not have rights to remove avatars</result>';
+	if (count($workersids)==0)
+	$workersids[]=0;
+	$sql='SELECT id, name FROM `workers` WHERE avatarid='.$avatarid.' and id not in ('.implode(',',$workersids).');';
+	$question='<result><p>Removing this avatar will change avatar to default for the following workers:</p><ul>';
+	$ids=[];
+	if ($result=$db->query($sql))
+		while ($row=$result->fetch_assoc())
+		{
+			$question.='<li>'.htmlentities($row['name']).'</li>';
+			$ids[]=$row['id'];
+		}
+	$question.='</ul></result>';
+	if (count($ids)>0)
+		return $question.'<ids>'.implode(',',$ids).'</ids>';
+	$sql='DELETE FROM avatars WHERE id='.$avatarid.' and projectid='.$_SESSION['projectid'].' LIMIT 1;';
+	$db->query($sql);
+	$sql='UPDATE workers SET avatarid=0 WHERE avatarid='.$avatarid.' and projectid='.$_SESSION['projectid'];
+	$db->query($sql);
+	return '<result>OK</result>';
+ }
+ 
  function addAvatar($name,$age,$height,$weight,$gender) {
-	 global $db;
+	global $db;
 	if ((!isset($_SESSION['userid'])) || (!isset($_SESSION['projectid'])))
     return 'You do not have permissions to edit this project.';
 	if (!isUsersProject($_SESSION['projectid']))
@@ -1591,6 +1668,11 @@
    else
 	 switch ($_POST['maintype'])
 	 {
+	   case -4: //Markers WalkTargets
+	    echo '<result>OK</result><maintype>'.$_POST['maintype'].'</maintype><response>';
+		insertWalkTargetMarkers();
+		echo '</response>';
+	   break;
 	   case -3: //stations
 	    if (isset($_POST['stationid']) && ctype_digit($_POST['stationid']))
 		insertStationsAsParts($_POST['stationid']);
@@ -1601,7 +1683,7 @@
 	    echo '</response>';	
        break;
 	   case -1:
-        if (isset($_POST['stationid']) && ctype_digit($_POST['stationid']))		//subassemblies
+        if (isset($_POST['stationid']) && ctype_digit($_POST['stationid'])) //subassemblies
         insertSubassemblies($_POST['stationid']);
 		break;
 	 }
@@ -1663,13 +1745,18 @@
 	if (ctype_digit($_POST['userid']) && ctype_digit($_POST['projectid']))
     removeUserFromProject($_POST['userid'],$_POST['projectid']);
   
+  if ($_POST['action']=='addMarker')
+   if (isset($_POST['name']) && (trim($_POST['name'])!='') &&
+       isset($_POST['type']) && (trim($_POST['type'])!=''))
+   echo '<result>'.addMarker(trim($_POST['name']),trim($_POST['type'])).'</result>';
+  
   if ($_POST['action']=='addPart')
    if (isset($_POST['name']) && (trim($_POST['name'])!=''))
-   echo '<result>'.addPart(trim($_POST['name'])).'</result>';	
+   echo '<result>'.addPart(trim($_POST['name'])).'</result>';
   
   if ($_POST['action']=='addPartCat')
    if (isset($_POST['name']) && (trim($_POST['name'])!=''))
-   echo '<result>'.addPartCat(trim($_POST['name'])).'</result>';	 
+   echo '<result>'.addPartCat(trim($_POST['name'])).'</result>';
    
   if ($_POST['action']=='addToolCat')
    if (isset($_POST['name']) && (trim($_POST['name'])!=''))
@@ -1713,6 +1800,15 @@
 	}
 	else
 	  echo '<result>ERROR</result><msg>You need MMU library manager rights to perform this action.</msg>';
+   }
+	
+  if ($_POST['action']=='delAvatar')
+   if (isset($_POST['avatarid']) && ctype_digit($_POST['avatarid']))
+   {
+	   if (isset($_POST['workersids']) && ctype_digit(implode('',$_POST['workersids'])))
+		echo delAvatar($_POST['avatarid'], $_POST['workersids']);
+		else
+		echo delAvatar($_POST['avatarid'], array());
    }
 
   if ($_POST['action']=='delStation')
@@ -1950,6 +2046,9 @@
  
   if (($_POST['action']=='addWorker') && isset($_POST['name']) && isset($_POST['description']) && isset($_POST['station']) && isset($_POST['avatar']))
   echo addWorker($_POST['name'], $_POST['description'], $_POST['station'], $_POST['avatar'], $_SESSION['projectid']);
+
+  if (($_POST['action']=='editWorker') && isset($_POST['name']) && isset($_POST['description']) && isset($_POST['id']) && isset($_POST['avatar']))
+  echo editWorker($_POST['name'], $_POST['description'], $_POST['id'], $_POST['avatar'], $_SESSION['projectid']);
  
  //user management
  if (($_POST['action']=='updateUser') && isset($_POST['name']) && isset($_POST['email']) && isset($_POST['passcurrent']) && isset($_POST['passnew']))
