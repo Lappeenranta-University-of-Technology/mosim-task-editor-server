@@ -294,7 +294,9 @@
 	$projectid=tokenToProjectId($token);
 	if ($projectid==0)
 	return '<result>Error - insufficient user privileges</result>';
-	$sql='INSERT INTO `scene_temp`(`id`, `engineid`, `parent`, `name`, `type`, `projectid`) VALUES ';
+	$sql='DELETE FROM `scene_temp` WHERE project id='.$projectid.' and savename=\'current\';';
+	$db->query($sql);
+	$sql='INSERT INTO `scene_temp`(`id`, `engineid`, `parent`, `station` , `name`, `type`, `projectid`) VALUES ';
 	var_dump($_POST);
 	if (!(isset($_POST['names']) && isset($_POST['IDs']) && isset($_POST['MMIIDs']) && isset($_POST['parents']) && isset($_POST['stations']) && isset($_POST['types']) &&
       (count($_POST['names'])==count($_POST['IDs'])) &&
@@ -306,7 +308,7 @@
 	
 	$types=getEnumValues('scene_temp','type');
 	$itemscount=0;
-	
+	//loop over all components and add them to the insert sql statement.
 	for ($i=0; $i<count($_POST['IDs']); $i++)
 	{
 		$_POST['names'][$i]=$db->real_escape_string($_POST['names'][$i]);
@@ -317,7 +319,7 @@
 			ctype_digit(strval($_POST['parents'][$i])))
 		{
 		$_POST['types'][$i]=$db->real_escape_string($_POST['types'][$i]);
-		$sql.='('.$_POST['IDs'][$i].','.$_POST['MMIIDs'][$i].','.$_POST['parents'][$i].',\''.$_POST['names'][$i].'\',\''.$_POST['types'][$i].'\','.$projectid.'),';
+		$sql.='('.$_POST['IDs'][$i].','.$_POST['MMIIDs'][$i].','.$_POST['parents'][$i].','.$_POST['stations'][$i].',\''.$_POST['names'][$i].'\',\''.$_POST['types'][$i].'\','.$projectid.'),';
 		$itemscount++;
 		}
 	}
@@ -328,7 +330,69 @@
 	 $db->query($sql);
 	 return '<resultsql>'.$sql.'</returnsql>';
 	}
+ }
+ 
+ function addAvatarsFromScene($token) {
+	global $db;
+	$projectid=tokenToProjectId($token);
+	if ($projectid==0)
+	return '<result>Error - insufficient user privileges</result>';
+	
+	if (!(isset($_POST['avatarsNames']) && isset($_POST['avatarsIDs']) && isset($_POST['avatarsMMIIDs']) && isset($_POST['avatarsStation']) &&
+      (count($_POST['avatarsNames'])==count($_POST['avatarsIDs'])) &&
+	  (count($_POST['avatarsNames'])==count($_POST['avatarsStation'])) &&
+	  (count($_POST['avatarsNames'])==count($_POST['avatarsMMIIDs']))))
+	return '<result>Dataset error</result>';
 
+	$sql='SELECT `id`, `engineid`, `name` as avatar, `projectid` FROM `avatars` WHERE projectid='.$projectid.' ORDER BY avatar';
+	$avatars=[];
+	if ($result=$db->query($sql))
+	 while ($row=$result->fetch_assoc())
+	 {
+	  $row['changed']=false;
+	  $avatars[]=$row;
+	 }
+
+	$sql='INSERT INTO avatars (`projectid`, `engineid`, `name`) VALUES ';
+	$sqlu='INSERT INTO avatars (`id`,`projectid`, `engineid`, `name`) VALUES ';
+	
+	for ($i=0; $i<count($_POST['avatarsIDs']); $i++)
+	{
+	  $found=false;
+	  for ($j=0; $j<count($avatars); $j++)
+	  {
+	   if (!$avatars[$i]['changed'] && ($_POST['avatarsMMIIDs'][$i]==$avatars[$j]['engineid']))
+	   {
+		$found=true;
+		if (($_POST['avatarsNames'][$i]!=$avatars[$j]['avatar']) || 
+			($_POST['avatarsIDs'][$i]!=$avatars[$j]['id']))
+			$sqlu.='('.$avatars[$j]['id'].','.$projectid.','.$_POST['avatarsMMIIDs'][$i].',\''.$db->real_escape_string($_POST['avatarsNames'][$i]).'\'),';
+		break;
+	   }
+	  }
+	  if (!$found)
+		  $sql.='('.$projectid.','.$_POST['avatarsMMIIDs'][$i].',\''.$db->real_escape_string($_POST['avatarsNames'][$i]).'\'),';
+	}
+	
+	
+	if (substr($sqlu,-1)==',') //updating existing ones
+	{
+		$sqlu=substr($sqlu,0,-1).' ON DUPLICATE KEY UPDATE engineid=VALUES(engineid), name=VALUES(name);';
+		$db->query($sqlu);
+	}
+	if (substr($sql,-1)==',') //adding new ones
+	{
+		$sql=substr($sql,0,-1);
+		$db->query($sql);
+	}
+	
+	$output=[];
+	$sql='SELECT `id`, `engineid`, `name` as avatar, `projectid` FROM `avatars` WHERE projectid='.$projectid.' ORDER BY avatar';
+	if ($result=$db->query($sql))
+	 while ($row=$result->fetch_assoc())
+	 $output[]=$row;
+    
+	return json_encode($output);
  }
  
  function addPartsFromScene($token) {
@@ -803,6 +867,20 @@ XML;
   echo json_encode($stations);
  }
  
+ function getWorkers($token) {
+  global $db;
+  $sql='SELECT w.id, w.name as worker, w.stationid, w.avatarid FROM `workers` w, `tokens` t WHERE w.projectid=t.projectid and t.token=\''.$db->real_escape_string($token).'\' ORDER BY stationid, worker;';
+  $workers=array();
+   if ($result=$db->query($sql))
+    while ($row=$result->fetch_assoc())
+	{
+	 $row['simulate']=true;
+	 $workers[]=$row;
+	}
+  header('Content-Type: application/json');	
+  echo json_encode($workers);
+ }
+ 
  function testConnection($token) {
 	 $idName=tokenToProjectIdAndName($token);
 	 return json_encode(array("projectid"=>intval($idName['id']),
@@ -821,6 +899,9 @@ XML;
   if (($_POST['action']=='getStationList') && (tokenToProjectId($_POST['token'])!==0))
   getStationTypes($_POST['token']);
 
+  if (($_POST['action']=='getWorkerList') && (tokenToProjectId($_POST['token'])!==0))
+  getWorkers($_POST['token']);
+
   if (($_POST['action']=='removeMMU') && isset($_POST['vendorID']))
   {
 	if (tokenToProjectIdAndRoleCheck($_POST['token'],'MMU Library manager')>0)
@@ -833,6 +914,14 @@ XML;
      } //TODO: prepare response for error state
 	}
   }
+
+	if (($_POST['action']=='syncAvatars') && (tokenToProjectId($_POST['token'])!==0))
+	{
+		$result=addAvatarsFromScene($_POST['token']);
+		 if ((substr($result,0,8)<>'<result>') && (substr($result,0,5)<>'<sql>'))
+		 header('Content-Type: application/json');
+		echo $result;
+	}
 
   if (($_POST['action']=='addParts'))
   {
@@ -890,8 +979,7 @@ XML;
  
  if (($_POST['action']=='syncGroupsAndStations') && isset($_POST['token']))
  {
-  echo addStationsFromScene($_POST['token']);                             
-   //sd fsd gsr gsrg srg srg sg s
+  echo addStationsFromScene($_POST['token']);
  }
  
  if (($_POST['action']=='getSettings') && isset($_POST['token']))
@@ -994,6 +1082,9 @@ XML;
 
   if (($_GET['action']=='getToolList') && (tokenToProjectId($_GET['token'])!==0))
   getToolTypes($_GET['token']);
+
+  if (($_GET['action']=='getWorkerList') && (tokenToProjectId($_GET['token'])!==0))
+  getWorkers($_GET['token']);
 
   if (($_GET['action']=='getPart3D') && isset($_GET['partid']) && ctype_digit($_GET['partid']))
   {
