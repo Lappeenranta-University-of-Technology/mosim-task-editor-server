@@ -323,10 +323,9 @@
 		$itemscount++;
 		}
 	}
-	
 	if ($itemscount>0) //update scene_temp table only if there are objects in the scene
 	{
-	 $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE parent=VALUES(parent), name=VALUES(name), type=VALUES(type), changed=CURRENT_TIMESTAMP();';
+	 $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE parent=VALUES(parent), name=VALUES(name), station=VALUES(station), type=VALUES(type), changed=CURRENT_TIMESTAMP();';
 	 $db->query($sql);
 	 return '<resultsql>'.$sql.'</returnsql>';
 	}
@@ -356,23 +355,36 @@
 	$sql='INSERT INTO avatars (`projectid`, `engineid`, `name`) VALUES ';
 	$sqlu='INSERT INTO avatars (`id`,`projectid`, `engineid`, `name`) VALUES ';
 	
-	for ($i=0; $i<count($_POST['avatarsIDs']); $i++)
+	for ($i=0; $i<count($_POST['avatarsIDs']); $i++) 
 	{
 	  $found=false;
 	  for ($j=0; $j<count($avatars); $j++)
-	  {
-	   if (!$avatars[$i]['changed'] && ($_POST['avatarsMMIIDs'][$i]==$avatars[$j]['engineid']))
+	  { //finding maches by engineid (already synced earlier)
+	   if (!$avatars[$j]['changed'] && ($_POST['avatarsMMIIDs'][$i]==$avatars[$j]['engineid']))
 	   {
 		$found=true;
+		$avatars[$j]['changed']=true;
 		if (($_POST['avatarsNames'][$i]!=$avatars[$j]['avatar']) || 
 			($_POST['avatarsIDs'][$i]!=$avatars[$j]['id']))
 			$sqlu.='('.$avatars[$j]['id'].','.$projectid.','.$_POST['avatarsMMIIDs'][$i].',\''.$db->real_escape_string($_POST['avatarsNames'][$i]).'\'),';
 		break;
 	   }
 	  }
-	  if (!$found)
-		  $sql.='('.$projectid.','.$_POST['avatarsMMIIDs'][$i].',\''.$db->real_escape_string($_POST['avatarsNames'][$i]).'\'),';
+
+	  if (!$found) //finding maches by names for those that have engineid=0
+		for ($j=0; $j<count($avatars); $j++)
+	     if (!$avatars[$j]['changed'] && ($avatars[$j]['engineid']==0) && 
+		    ($_POST['avatarsNames'][$i]==$avatars[$j]['avatar']))
+		 {
+			$found=true;
+			$avatars[$j]['changed']=true;
+			$sqlu.='('.$avatars[$j]['id'].','.$projectid.','.$_POST['avatarsMMIIDs'][$i].',\''.$db->real_escape_string($_POST['avatarsNames'][$i]).'\'),';
+		 }
+	  
+		if (!$found)
+		$sql.='('.$projectid.','.$_POST['avatarsMMIIDs'][$i].',\''.$db->real_escape_string($_POST['avatarsNames'][$i]).'\'),';
 	}
+	
 	
 	
 	if (substr($sqlu,-1)==',') //updating existing ones
@@ -386,8 +398,20 @@
 		$db->query($sql);
 	}
 	
+	$dellist=[]; //deleting removed avatars from scene
+	for ($i=0; $i<count($avatars); $i++)
+		if (!$avatars[$i]['changed'] && $avatars[$i]['engineid']>0)
+			$dellist[]=$avatars[$i]['id'];
+	if (count($dellist)>0)
+	{
+	 $dellist=implode(',',$dellist);
+	 $sqldel='UPDATE workers SET avatarid=0 WHERE avatarid in ('.$dellist.') and projectid='.$projectid;
+	 $db->query($sqldel);
+	 $sqldel='DELETE FROM avatars WHERE id in ('.$dellist.') and projectid='.$projectid;
+	 $db->query($sqldel);
+	}
 	$output=[];
-	$sql='SELECT `id`, `engineid`, `name` as avatar, `projectid` FROM `avatars` WHERE projectid='.$projectid.' ORDER BY avatar';
+	$sql='SELECT `id`, `engineid` as localID, `name` as avatar FROM `avatars` WHERE projectid='.$projectid.' ORDER BY avatar';
 	if ($result=$db->query($sql))
 	 while ($row=$result->fetch_assoc())
 	 $output[]=$row;
@@ -881,6 +905,30 @@ XML;
   echo json_encode($workers);
  }
  
+ function setWorkers($token) {
+	global $db;
+	if (!(isset($_POST['workerid']) && isset($_POST['simulate']) && isset($_POST['avatarid']) && (count($_POST['workerid'])==count($_POST['simulate']))
+		 && (count($_POST['workerid'])==count($_POST['avatarid']))))
+		 {
+			ob_start();
+			var_dump($_POST);
+			$result = ob_get_clean();
+			return '<result>Dataset error: '.$result.'</result>';
+		 }
+	 if (tokenToProjectId($token)==0)
+	 return '<result>Invalid project token</result>';
+	
+	$sql='';
+	for ($i=0; $i<count($_POST['workerid']); $i++)
+		if (ctype_digit(strval($_POST['workerid'][$i])) && ctype_digit(strval($_POST['avatarid'][$i])))
+		$sql.='UPDATE `workers` SET avatarid='.$_POST['avatarid'][$i].' WHERE id='.$_POST['workerid'][$i].' LIMIT 1; ';
+	if ($sql=='')
+	return '<result>Nothing to update</result>';
+	$db->multi_query($sql);
+	while ($db -> next_result());
+	return '<result>OK</result>';
+ }
+ 
  function testConnection($token) {
 	 $idName=tokenToProjectIdAndName($token);
 	 return json_encode(array("projectid"=>intval($idName['id']),
@@ -901,6 +949,9 @@ XML;
 
   if (($_POST['action']=='getWorkerList') && (tokenToProjectId($_POST['token'])!==0))
   getWorkers($_POST['token']);
+
+  if (($_POST['action']=='setWorkerList') && (tokenToProjectId($_POST['token'])!==0))
+  echo setWorkers($_POST['token']);
 
   if (($_POST['action']=='removeMMU') && isset($_POST['vendorID']))
   {

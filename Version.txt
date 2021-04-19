@@ -1,3 +1,11 @@
+2.6.4
+ - Delete from task editor avatars that have been removed from the scene.
+ - Merge avatars created independently in task editor and unity
+2.6.3
+ - Added setWorkerList to api calls
+ - Scene sync procedure updates scene value for MMIScenObjects
+ - Database structure updates:
+	ALTER TABLE `scene` ADD `station` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `parent`;
 2.6.2
  - Added getWorkerList to api calls
  - Added avatar syncing with Unity (avatars created in task editor and not present in the scene will so far not be created automatically)
