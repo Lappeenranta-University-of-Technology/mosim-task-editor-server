@@ -405,7 +405,7 @@
    if ($result=$db->query($sql))
    while ($row=$result->fetch_assoc())
    {
-	 $j=$j+1;	
+	 $j=$j+1;
 	 echo '<div id="tool'.$j.'" data-level="0" data-order="'.$j.'" data-type="'.(($row['tasktypeid']==0)?'assembly" data-assembly="'.$row['stationid']:'taskitem').'" data-id="'.$row['id'].'" class="w3-container">';
 	 echo '<div class="handle'.(($row['tasktypeid']==0)?' subassembly':'').'"></div>';
 	 if ($row['tasktypeid']==0)
