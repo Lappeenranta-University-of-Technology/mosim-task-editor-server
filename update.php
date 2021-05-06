@@ -1659,10 +1659,13 @@
    }
 
   if (($_POST['action']=='getSubParts') && isset($_POST['maintype']))
-   if (ctype_digit($_POST['maintype']))
+   if (ctype_digit(strval($_POST['maintype'])))
    {
 	echo '<result>OK</result><maintype>'.$_POST['maintype'].'</maintype><response>';
-	insertParts($_POST['maintype']);
+	 if (isset($_POST['stationid']) && ctype_digit($_POST['stationid']))
+	 insertParts($_POST['maintype'],$_POST['stationid']);
+	 else
+	 insertParts($_POST['maintype']);
     echo '</response>';	
    } 	
    else

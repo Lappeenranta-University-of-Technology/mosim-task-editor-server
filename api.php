@@ -1,6 +1,5 @@
 <?php
  session_start();
- 
  include('db.php');
  
  if (!connectDB())
@@ -71,6 +70,16 @@
 	if ($result=$db->query($sql))
 	if ($row=$result->fetch_assoc())
 	return $row['projectid'];
+	return 0;
+ }
+ 
+ function tokenAndPartIDEngineIDToProjectID($token,$partid,$enginepartid) //this function will replace the one above
+ {
+	global $db;
+	$sql='SELECT t.projectid, p.id, p.engineid FROM tokens t, `parts` p  WHERE t.token=\''.$db->real_escape_string($token).'\' and (p.id='.$partid.' or p.engineid='.$enginepartid.') and p.projectid=t.projectid LIMIT 1';
+	if ($result=$db->query($sql))
+	if ($row=$result->fetch_assoc())
+	return array("projectid" => $row['projectid'],"idok"=> $row['id']==$partid,"engineidok"=>$row['engineid']==$enginepartid);
 	return 0;
  }
 
@@ -289,14 +298,89 @@
   return json_encode($reply);
  }
  
- function syncSceneToDB($token) {
+ function syncTypeChange($row,$resultL)
+ {
+	 if ($row['newtype']=='MSceneObject')
+	 {}
+	 if ($row['newtype']=='InitialLocation')
+	 {} 
+	 if ($row['newtype']=='FinalLocation')
+	 {} 
+	 if ($row['newtype']=='WalkTarget')
+	 {} 
+	 if ($row['newtype']=='Area')
+	 {}
+	 if ($row['newtype']=='Part')
+	 {} 
+	 if ($row['newtype']=='Tool')
+	 {} 
+	 if ($row['newtype']=='Group')
+	 {} 
+	 if ($row['newtype']=='Station')
+	 {
+		if (($row['type']=='InitialLocation') || ($row['type']=='FinalLocation')
+			|| ($row['type']=='WalkTarget'))
+			{
+				
+			}
+	 }
+		 
+	 if ($row['newtype']=='StationResult')
+	 {}
+ }
+ 
+ function syncCombineInputs($projectid, $dataset) //dataset parameter should be unique for each client
+ {
 	global $db;
+	$sql='SELECT s.id as id, s.parent, s.station, s.name, s.type, st.engineid, st.parent as newparent, st.station as newstation, st.name as newname, st.type as newtype '.
+	'FROM `scene_temp` st '.
+	'LEFT JOIN `scene` s ON (st.engineid=s.engineid and st.projectid=s.projectid and st.savename=s.savename) '.
+	'WHERE st.projectid='.$projectid.' and st.savename=\''.$dataset.'\' '.
+	'UNION '.
+	'SELECT s.id as id, s.parent, s.station, s.name, s.type, s.engineid, st.parent as newparent, st.station as newstation, st.name as newname, st.type as newtype '.
+	'FROM `scene_temp` st '.
+	'RIGHT JOIN `scene` s ON (st.engineid=s.engineid and st.projectid=s.projectid and st.savename=s.savename) '.
+	'WHERE s.projectid='.$projectid.' and st.savename=\''.$dataset.'\' '.
+	'ORDER BY engineid ';
+	$sqlLocal='SELECT m.id, m.engineid, m.name, m.stationid, m.`type`, count(hlt.id) as usedtimes '.
+	' FROM `markers` m '.
+	' LEFT JOIN highleveltasks hlt ON (hlt.markerid=m.id) '.
+	' WHERE m.projectid='.$projectid.' '.
+	' GROUP BY m.id '.
+	'UNION ALL '.
+	'SELECT p.id, p.engineid, p.name, 0, if(p.isGroup,\'Group\',\'Part\'), count(hlt.id) '.
+	' FROM parts p '.
+	' LEFT JOIN highleveltasks hlt ON (hlt.partid=p.id) '.
+	' WHERE p.projectid='.$projectid.' '.
+	' GROUP BY p.id '.
+	'UNION ALL '.
+	'SELECT id, engineid, name, 0, \'Station\', count(hlt.id) '.
+	' FROM `stations` s '.
+	' LEFT JOIN highleveltasks hlt ON (hlt.stationid=s.id) '.
+	' WHERE parent=0 and projectid='.$projectid.' '.
+	' GROUP BY s.id '.
+	'ORDER BY engineid ';
+	$updatesql=[];
+	if (($resultR=$db->query($sql)) && ($resultL=$db->query($sqlLocal)))
+	{
+		while ($rowR=$resultR->fetch_assoc())
+			if ($rowR['type']!==null && $rowR['type']!=$rowR['newtype']) //type change handling
+			$updatesql=syncTypeChange($rowR,$resultL);
+	}
+	
+	//query failed or something else on the way
+	return false;
+ }
+ 
+ function syncSceneToDB($token) { //new scene syncing routine, should replace other smaller routines
+	global $db;
+	$dataset='current';
 	$projectid=tokenToProjectId($token);
 	if ($projectid==0)
 	return '<result>Error - insufficient user privileges</result>';
-	$sql='DELETE FROM `scene_temp` WHERE project id='.$projectid.' and savename=\'current\';';
+	$sql='DELETE FROM `scene_temp` WHERE project id='.$projectid.' and savename=\''.$dataset.'\';';
 	$db->query($sql);
-	$sql='INSERT INTO `scene_temp`(`id`, `engineid`, `parent`, `station` , `name`, `type`, `projectid`) VALUES ';
+	$sql=' (`id`, `engineid`, `parent`, `station` , `name`, `type`, `projectid`) VALUES ';
 	var_dump($_POST);
 	if (!(isset($_POST['names']) && isset($_POST['IDs']) && isset($_POST['MMIIDs']) && isset($_POST['parents']) && isset($_POST['stations']) && isset($_POST['types']) &&
       (count($_POST['names'])==count($_POST['IDs'])) &&
@@ -325,10 +409,14 @@
 	}
 	if ($itemscount>0) //update scene_temp table only if there are objects in the scene
 	{
-	 $sql=substr($sql,0,-1).' ON DUPLICATE KEY UPDATE parent=VALUES(parent), name=VALUES(name), station=VALUES(station), type=VALUES(type), changed=CURRENT_TIMESTAMP();';
-	 $db->query($sql);
+	 $sqladd='INSERT INTO `scene`'.substr($sql,0,-1).' ON DUPLICATE KEY UPDATE engineid=engineid';
+	 $sql='INSERT INTO `scene_temp`'.substr($sql,0,-1).' ON DUPLICATE KEY UPDATE parent=VALUES(parent), name=VALUES(name), station=VALUES(station), type=VALUES(type), changed=CURRENT_TIMESTAMP();';
+	 $db->query($sql); //adding all elements to the remote state table
+	 $db->query($sqladd); //adding new elements to the current scene state table
 	 return '<resultsql>'.$sql.'</returnsql>';
 	}
+	
+	syncCombineInputs($projectid,$dataset);
  }
  
  function addAvatarsFromScene($token) {
@@ -447,6 +535,8 @@
    
 	for ($i=0; $i<count($_POST['partsIDs']); $i++)
      {
+	  if ($_POST['partsIDs'][$i]!=0)
+	  $sqls.=' ('.$_POST['partsIDs'][$i].','.$_POST['partsStation'][$i].'),';
 	  $found=false;
 	  if ($_POST['partsIDs'][$i]!=0)
 	   for ($j=0; $j<count($parts); $j++)
@@ -460,10 +550,7 @@
 	     $parts[$j]['changed']=true;
 	      if (($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i]) || 
 		      ($parts[$j]['name']!=$decamelled))
-		 {
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
-		  $sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
-		 }
          break;	
 	    }
 	   }
@@ -482,7 +569,7 @@
 	     $parts[$j]['changed']=true;
 	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])		      
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
-	      $sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
+	      //$sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -500,7 +587,7 @@
 	     $parts[$j]['changed']=true;
 	      //if ($parts[$j]['engineid']!=$_POST['partsMMIIDs'][$i])
 		  $sqlu.='('.$parts[$j]['id'].','.$projectid.',\'\',\''.$decamelled.'\','.$_POST['partsMMIIDs'][$i].'),';
-	      $sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
+	      //$sqls.=' ('.$parts[$j]['id'].','.$_POST['partsStation'][$i].'),';
          break;	
 	    }
 	   }
@@ -525,16 +612,22 @@
 	$ok=$ok && ($db->query($sqlu));
    }
    
-   if ($sqls[strlen($sqls)-1]==',') 
+   if ($sqls[strlen($sqls)-1]==',') //updating stations
    {
+	$sqlclean = 'SELECT ps.station, ps.part FROM (`part_station` ps, parts p) LEFT JOIN stations s ON (s.id=ps.station) WHERE p.projectid='.$projectid.' and p.id=ps.part and ps.station>0 and s.name is null';
+	$todelete='';
+	 if ($r=$db->query($sqlclean))
+		 while ($row=$r->fetch_assoc())
+			 $todelete.='('.$row['station'].','.$row['part'].'),';
+	 if ($todelete!='') //removing connections between parts and stations that no longer exist
+	 {
+		 $todelete=substr($todelete,0,-1);
+		 $db->query('DELETE FROM `part_station` WHERE (station, part) in ('.$todelete.');');
+	 }
     $sqls=substr($sqls,0,-1).' ON DUPLICATE KEY UPDATE station=values(station);';
-	echo '<sqls>'.$sqls.'</sqls>';
 	$ok=$ok && ($db->query($sqls));
    }
-   
-   //echo '<sql>'.$sql.'</sql>'."\r\n"; //this is only for debug purposes
-   //echo '<sqlu>'.$sqlu.'</sqlu>'."\r\n";  //this is only for debug purposes
-   
+
    if ($ok)
    {
 	 $sql='SELECT id, name, engineid FROM `parts` WHERE engineid>0 and projectid='.$projectid.' ORDER BY name, engineid';
@@ -542,17 +635,17 @@
 	 if ($rset=$db->query($sql))
 		 while ($row=$rset->fetch_assoc())
 		 {
-		  $row['name']=str_replace(' ','',$row['name']);
+		  //$row['name']=str_replace(' ','',$row['name']);
 		  $data[]=$row;
 		 }
 	 $result.=json_encode($data); //printing entires from database as JSON
    }
    else
    {
-	$reply="Error";
+	$reply="Error: not all queries succeeded";
     $result.=json_encode($reply);
    }
-   
+
   return $result;
  }
  
@@ -813,7 +906,8 @@
 		$avatarid=$row['avatarid'];
 		$i=0;
 	}
-   $output[]=array('step'=>$i,
+   $output[]=array('taskid'=>intval($row['id']), //returing task id for every task
+				   'step'=>$i,
                    'operation'=>camel($row['operation']),
 	   		       'part'=>array('type'=>camel($row['partname']),
 				   'id'=>"NULL"),

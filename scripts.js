@@ -1429,7 +1429,7 @@
  
  function getSubParts(e) {
   if (!(e instanceof Event))
-  e.target=e;	 
+  e.target=e;
   var maintype = e.target.value;
   var subtypes = document.getElementById(e.target.dataset.sub);
   var stationid = document.getElementById("stations").value;

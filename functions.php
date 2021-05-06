@@ -109,7 +109,7 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
 	   $selid=-2;
 	 }
    }
-   if ($stationid==0)
+	if ($stationid==0)
 	echo '<option value="-3">Station output</option>';
 	$sql='SELECT count(*) as num FROM `markers` WHERE projectid='.$_SESSION['projectid'].' and type=\'WalkTarget\';';
 	if ($result=$db->query($sql))
@@ -119,21 +119,34 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
   return $selid;
  } 
 
- function insertParts($parttype=1)
+ function insertParts($parttype=1, $station=0)
  {
   global $db;
-   if ($result=$db->query('SELECT p.id, p.name, (p.id=pc.defaultpart) as selected FROM parts p, part_cat p_c, partcat pc WHERE pc.id=p_c.cat and p_c.cat='.$parttype.' and p_c.part=p.id and p.projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
+   if ($station>0)
+	$station=' in (0,'.$station.')';
+   else
+	$station='=0';
+   if ($result=$db->query('SELECT p.id, p.name, (p.id=pc.defaultpart) as selected, ps.station FROM (parts p, part_cat p_c, partcat pc) LEFT JOIN part_station ps ON (ps.part=p.id) WHERE pc.id=p_c.cat and p_c.cat='.$parttype.' and p_c.part=p.id and (ps.station is null or ps.station'.$station.') and p.projectid='.$_SESSION['projectid'].' GROUP BY p.id ORDER BY name ASC'))
 	while ($row=$result->fetch_assoc())
 	echo '<option '.($row['selected']?'selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
  }
  
- function insertUncategorizedParts()
+ function insertUncategorizedParts($station=0)
  {
   global $db;
-   if ($result=$db->query('SELECT p.id, p.name FROM parts p LEFT JOIN part_cat p_c ON (p_c.part=p.id) WHERE isnull(p_c.cat) and p.projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
+  if ($station>0)
+	$station=' in (0,'.$station.')';
+  else
+	$station='=0';
+   if ($result=$db->query(
+   'SELECT p.id, p.name, ps.station '.
+   'FROM (parts p LEFT JOIN part_cat p_c ON (p_c.part=p.id)) '.
+   'LEFT JOIN part_station ps ON (ps.part=p.id) '.
+   'WHERE isnull(p_c.cat) and (isnull(ps.station) or ps.station'.$station.') and p.projectid='.$_SESSION['projectid'].
+   ' GROUP BY p.id ORDER BY name ASC'))
 	$i=0;
 	while ($row=$result->fetch_assoc())
-	echo '<option '.($i++==0?' selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	echo '<option '.($i++==0?' selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
  }
  
   function insertWalkTargetMarkers()

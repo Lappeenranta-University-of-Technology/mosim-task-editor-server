@@ -571,7 +571,7 @@
 <p class="warning">Experimental - not fully supported yet</p>
 <p>Name: <input type="text" id="new_subassemblyname" /></p>
 <p>Main part type: <select id="newsub_parttype" data-sub="subpartselector" onchange="getSubParts(event);"><?php insertPartTypes($stationid); ?></select></p>
-<p>Main part: <select id="subpartselector"><?php insertParts(); ?></select></p>
+<p>Main part: <select id="subpartselector"><?php insertParts(1,$stationid); ?></select></p>
 <p>Place: <select id="newsub_position"><?php insertSubPositions(); ?></select></p>
 </div>
 <div class="modalbutton" onclick="windowOKsubassembly(this);">Create</div>
@@ -588,9 +588,9 @@
 <p><span>Part:</span><select id="partselector" onchange="partChange();">
   <?php 
    if ($selPartType==-2)
-   insertUncategorizedParts();
+   insertUncategorizedParts($stationid);
    else
-   insertParts($selPartType); 
+   insertParts($selPartType,$stationid); 
   ?></select></p>
   <p><span>Tool type:</span><select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
 <p><span>Tool:</span><select id="new_tool">

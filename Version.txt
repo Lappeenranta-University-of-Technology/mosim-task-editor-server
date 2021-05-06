@@ -1,3 +1,9 @@
+2.6.5
+ - Api returns also taskid for every task in getTaskList action
+ - Fixed issue with not displaying parts assigned to category in new task list window
+ - Names of parts synced from task editor to Unity are not longer modified to have no spaces
+ - In task editing only parts assigned to current station or unassigned to any station are now visible
+ - Parts assigned to stations in Unity are now also assigned to stations in Task editor after sync. This solution will be improved, as currently if part is moved in Unity between stations it will be assigned to all stations that it was assigned in the past.
 2.6.4
  - Delete from task editor avatars that have been removed from the scene.
  - Merge avatars created independently in task editor and unity
