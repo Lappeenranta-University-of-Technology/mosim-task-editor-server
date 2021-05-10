@@ -363,16 +363,22 @@
 </script>
 
 <?php
- $stationid=0;
+ $stationid=isset($_SESSION['stationid'])?$_SESSION['stationid']:0;
  if (isset($_GET['station']))
   if (ctype_digit($_GET['station']))
-  $stationid=$_GET['station'];
- $workerid=0;
+  {
+   $stationid=$_GET['station'];
+   $_SESSION['stationid']=$stationid;
+  }
+ $workerid=isset($_SESSION['workerid'])?$_SESSION['workerid']:0;
  if (isset($_GET['worker']))
   if (ctype_digit($_GET['worker']))
-  $workerid=$_GET['worker'];
- loadStations();
- loadWorkers();
+  {
+   $workerid=$_GET['worker'];
+   $_SESSION['workerid']=$workerid;
+  }
+ index::loadStations();
+ index::loadWorkers();
  
  function notBlankIcon($data)
  {
@@ -433,40 +439,6 @@
      echo '</div>';
    }
  }
- 
- function loadStations()
- {
-  global $db, $stationid, $stations;
-  $stations='';
-  $projectid=$_SESSION['projectid'];
-  $i=0;
-   if ($result=$db->query('SELECT id, name, sortorder FROM stations WHERE projectid='.$projectid.' and parent=0 ORDER BY sortorder'))
-	while ($row=$result->fetch_assoc())	
-	{
-	 $stations.='<option '.((($row['id']==$stationid) || (($stationid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
-	 if (($stationid==0) && ($i==0))
-	 $stationid=$row['id'];	 
-	 $i++;
-	}
- }
- 
- function loadWorkers()
- {
-  global $db, $stationid, $workerid, $workers;
-  $workers='';
-  $projectid=$_SESSION['projectid'];
-  $i=0;
-  $sql='SELECT id, name, description, avatarid FROM workers WHERE projectid='.$projectid.
-       ' and stationid in (0, '.$stationid.') ORDER BY name';
-   if ($result=$db->query($sql))
-	while ($row=$result->fetch_assoc())	
-	{
-	 $workers.='<option '.((($row['id']==$workerid) || (($workerid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'" data-desc="'.str_replace('"','\"',$row['description']).'" data-avatar="'.$row['avatarid'].'">'.$row['name'].'</option>';	
-	 if (($workerid==0) && ($i==0))
-	 $workerid=$row['id'];
-	 $i++;
-	}
- } 
  
  function insertStations($selectCurrent=true)
  {

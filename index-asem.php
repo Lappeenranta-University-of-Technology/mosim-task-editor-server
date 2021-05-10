@@ -432,16 +432,22 @@ div.w3-container[data-used] .w3-opacity.task:hover {
 </script>
 
 <?php
- $stationid=0;
+ $stationid=isset($_SESSION['stationid'])?$_SESSION['stationid']:0;
  if (isset($_GET['station']))
   if (ctype_digit($_GET['station']))
-  $stationid=$_GET['station'];
- $workerid=0;
+  {
+   $stationid=$_GET['station'];
+   $_SESSION['stationid']=$stationid;
+  }
+ $workerid=isset($_SESSION['workerid'])?$_SESSION['workerid']:0;
  if (isset($_GET['worker']))
   if (ctype_digit($_GET['worker']))
-  $workerid=$_GET['worker'];
- loadStations();
- loadWorkers();
+  {
+   $workerid=$_GET['worker'];
+   $_SESSION['workerid']=$workerid;
+  }
+ index::loadStations();
+ index::loadWorkers();
  
  function notBlankIcon($data)
  {
@@ -514,7 +520,7 @@ div.w3-container[data-used] .w3-opacity.task:hover {
      echo '</div>';
    }
  }
- 
+ /*
  function loadStations()
  {
   global $db, $stationid, $stations;
@@ -547,7 +553,7 @@ div.w3-container[data-used] .w3-opacity.task:hover {
 	 $workerid=$row['id'];
 	 $i++;
 	}
- } 
+ } */
  
  function insertStations($selectCurrent=true)
  {

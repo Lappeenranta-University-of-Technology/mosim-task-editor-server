@@ -302,16 +302,22 @@
 </script>
 
 <?php
- $stationid=0;
+ $stationid=isset($_SESSION['stationid'])?$_SESSION['stationid']:0;
  if (isset($_GET['station']))
   if (ctype_digit($_GET['station']))
-  $stationid=$_GET['station'];
- $workerid=0;
+  {
+   $stationid=$_GET['station'];
+   $_SESSION['stationid']=$stationid;
+  }
+ $workerid=isset($_SESSION['workerid'])?$_SESSION['workerid']:0;
  if (isset($_GET['worker']))
   if (ctype_digit($_GET['worker']))
-  $workerid=$_GET['worker'];
- loadStations();
- loadWorkers();
+  {
+   $workerid=$_GET['worker'];
+   $_SESSION['workerid']=$workerid;
+  }
+ index::loadStations();
+ index::loadWorkers();
  
  function notBlankIcon($data)
  {
@@ -374,7 +380,7 @@
      echo '</div>';
    }
  }
- 
+ /*
  function loadStations()
  {
   global $db, $stationid, $stations;
@@ -408,7 +414,7 @@
 	 $i++;
 	}
  } 
- 
+ */
  function insertStations($selectCurrent=true)
  {
   global $stations;

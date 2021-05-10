@@ -64,6 +64,50 @@
 	}
  }
 
+class index {
+
+ public static function loadStations()
+ {
+  global $db, $stationid, $stations;
+  $stations='';
+  $projectid=$_SESSION['projectid'];
+  $i=0;
+   if ($result=$db->query('SELECT id, name, sortorder FROM stations WHERE projectid='.$projectid.' and parent=0 ORDER BY sortorder'))
+	while ($row=$result->fetch_assoc())	
+	{
+	 $stations.='<option '.((($row['id']==$stationid) || (($stationid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	 if (($stationid==0) && ($i==0))
+	 {
+	  $stationid=$row['id'];
+	  $_SESSION['stationid']=$stationid;
+	 }
+	 $i++;
+	}
+ }
+ 
+ public static function loadWorkers()
+ {
+  global $db, $stationid, $workerid, $workers;
+  $workers='';
+  $projectid=$_SESSION['projectid'];
+  $i=0;
+  $sql='SELECT id, name, description, avatarid FROM workers WHERE projectid='.$projectid.
+       ' and stationid in (0, '.$stationid.') ORDER BY name';
+   if ($result=$db->query($sql))
+	while ($row=$result->fetch_assoc())	
+	{
+	 $workers.='<option '.((($row['id']==$workerid) || (($workerid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'" data-desc="'.str_replace('"','\"',$row['description']).'" data-avatar="'.$row['avatarid'].'">'.$row['name'].'</option>';	
+	 if (($workerid==0) && ($i==0))
+	 {
+	  $workerid=$row['id'];
+	  $_SESSION['workerid']=$workerid;
+	 }
+	 $i++;
+	}
+ } 
+
+}
+
  function insertAvatars()
  {
   global $db;
