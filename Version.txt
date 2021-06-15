@@ -1,3 +1,58 @@
+2.6.6
+ - Refreshing page does not reset current worker and station selected previously. Going out from Task editing and comming back will save the last used station and worker in session settings.
+ - Corrections in db.php to handle gracefully database connection errors related to installation procedure
+ - Included database initialization on first first login (added config directory with initial database content)
+ - Fixed password corruption issue on admin account creation
+ - Step by step installer is now implemented.
+2.6.5
+ - Fixed SQL compatibility issue for group by clause in functions.php inserParts
+ - Fixed issue with main page not loading due to error in functions insertUncategorizedParts
+ - Api returns also taskid for every task in getTaskList action
+ - Fixed issue with not displaying parts assigned to category in new task list window
+ - Names of parts synced from task editor to Unity are not longer modified to have no spaces
+ - In task editing only parts assigned to current station or unassigned to any station are now visible
+ - Parts assigned to stations in Unity are now also assigned to stations in Task editor after sync. This solution will be improved, as currently if part is moved in Unity between stations it will be assigned to all stations that it was assigned in the past.
+2.6.4
+ - Delete from task editor avatars that have been removed from the scene.
+ - Merge avatars created independently in task editor and unity
+2.6.3
+ - Added setWorkerList to api calls
+ - Scene sync procedure updates scene value for MMIScenObjects
+ - Database structure updates:
+	ALTER TABLE `scene` ADD `station` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `parent`;
+2.6.2
+ - Added getWorkerList to api calls
+ - Added avatar syncing with Unity (avatars created in task editor and not present in the scene will so far not be created automatically)
+2.6.1
+ - Confirmation dialog for deleting avatars
+ - Confirmation dialog for removing users from projects
+ - Fixed bug with overriding project setting whenever project page was visited
+ - Hiding tools for high-level tasks that do not require tools at all
+ - Syncing markers (inluding information about station to which they belong)
+ - Markers editor
+ - Issue with worker selection causing reset of the station selection is now fixed
+ - Avatar to worker assignment, worker name, and worker description can now be edited
+ - Export XML and JSON formats have been updated to include Worker division of the tasks
+2.6.0
+ - First implementation of assembly sequence generation toolbox
+ - Changed user interface to one with 4 main categories
+ - Support for markers, stations, and MMU sequences import from Unity/AJAN
+ - MMU sequences first implementation
+ - Minor bug fixes
+ - Settings are divided to multiple independent files
+ - Project can now be deleted using user interface
+2.5.6
+ + Task list page has now the following dialog boxes: 
+   - New station
+   - Move task
+   - New subassmbly
+ + Task list actions are all span elements and not links
+ + Update database:
+	ALTER TABLE `highleveltasks` ADD `workerid` BIGINT UNSIGNED NOT NULL DEFAULT '1' AFTER `stationid`;
+	CREATE TABLE `mosim`.`workers` ( `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT ,  `name` TINYTEXT NOT NULL ,  `description` TEXT NOT NULL ,  `avatarid` BIGINT UNSIGNED NOT NULL ,    PRIMARY KEY  (`id`)) ENGINE = MyISAM;
+	ALTER TABLE `workers` CHANGE `avatarid` `avatarid` BIGINT(20) UNSIGNED NOT NULL DEFAULT '0'; 
+	ALTER TABLE `workers` ADD `stationid` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `description`;
+	ALTER TABLE `workers` ADD `projectid` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `stationid`;
 2.5.5
  - Main menu reorganized and restyled
  - Added project name header to task editor

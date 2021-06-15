@@ -31,7 +31,7 @@
     if (w.firstChild.children[i].dataset.icon==obj.parentNode.dataset.icon)
 	w.firstChild.children[i].className="chosen";
     else
-    w.firstChild.children[i].className="";   
+    w.firstChild.children[i].className="";
   }
  }
 
@@ -54,11 +54,11 @@
 	   if (iconchanged)
 	    $.post("update.php",
         {
-         action: "changePartCatIcon",                                     
+         action: "changePartCatIcon",
 	     partcat: obj.parentNode.dataset.catid,
-		 icon: w.children[j].dataset.icon                           
+		 icon: w.children[j].dataset.icon
         },
-         function(data, status){ 	
+         function(data, status){
           if (getTagValue(data,'result')!='OK')
           alert(getTagValue(data,'result'));
 	    });  
@@ -67,11 +67,11 @@
 	   break;
 	  }
    }
-  windowCancel(obj);	 
+  windowCancel(obj);
  }
  
  function windowCancel(obj) {
-  obj.parentNode.className=obj.parentNode.className.split(' show').join('');	 
+  obj.parentNode.className=obj.parentNode.className.split(' show').join('');
  }
  
  function choose(e) {
@@ -85,8 +85,8 @@
   var formData = new FormData();
    for (var i=0; i<obj.files.length; i++)
    formData.append("icon[]",obj.files[i],obj.files[i].name);
-  formData.append("upload_file",true);  
-  formData.append("action","uploadIcons");  
+  formData.append("upload_file",true);
+  formData.append("action","uploadIcons");
   
   $.ajax({
         type: "POST",
@@ -109,10 +109,10 @@
 			  img.dataset.icon=icon.split('icons/').join('');
           	  img.style.backgroundImage='url(\''+icon+'\')';
 			  img.onclick=choose;
-			  obj.parentNode.firstChild.appendChild(img);   
+			  obj.parentNode.firstChild.appendChild(img);
 			 }
-		   }			   
-		 }			 
+		   }
+		 }
         },
         error: function (error) {
             // handle error
@@ -130,7 +130,7 @@
  var portsToTry=[80,8080,8081];
  var portIndex = 0;
  
- function startPartsFromSceneImport(token) {	 
+ function startPartsFromSceneImport(token) {
    var projectname=document.getElementById("projectname").innerText;
    var a=document.location.pathname.lastIndexOf('/');
    var path = document.location.pathname.substr(0,a+1);
@@ -141,7 +141,7 @@
 		headers: {
               accept: "application/json",
               "Access-Control-Allow-Origin": "*"
-          },                               
+          },
 		crossDomain: true,*/
         url: "http://127.0.0.1"+":"+portsToTry[portIndex]+getstring,
         xhr: function () {
@@ -153,7 +153,7 @@
          {
 		  document.getElementById("importpartsmsg").innerHTML+="<br><img src=\"ok.png\" />Connected to Unity";
 		  console.debug("Parts synchronization has been started...");
-		 }			 
+		 }
         },
         error: function (error) { //error callback
 		  
@@ -186,7 +186,7 @@
     function(data, status){
 	 if (getTagValue(data,'result')=='OK')
 	 {
-	  accessToken=getTagValue(data,'token');	 
+	  accessToken=getTagValue(data,'token');
 	  startPartsFromSceneImport(accessToken);
       console.debug("Access token granted");
 	  document.getElementById("importpartsmsg").innerHTML+="<img src=\"ok.png\" />Access token has been created<br>";

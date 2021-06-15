@@ -111,6 +111,22 @@
  }
  
  }; //end of MMUS namespace
+
+ function addMarker(val,mtype) {
+  val=document.getElementById(val).value;
+  mtype=document.getElementById(mtype).value;
+  if (val!='')
+   $.post("update.php",
+    {
+      action: "addMarker",
+	  name: val,
+	  type: mtype
+    },
+    function(data, status){
+     if (getTagValue(data,'result')=='OK')
+     document.location.reload();
+	});  
+ }
  
  function addPart(val) {
   val=document.getElementById(val).value;
@@ -172,26 +188,41 @@
   e.stopPropagation();
   var action='delToolCat';
    if (e.target.parentNode.parentNode.parentNode.id=='partcatlist')
-   action='delPartCat';	   
-  var val=e.target.parentNode.parentNode.dataset.id;	 
+   action='delPartCat';	
+  var val=e.target.parentNode.parentNode.dataset.id;
   $.post("update.php",
     {
       action: action,
 	  id: val
     },
-    function(data, status){ 	
+    function(data, status){
      if (getTagValue(data,'result')=='OK')
-     document.location.reload();		 
+     document.location.reload();
      else
-	 e.target.parentNode.innerHTML="Error: Cannot delete entry";	 
+	 e.target.parentNode.innerHTML="Error: Cannot delete entry";
 	});   	 
+ }
+ 
+ function removeUserFromProject(obj)
+ {
+  if (obj.className.indexOf("clicked")>-1)
+  {
+   obj.className=obj.dataset.lastclass;
+   obj.innerHTML="X";
+  }
+  else
+  {
+	obj.dataset.lastclass=obj.className;
+	obj.className="clicked";
+    obj.innerHTML="Delete? <span onclick=\"removeUserFromProjectYes(event);\">Yes</span><span>Cancel</span>";
+  }
  }
  
  function deleteStation(obj) {
   if (obj.className.indexOf("clicked")>-1)
   {
-   obj.className="";	  
-   obj.innerHTML="X";	  
+   obj.className="";
+   obj.innerHTML="X";
   }
   else
   {
@@ -461,8 +492,9 @@
  }
  
  function moveSelected() {
-  var tostation=document.getElementById("tostation").value;	 
-  var fromstation=document.getElementById("stations").value;	 
+  var tostation=document.getElementById("tostation").value;
+  var toworker=document.getElementById("toworker").value;
+  var fromstation=document.getElementById("stations").value;
   var tasks=document.getElementById("tasklist").children;
   var S='';
   var Subs='';
@@ -471,7 +503,7 @@
 	if (tasks[i].tagName=="DIV") 
 	{
      if ((tasks[i].dataset.type=="taskitem") &&
-         (tasks[i].children[2].className.indexOf("selected")>-1))	
+         (tasks[i].children[2].className.indexOf("selected")>-1))
 	{
 	 S=S+tasks[i].dataset.id+',';
 	 From+=fromstation+',';
@@ -504,7 +536,8 @@
 	  task_ids: S,
 	  subassembly_id: Subs,
 	  fromstation: From,
-	  tostation: tostation
+	  tostation: tostation,
+	  toworker: toworker
     },
     function(data, status){ 	
 	 if (getTagValue(data,'result')=='OK')
@@ -517,7 +550,7 @@
 	 else
 	 {
 	  windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
-      windowShow(null);		 
+      windowShow(null);
 	 }
 	});
  }
@@ -549,14 +582,15 @@
 	 else
 	 {
 	  windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
-      windowShow(null);		 
+      windowShow(null);
 	 }
 	});
  }
 
- function removeUserFromProject(obj) {
-   var projectid=obj.parentNode.parentNode.dataset.project;
-   var userid=obj.parentNode.parentNode.dataset.id;
+ function removeUserFromProjectYes(e) {
+   e.stopPropagation(); 
+   var projectid=e.target.parentNode.parentNode.parentNode.dataset.project;
+   var userid=e.target.parentNode.parentNode.parentNode.dataset.id;
     $.post("update.php",
     {
       action: "removeUserFromProject",
@@ -564,8 +598,10 @@
 	  projectid: projectid
     },
     function(data, status){
-		
-     obj.parentNode.parentNode.parentNode.deleteRow(obj.parentNode.parentNode.rowIndex);
+	 if (getTagValue(data,'result')=='OK')
+     e.target.parentNode.parentNode.parentNode.parentNode.deleteRow(e.target.parentNode.parentNode.parentNode.rowIndex);
+	 else
+	 e.target.parentNode.innerHTML=getTagValue(data,'result');
 	});
  }
  
@@ -872,10 +908,15 @@
     },
     function(data, status){
 		if (getTagValue(data,'result')=='OK')
-		document.location.reload();
+		{
+		 document.location.reload();
+		  if (document.getElementById("newProject")!=null)
+		  document.getElementById("newProject").className=
+		  document.getElementById("newProject").className.split(' show').join('');
+		}
 	    else
 		{
-		 perror.innerHTML=getTagValue(data,'result');	
+		 perror.innerHTML=getTagValue(data,'result');
 		 perror.style.display="inline";
 		}
 	});
@@ -926,7 +967,7 @@
  }
  
  function addTask() {
-  var subassemblies = [];	 
+  var subassemblies = [];
   var tasks=document.getElementById("tasklist");
    for (var i=0; i<tasks.children.length; i++)
     if (tasks.children[i].tagName=='DIV')
@@ -935,7 +976,7 @@
 	   if ((tasks.children[i].children[3].className.indexOf('editmode')==-1) &&
           (tasks.children[i].children[3].className.indexOf('selected')>-1)) 
        subassemblies.push(i);
-	  
+  var workerid = document.getElementById("workers").value;
   var ntype = document.getElementById("new_subtype");
   var npart = document.getElementById("partselector");
   var ntool = document.getElementById("new_tool");
@@ -950,6 +991,7 @@
     {
         action: "addTask",
 		stationid: stationid,
+		workerid: workerid,
 		type: ntype.value,
 		part: npart.value,
 		tool: ntool.value,
@@ -1126,12 +1168,17 @@
  }
  
  function changeProject(obj) {
-  document.location.href='?project='+obj.value;	 
+  document.location.href='?project='+obj.value;
  }
  
  function changeStation(obj) {
-  document.location.href='?station='+obj.value;	 
+  document.location.href='?station='+obj.value;
  }
+ 
+ function changeWorker(obj) {
+  var station=document.getElementById('stations').value;
+  document.location.href='?worker='+obj.value+'&station='+station;
+ } 
  
  function cancelTaskEdit(e) {
   var task = e.target.parentNode.parentNode;
@@ -1382,7 +1429,7 @@
  
  function getSubParts(e) {
   if (!(e instanceof Event))
-  e.target=e;	 
+  e.target=e;
   var maintype = e.target.value;
   var subtypes = document.getElementById(e.target.dataset.sub);
   var stationid = document.getElementById("stations").value;
@@ -1512,6 +1559,12 @@
  }
  
  //windows
+ function windowSetContext(atrib, value)
+ {
+	var w=document.getElementsByClassName("modalwindow")[0]; 
+	w.setAttribute('data-'+atrib,value);
+ }
+ 
  function windowUpdate(title,content,buttons) {
   var w=document.getElementsByClassName("modalwindow")[0];
   w.firstChild.innerHTML=content;
@@ -1519,7 +1572,7 @@
   
   if (buttons.length==1)
   {
-   w.children[2].innerHTML=buttons[0];	  	  
+   w.children[2].innerHTML=buttons[0];
    if (w.children[1].className.indexOf("single")==-1)
    w.children[1].className=w.children[1].className+" single";
    if (w.children[2].className.indexOf("single")==-1)
@@ -1527,10 +1580,9 @@
   }
   else
   {
-	w.children[1].innerHTML=buttons[0];	  	    
-	w.children[2].innerHTML=buttons[1];	    
-	w.children[1].className=w.children[1].className.split(' single').join('');  
-	w.children[2].className=w.children[2].className.split(' single').join('');  
+	w.children[1].innerHTML=buttons[0];
+	w.children[2].innerHTML=buttons[1];
+	w.children[1].className=w.children[1].className.split(' single').join('');
+	w.children[2].className=w.children[2].className.split(' single').join('');
   }
  }
- 

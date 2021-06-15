@@ -1,4 +1,18 @@
 <?php
+
+ function getEnumValues($table,$field) {
+	global $db;
+	$sql = "SHOW FIELDS FROM `{$table}` LIKE '{$field}'";
+	$result = $db->query($sql);
+	if ($row = $result->fetch_assoc())
+	{
+	 preg_match('#^enum\((.*?)\)$#ism', $row['Type'], $matches);
+	 $enum = str_getcsv($matches[1], ",", "'");
+	 return $enum;
+	}
+	return array();
+ }
+
  function projectName() {
   global $db;
   if ($_SESSION['projectid']==0)
@@ -14,7 +28,27 @@
   for ($i=0; $i<count($ikony); $i++)
    if (!is_dir($ikony[$i]) && in_array(pathinfo($ikony[$i], PATHINFO_EXTENSION),array('png','svg','jpg')))   
    echo '<div data-icon="'.$ikony[$i].'" style="background-image:url(\'icons/'.$ikony[$i].'\');"></div>';
- }           
+ }
+ 
+ function array_part_or_assembly($val)
+ {
+	if (is_array($val))
+	{
+		$ok=true;
+		for ($i=0; ($i<count($val)) && $ok; $i++)
+			if (!ctype_digit($val[$i]))
+				if (!((ctype_digit(substr($val[$i],1)) && in_array(substr($val[$i],0,1),array('S','M')))))
+				$ok=false;
+	return $ok;
+	}
+	else
+	{
+	 if (ctype_digit($val))
+		return true;
+	 else
+	 return ((ctype_digit(substr($val,1)) && in_array(substr($val,0,1),array('S','M'))));
+	}
+ }
 
  function insertSubTypes($maintype = 1)
  {
@@ -29,6 +63,50 @@
 	 echo '<option data-defaulttool="'.$row['tooltype'].'" data-defaultpart="'.$row['parttype'].'" '.($row['restrictpart']=='onlylisted'?'data-onlyparts="'.$row['partlist'].'"':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
 	}
  }
+
+class index {
+
+ public static function loadStations()
+ {
+  global $db, $stationid, $stations;
+  $stations='';
+  $projectid=$_SESSION['projectid'];
+  $i=0;
+   if ($result=$db->query('SELECT id, name, sortorder FROM stations WHERE projectid='.$projectid.' and parent=0 ORDER BY sortorder'))
+	while ($row=$result->fetch_assoc())	
+	{
+	 $stations.='<option '.((($row['id']==$stationid) || (($stationid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	 if (($stationid==0) && ($i==0))
+	 {
+	  $stationid=$row['id'];
+	  $_SESSION['stationid']=$stationid;
+	 }
+	 $i++;
+	}
+ }
+ 
+ public static function loadWorkers()
+ {
+  global $db, $stationid, $workerid, $workers;
+  $workers='';
+  $projectid=$_SESSION['projectid'];
+  $i=0;
+  $sql='SELECT id, name, description, avatarid FROM workers WHERE projectid='.$projectid.
+       ' and stationid in (0, '.$stationid.') ORDER BY name';
+   if ($result=$db->query($sql))
+	while ($row=$result->fetch_assoc())	
+	{
+	 $workers.='<option '.((($row['id']==$workerid) || (($workerid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'" data-desc="'.str_replace('"','\"',$row['description']).'" data-avatar="'.$row['avatarid'].'">'.$row['name'].'</option>';	
+	 if (($workerid==0) && ($i==0))
+	 {
+	  $workerid=$row['id'];
+	  $_SESSION['workerid']=$workerid;
+	 }
+	 $i++;
+	}
+ } 
+
+}
 
  function insertAvatars()
  {
@@ -70,32 +148,59 @@ LEFT JOIN partcat pc ON (catids.cat=pc.id) WHERE isnull(pc.projectid) or pc.proj
     if ($row=$result->fetch_assoc())
      if ($row['ile']>0)
 	 {
-      echo '<option value="-1">Subassemblies</option>'; 		
+      echo '<option value="-1">Subassemblies</option>';
 	   if ($i==0)
 	   $selid=-2;
 	 }
    }
-   if ($stationid==0)
+	if ($stationid==0)
 	echo '<option value="-3">Station output</option>';
+	$sql='SELECT count(*) as num FROM `markers` WHERE projectid='.$_SESSION['projectid'].' and type=\'WalkTarget\';';
+	if ($result=$db->query($sql))
+	 if ($row=$result->fetch_assoc())
+		if ($row['num']>0)
+		echo '<option value="-4">Markers</option>';
   return $selid;
  } 
 
- function insertParts($parttype=1)
+ function insertParts($parttype=1, $station=0)
  {
   global $db;
-   if ($result=$db->query('SELECT p.id, p.name, (p.id=pc.defaultpart) as selected FROM parts p, part_cat p_c, partcat pc WHERE pc.id=p_c.cat and p_c.cat='.$parttype.' and p_c.part=p.id and p.projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
+   if ($station>0)
+	$station=' in (0,'.$station.')';
+   else
+	$station='=0';
+   if ($result=$db->query('SELECT p.id, p.name, MAX(p.id=pc.defaultpart) as selected, GROUP_CONCAT(ps.station) as station FROM (parts p, part_cat p_c, partcat pc) LEFT JOIN part_station ps ON (ps.part=p.id) WHERE pc.id=p_c.cat and p_c.cat='.$parttype.' and p_c.part=p.id and (ps.station is null or ps.station'.$station.') and p.projectid='.$_SESSION['projectid'].' GROUP BY p.id ORDER BY name ASC'))
 	while ($row=$result->fetch_assoc())
-	echo '<option '.($row['selected']?'selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	echo '<option '.($row['selected']?'selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
  }
  
- function insertUncategorizedParts()
+ function insertUncategorizedParts($station=0)
  {
   global $db;
-   if ($result=$db->query('SELECT p.id, p.name FROM parts p LEFT JOIN part_cat p_c ON (p_c.part=p.id) WHERE isnull(p_c.cat) and p.projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
+  if ($station>0)
+	$station=' in (0,'.$station.')';
+  else
+	$station='=0';
+   if ($result=$db->query(
+   'SELECT p.id, p.name '. 
+   'FROM (parts p LEFT JOIN part_cat p_c ON (p_c.part=p.id)) '.
+   'LEFT JOIN part_station ps ON (ps.part=p.id) '.
+   'WHERE isnull(p_c.cat) and (isnull(ps.station) or ps.station'.$station.') and p.projectid='.$_SESSION['projectid'].
+   ' GROUP BY p.id ORDER BY name ASC'))
 	$i=0;
 	while ($row=$result->fetch_assoc())
-	echo '<option '.($i++==0?' selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	echo '<option '.($i++==0?' selected="selected" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
  }
+ 
+  function insertWalkTargetMarkers()
+  {
+	global $db;
+	if ($result=$db->query('SELECT id, name FROM markers WHERE projectid='.$_SESSION['projectid'].' ORDER BY name ASC'))
+	$i=0;
+	while ($row=$result->fetch_assoc())
+	echo '<option '.($i++==0?' selected="selected" ':'').'value="M'.$row['id'].'">'.$row['name'].'</option>';
+  }
  
  function insertTools($tooltype = 0)
  {
