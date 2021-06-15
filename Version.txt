@@ -1,5 +1,9 @@
 2.6.6
  - Refreshing page does not reset current worker and station selected previously. Going out from Task editing and comming back will save the last used station and worker in session settings.
+ - Corrections in db.php to handle gracefully database connection errors related to installation procedure
+ - Included database initialization on first first login (added config directory with initial database content)
+ - Fixed password corruption issue on admin account creation
+ - Step by step installer is now implemented.
 2.6.5
  - Fixed SQL compatibility issue for group by clause in functions.php inserParts
  - Fixed issue with main page not loading due to error in functions insertUncategorizedParts

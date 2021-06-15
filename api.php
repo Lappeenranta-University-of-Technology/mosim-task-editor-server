@@ -103,9 +103,10 @@
   if ($projectid==0)
 	  return 'No project found for given token';
   if (is_string($data))
-   $data=json_decode($data,true); //decodig into array
+   $data=json_decode($data,true); //decodig into array if data is given as string
   
-  if (!array_key_exists('ID',$data) || !array_key_exists('Name',$data) || 
+  if (!array_key_exists('taskID',$data) ||
+	  !array_key_exists('ID',$data) || !array_key_exists('Name',$data) || 
       !array_key_exists('MotionType',$data) || !array_key_exists('Properties',$data) || 
 	  !array_key_exists('Constraints',$data) || !array_key_exists('StartCondition',$data) || 
 	  !array_key_exists('EndCondition',$data) || !array_key_exists('SortOrder',$data) || 
@@ -1172,9 +1173,10 @@ XML;
 	 echo json_encode(array("result"=>saveMMUList($_POST['token'],array('ID'=>$_POST['ID'], 'Name'=>$_POST['Name'], 'MotionType'=>$_POST['MotionType'], 'Properties'=>$_POST['Properties'],'Constraints'=>$_POST['Constraints'], 'StartCondition'=>$_POST['StartCondition'], 'EndCondition'=>$_POST['EndCondition'], 'SortOrder'=>$_POST['SortOrder'], 'ResultSet'=>$_POST['ResultSet'],'Success'=>$_POST['Success']))));
 	}
 	else
-	if (isset($_POST['data']))
+	if (isset($_POST['data']) && isset($_POST['ResultSet']) && ctype_digit(strval($_POST['ResultSet'])))
     {
 	 $data=json_decode($_POST['data'],true);
+	 $data['ResultSet']=$_POST['ResultSet'];
 	 echo json_encode(array("result"=>saveMMUList($_POST['token'],$_POST['data'])));
     }
   }
@@ -1276,7 +1278,7 @@ XML;
    if (isset($_GET['test']))
    echo '<p>In array: '.(in_array($_GET['test'],getEnumValues('markers','type'))?'yes':'no');
   }
-  
+   
   if ($_GET['action']=='saveMMUTask')
   {
 	header('Content-Type: application/json; charset=utf-8');  

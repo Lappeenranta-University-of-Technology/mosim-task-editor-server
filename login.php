@@ -31,9 +31,11 @@
 </style>
 <script>
  function resetMsg() {
+	 /* temporarly disabled as autfill of user and password removed the message when it should be displayd
 	 var msg = document.getElementById("loginerror");
 	 if (msg!=null)
 		 msg.innerHTML="";
+	 */
  }
 </script>
 </head>
@@ -54,8 +56,6 @@
   <?php 
    if (isset($loginerror))
 	echo '<span id="loginerror">'.$loginerror.'</span><br />';
-   //if (isset($_POST['password']))
-   //echo '<br>'.password_hash($_POST['password'],PASSWORD_BCRYPT);
   ?>
   <span class="w3-tag w3-round button" onclick="this.parentNode.submit();">Log in</span>
   </form>
