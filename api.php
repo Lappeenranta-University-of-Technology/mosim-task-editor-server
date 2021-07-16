@@ -282,7 +282,11 @@
  */
  function getCadForPart($token,$partid) {
   global $db;
-  $projectid=tokenToProjectId($token);  
+   $projectid=0;
+   if ($token=='session')
+	$projectid=isset($_SESSION['projectid'])?$_SESSION['projectid']:0;
+   else
+    $projectid=tokenToProjectId($token);
   if ($projectid==0)
   return json_encode('Error - insufficient user privileges');
  //update the sql statement now it should be correct
@@ -1082,7 +1086,10 @@ XML;
 	{
 	 $pic=file_get_contents($_FILES['part']['tmp_name']);
 	 $pic=bin2hex($pic);
-	 $sql='UPDATE parts SET picture=0x'.$pic.' WHERE id='.$_POST['partid'].' LIMIT 1;';
+	  $type='picture';
+	  if (substr($_FILES['part']['name'],-4)=='gltf')
+		  $type='cad';
+	 $sql='UPDATE parts SET '.$type.'=0x'.$pic.' WHERE id='.$_POST['partid'].' LIMIT 1;';
 	 $db->query($sql);
 	 if ($db->affected_rows>-1) //-1 means error, everything above is okay
 		 echo '<result>OK</result>';

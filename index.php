@@ -250,7 +250,7 @@
  
  function partChange() {
 	 var p=document.getElementById('partselector');
-	 loadPart3D(p.value,"pyTxMNWiTCQLK6rkTiocd486spTm33");
+	 loadPart3D(p.value,"session");
 	 //var i=document.getElementById('new_partpreview');
 	 //i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
  }
@@ -407,7 +407,6 @@
    //TODO: Add display of first level subassembly headers
    //TODO: Check why LIMIT 1 is needed in all the subqueries, they should be constrained enough not to produce more than one result.
 
-   
    if ($result=$db->query($sql))
    while ($row=$result->fetch_assoc())
    {
@@ -435,7 +434,6 @@
 	 //TODO: add position id to the query
 	 
      echo "<p>".str_replace("\n","<br>",htmlentities($row['description']))."</p>";
-     //echo '<hr>';
      echo '</div>';
    }
  }

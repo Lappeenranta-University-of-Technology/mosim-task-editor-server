@@ -91,11 +91,16 @@ class index {
   $workers='';
   $projectid=$_SESSION['projectid'];
   $i=0;
+  $firstWorkerID=0;
+  $workerIDs = [];
   $sql='SELECT id, name, description, avatarid FROM workers WHERE projectid='.$projectid.
        ' and stationid in (0, '.$stationid.') ORDER BY name';
    if ($result=$db->query($sql))
 	while ($row=$result->fetch_assoc())	
 	{
+	 if ($i==0)
+		$firstWorkerID=$row['id'];
+	 $workerIDs[]=$row['id'];
 	 $workers.='<option '.((($row['id']==$workerid) || (($workerid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'" data-desc="'.str_replace('"','\"',$row['description']).'" data-avatar="'.$row['avatarid'].'">'.$row['name'].'</option>';	
 	 if (($workerid==0) && ($i==0))
 	 {
@@ -103,6 +108,11 @@ class index {
 	  $_SESSION['workerid']=$workerid;
 	 }
 	 $i++;
+	}
+	if (!in_array($workerid,$workerIDs))
+	{
+		$workerid=$firstWorkerID;
+		$_SESSION['workerid']=$workerid;
 	}
  } 
 
