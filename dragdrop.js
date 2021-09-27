@@ -151,6 +151,7 @@ function dragElement(elmnt) {
   var tasks=document.getElementById("tasklist");
   var beforeOrAfter = 0;
   var dropitem = null;
+  var listOffset = 200;  //elmnt.offsetParent.offsetTop; //55
   if (elmnt.firstChild.className.indexOf('handle')>-1) {
     // if present, the header is where you move the DIV from:
     elmnt.firstChild.onmousedown = dragMouseDown;
@@ -175,7 +176,7 @@ function dragElement(elmnt) {
     pos4 = e.clientY;
 	
 	yscroll = -window.scrollY;
-	ypos=elmnt.offsetTop-5-pos4+55;
+	ypos=elmnt.offsetTop-5-pos4+listOffset;
 	//console.debug(String(pos4));
 	//console.debug("Offset" + String(elmnt.offsetTop));
 	elmnt.style.top = (elmnt.offsetTop-5)+"px";

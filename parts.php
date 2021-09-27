@@ -48,7 +48,7 @@
 	 for (var j=0; j<w.children.length; j++)
 	  if ((w.children[j].tagName=='DIV') && (w.children[j].dataset.id==obj.parentNode.dataset.catid))
 	  {
-	   var iconchanged=(w.children[j].dataset.icon!=obj.parentNode.firstChild.children[i].dataset.icon);	  
+	   var iconchanged=(w.children[j].dataset.icon!=obj.parentNode.firstChild.children[i].dataset.icon);
 	   w.children[j].dataset.icon=obj.parentNode.firstChild.children[i].dataset.icon;
 	   w.children[j].children[1].style.backgroundImage='url(\'icons/'+w.children[j].dataset.icon+'\')';
 	   if (iconchanged)
@@ -61,7 +61,7 @@
          function(data, status){
           if (getTagValue(data,'result')!='OK')
           alert(getTagValue(data,'result'));
-	    });  
+	    });
 	   obj.parentNode.dataset.catid=0;
 	   go=false;
 	   break;
@@ -78,7 +78,7 @@
   for (var i=0; i<e.target.parentNode.children.length; i++)
    if (e.target.parentNode.children[i].className.indexOf('chosen')>-1)
    e.target.parentNode.children[i].className="";
-  e.target.className="chosen";	   
+  e.target.className="chosen";
  }
  
  function uploadIcons(obj) {
@@ -224,13 +224,17 @@
  
  function loadParts() {
   global $db;
-  $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart FROM '.
+  $sql='SELECT tc.id as tcid, tc.name as tcname, tc.sortorder, t.id, t.name, t_c.sortorder as sortorder1, defaultpart, t.engineid, Count(hlt.id) as taskcount FROM '.
   '(SELECT id, name, sortorder, language, defaultpart FROM `partcat` WHERE grouptype=\'parttype\' and projectid='.$_SESSION['projectid'].') tc '.
   ' LEFT JOIN (part_cat t_c, parts t) ON (t_c.cat=tc.id and t_c.part=t.id and t.projectid='.$_SESSION['projectid'].') '.
+  ' LEFT JOIN highleveltasks hlt ON (t.id=hlt.partid) '.
+  ' GROUP BY tc.id, t.id '.
   ' UNION ALL '.
-  'SELECT 0, \'Uncategorized\', 0, t.id, t.name, 0, 0 FROM parts t '.
+  'SELECT 0, \'Uncategorized\', 0, t.id, t.name, 0, 0, t.engineid, Count(hlt.id) as taskcount FROM parts t '.
   'LEFT JOIN part_cat t_c ON (t_c.part=t.id) '.
+  'LEFT JOIN highleveltasks hlt ON (t.id=hlt.partid) '.
   'WHERE (isnull(t_c.cat) or t_c.cat=0) and t.projectid='.$_SESSION['projectid'].' '.
+  'GROUP BY t.id '.
   'ORDER BY sortorder, tcid, sortorder1';
   $lastname=-1;
    if ($result=$db->query($sql))
@@ -242,7 +246,9 @@
 		 $lastname=$row['tcid'];
 	   }		
        if ($row['id']!=0)
-       echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);"><span>X</span></span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span></div>';
+       echo '<div data-cat="'.$row['tcid'].'" data-id="'.$row['id'].'">'.htmlentities($row['name']).'<span onclick="deleteTool(this);"><span>X</span></span><span onclick="setDefaultPart(this);" '.($row['defaultpart']==$row['id']?'class="check"':"").'></span>'.
+		($row['engineid']!=0?'<span class="islinked"></span>':'').
+		($row['taskcount']>0?'<span class="isused"></span>':'').'</div>';
 	}		
   echo '<script>makeDraggableTool(\'partlist\');</script>';	
  }

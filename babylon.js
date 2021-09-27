@@ -152,21 +152,21 @@ var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
 				token: token,
 				partid: partid
 			},
-			function(data, status){ 	
-				var i=document.getElementById('new_partpreview');
+			function(data, status){
+				//var i=document.getElementById('new_partpreview');
 				var c=document.getElementById('renderCanvas');
 				
-				if ((typeof(data)=="string") && 
-				    ((data.indexOf("Error")==0) || (data.indexOf("no cad data")==0)))
+				if ((typeof(data)=="string") && //no cad data case
+					((data.indexOf("Error")==0) || (data.indexOf("no cad data")==0)))
 				{
-					var p=document.getElementById('partselector');
-					i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
-					i.style.display="";
+					//var p=document.getElementById('partselector');
+					//i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
+					//i.style.display="";
 					c.style.display="none";
 				}
-				else
+				else //there is proper cad data
 				{
-				 i.style.display="none";
+				 //i.style.display="none";
 				 c.style.display="";
 				 scene = createSceneScrew(data);
 				 engine.runRenderLoop(function () {

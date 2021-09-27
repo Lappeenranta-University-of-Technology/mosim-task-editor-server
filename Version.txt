@@ -1,3 +1,20 @@
+2.6.8
+ - Fixed problem with no workers visible on the list when current station was not set to the one belonging to the current project.
+ - Simple group tasks are introduced: meet, talk, sync actions, shake hand, give object, take object
+ - New task definition change field labels based on task type
+ - import config/grouptasks.sql to upgrade to this version
+ - Logic editor for reasoning actions
+ - Selectable 2D/3D preview
+ - Creating new task location can be set to markers existing in the specific station or global
+ - In parts list there are icons indicating whether part is in sync with scene part, and whether part is used in any task
+ - Assigning markers to stations in task editor is now implemented
+ - Drag and drop of tasks the offset is corrected
+ SQL:
+	ALTER TABLE `highleveltasks` ADD `timeout` TIME NOT NULL DEFAULT '00:00:00' AFTER `esttime`; 
+	ALTER TABLE `highleveltasks` ADD `leadertask` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `timeout`; 
+	ALTER TABLE `defaulttooltype` ADD `followerlimit` INT UNSIGNED NOT NULL DEFAULT '0' AFTER `grouptask`; 
+	ALTER TABLE `highleveltasks` ADD `positionmarkerid` BIGINT UNSIGNED NOT NULL DEFAULT '0' AFTER `toolid`; 
+	ALTER TABLE `defaulttooltype` ADD `haslocation` BOOLEAN NOT NULL DEFAULT TRUE AFTER `partlist`; 
 2.6.7
  - Corrected worker selection procedure in functions.php (class index)
  - Added differentiation between gltf cad data and png thumbnail pictures to the api endpoint

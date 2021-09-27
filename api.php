@@ -1034,6 +1034,26 @@ XML;
 	 "projectName"=>$idName['name']));
  }
  
+ function getTaskList($station,$dataformat,$token="")
+ {
+	 global $db; //sql feching first tasks where subject is part
+	 $possql='if(positionmarkerid=0,ht.positionname,ifnull((SELECT name FROM markers WHERE id=ht.positionmarkerid LIMIT 1),"")) as positionname';
+	 $sql='SELECT ht.id as `id`, ht.workerid as `workerid`, w.avatarid, ht.sortorder as `sortorder`, '.$possql.', p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
+	     'FROM highleveltasks ht, workers w, parts p, tools t, tasktypes tt '.
+	     'WHERE w.stationid=ht.stationid and w.id=ht.workerid and ht.stationid='.$station.' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
+		 'UNION ALL '. //tasks where subject is marker
+		'SELECT ht.id, ht.workerid, w.avatarid, ht.sortorder, '.$possql.', m.engineid, m.name as partname, t.name as toolname, tt.name as operation '.
+		'FROM highleveltasks ht, workers w, markers m, tools t, tasktypes tt '.
+		'WHERE w.stationid=ht.stationid and w.id=ht.workerid and ht.stationid='.$station.' and ht.markerid=m.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
+	    'ORDER BY workerid, sortorder, id;';
+	
+	if ($result=$db->query($sql))
+	  if (strtoupper($dataformat)=='XML')
+	  outputXML($result);
+      else 
+	  outputJSON($result,$token);
+ }
+ 
 //main body
  
  //POST requests begin
@@ -1203,6 +1223,8 @@ XML;
 	if (($_GET['action']=='getTaskList') && isset($_GET['station']) && ctype_digit($_GET['station']))
 	if (stationInCurrentProject($_GET['station']))
 	{
+		getTaskList($_GET['station'],(isset($_GET['format'])?$_GET['format']:""));
+		/*
 	 $sql='SELECT ht.id, ht.workerid, w.avatarid, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
 	     'FROM highleveltasks ht, workers w, parts p, tools t, tasktypes tt'.
 	     ' WHERE w.stationid=ht.stationid and w.id=ht.workerid and ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
@@ -1211,7 +1233,7 @@ XML;
 	  if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
 	  outputXML($result);
       else 
-  	  outputJSON($result);
+  	  outputJSON($result);*/
 	}
  }
 
@@ -1222,6 +1244,8 @@ XML;
 	$projectid=tokenToProjectId($_GET['token']);
 	if ($projectid>0)
 	{
+		getTaskList($_GET['station'],(isset($_GET['format'])?$_GET['format']:""),$_GET['token']);
+		/*
 	$sql='SELECT ht.id, ht.workerid, w.avatarid, ht.sortorder, ht.positionname, p.engineid, p.name as partname, t.name as toolname, tt.name as operation '.
 	     'FROM highleveltasks ht, workers w, parts p, tools t, tasktypes tt'.
 	     ' WHERE w.stationid=ht.stationid and w.id=ht.workerid and ht.stationid='.$_GET['station'].' and ht.partid=p.id and ht.tasktype=tt.id and tt.language=t.language and ht.toolid=t.id and t.language=\'mosim\' '.
@@ -1230,7 +1254,7 @@ XML;
 	 if (isset($_GET['format']) && (strtoupper($_GET['format'])=='XML'))
 	 outputXML($result);
 	 else 
-	 outputJSON($result,$_GET['token']);
+	 outputJSON($result,$_GET['token']);*/
 	}
   }
 

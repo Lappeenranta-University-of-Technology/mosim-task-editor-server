@@ -2,6 +2,12 @@ span.w3-tag.tagicon.tools[data-id="0"] {
  display: none; /*hide tools for tasks that do not require them */
 }
 
+input[type="checkbox"].large {
+ width: 20px;
+ height: 20px;
+ margin-left: 10px;
+}
+
 div.brackettop {
  background-position: left 3px, left bottom;
  background-repeat: no-repeat, no-repeat;
@@ -79,6 +85,11 @@ span.w3-tag.tagicon.part {
 
 span.w3-tag.tagicon.tools {
   background-color: #495f6b;
+}
+
+span.w3-tag.tagicon.position {
+  background-color: #99bbce;
+  background-image: url('../cross.png');
 }
 
 span.subassembly {
@@ -180,11 +191,18 @@ div.modalwindow > div:first-child {
 }
 
 div#newtaskwindow {
-	height: 600px;
+	height: 660px;
 }
 
 div#tasksettingswindow {
 	height: auto;
+}
+
+div#new_partpreview {
+ width: 100%;
+ height: 100%;
+ margin: 0px;
+ border: none;
 }
 
 /* TODO: make responsive for small screens*/
@@ -200,8 +218,13 @@ div.modalwindow > div > div:first-of-type {
  border: 1px dotted black;
 }
 
+input#new_time {
+ width: 100px;
+}
+
 #renderCanvas {
- width: calc(100% - 550px);
+ /*width: calc(100% - 550px);*/
+ width:100%;
  max-width: 400px;
  height: 350px;
  display: inline-block;
@@ -209,3 +232,100 @@ div.modalwindow > div > div:first-of-type {
  border: 1px dotted black;
  touch-action: none;
  }
+ 
+ /*Tab view style definition*/
+ 
+ div.modalwindow div.tabs {
+ position: relative;
+ padding: 0px;
+ text-align: left;
+ position: relative;
+}
+
+div.modalwindow div.tabs > span {
+ display: inline-block;
+ padding: 2px 5px 2px 5px;
+ background-color: white;
+ border-top: 1px solid black;
+ border-left: 1px solid black;
+ border-right: 1px solid black;
+ margin-right: 2px;
+ position: relative;
+ bottom: 30px;
+ height: 30px;
+ border-radius: 5px 5px 0px 0px;
+ cursor: pointer;
+}
+
+div.modalwindow div.tabs > span.active {
+ background-color: #213864;
+ color: white;
+}
+
+div.modalwindow div.tabs > div {
+ width: 100%;
+ height: 100%;
+ left: 0px;
+ position: absolute;
+ top: 0px;
+ margin: 0px;
+ display: none;
+}
+
+/*Tags definition */
+
+div.modalwindow div.tabs > div.active {
+ display: block;
+}
+
+div.modalwindow span.tag {
+ background-color: cornflowerblue;
+ padding: 5px;
+ border-radius: 10px;
+ display: inline-block;
+ margin-top: 10px;
+ cursor: pointer;
+ transition: background-color 0.2s linear, color 0.2s linear;
+}
+
+div.modalwindow span.tag.dialog {
+ margin-top: 0px;
+}
+
+div.modalwindow span.tag + span.tag {
+ margin-left: 5px;
+}
+
+div.modalwindow span.tag > select + span, div.modalwindow span.tag > select + span + span {
+ margin-left: 5px;
+ border-radius: 6px;
+ cursor: pointer;
+ padding: 4px;
+ transition background-color 0.2s linear;
+}
+
+div.modalwindow span.tag > select + span:hover, div.modalwindow span.tag > select + span + span:hover {
+ background-color: #ffb300;
+}
+
+div.modalwindow span.tag > select + span {
+ background-color: lime;
+}
+
+div.modalwindow span.tag > select + span + span {
+ background-color: orangered;
+}
+
+div.modalwindow span.tag > select {
+ width:auto;
+ margin-left:0px;
+}
+
+div.modalwindow span.tag > select:nth-of-type(2) {
+ margin-left: 5px;
+}
+
+div.modalwindow span.tag.selected {
+ color: white;
+ background-color: #213864;
+}

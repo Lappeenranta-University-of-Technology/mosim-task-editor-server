@@ -348,7 +348,7 @@
 	obj.parentNode.nextSibling.nextSibling.nextSibling.style.display="none";
 	obj.dataset.defclass=obj.className;  
 	obj.className="clicked";
-    obj.innerHTML='<span data-toggle="Activate,Delete/Deactivate,Delete" data-toggleval="0" onclick=spanToggle(event,this.parentNode.parentNode.parentNode.dataset.enabled);>'+(obj.parentNode.parentNode.dataset.enabled=="1"?'Dea':'A')+'ctivate</span>'+obj.parentNode.nextSibling.innerText+"? <span onclick=\"deleteUserYes(event);\">Yes</span><span>Cancel</span>";	
+    obj.innerHTML='<span data-toggle="Activate,Delete/Deactivate,Delete" data-toggleval="0" onclick=spanToggle(event,this.parentNode.parentNode.parentNode.dataset.enabled);>'+(obj.parentNode.parentNode.dataset.enabled=="1"?'Dea':'A')+'ctivate</span>'+obj.parentNode.nextSibling.innerText+"? <span onclick=\"deleteUserYes(event);\">Yes</span><span>Cancel</span>";
   }
  }
  
@@ -359,6 +359,8 @@
   action='reorderParts';
   if (div.id=='partstationlist')
   action='reorderPartsToStations';
+  if (div.id=='markerstationlist')
+  action='reorderMarkersToStations';
  for (var i=0; i<div.children.length; i++)
   if ((div.children[i].tagName=='DIV') && (div.children[i].className.indexOf("category")==-1))
   if (div.children[i].dataset.cat==NewObject.dataset.cat) 
@@ -369,17 +371,17 @@
 		 div.children[i].dataset.fromcat:'-1')
 		);
   NewObject.removeAttribute('data-fromcat');
-		
+
     $.post("update.php",
     {
       action: action,
 	  neworder: neworder
     },
-    function(data, status){ 	
+    function(data, status){
      //if (getTagValue(data,'result')=='OK')
-	  	 
-     //document.location.reload();		 
-	});	 
+
+     //document.location.reload();
+	});
  }
  
  function cancelTool(obj) {
@@ -387,12 +389,12 @@
  }
  
  function copyTool(obj) {
-  var obj1=obj;	 
+  var obj1=obj;
   obj=obj.parentNode.parentNode;
   if (obj.className=="category")
   {
    var newObject=draggedObject.cloneNode(true);
-   newObject.dataset.cat=obj.dataset.id;      
+   newObject.dataset.cat=obj.dataset.id;
    newObject.lastChild.className="";
    obj.parentNode.insertBefore(newObject,obj.nextSibling);
   }
@@ -409,24 +411,24 @@
  }
  
  function moveTool(obj,direct) {
-  var obj1=obj;	 
+  var obj1=obj;
    if (!direct)
    obj=obj.parentNode.parentNode;
   if (obj.className=="category")
   {
    draggedObject.dataset.fromcat=draggedObject.dataset.cat;
-   draggedObject.dataset.cat=obj.dataset.id;     
-   draggedObject.lastChild.className="";   
+   draggedObject.dataset.cat=obj.dataset.id;
+   draggedObject.lastChild.className="";
    obj.parentNode.insertBefore(draggedObject,obj.nextSibling);
   }
   else
   {
-   draggedObject.dataset.fromcat=draggedObject.dataset.cat;	  
-   draggedObject.dataset.cat=obj.dataset.cat;	 
-   draggedObject.lastChild.className="";   
+   draggedObject.dataset.fromcat=draggedObject.dataset.cat;
+   draggedObject.dataset.cat=obj.dataset.cat;
+   draggedObject.lastChild.className="";
    obj.parentNode.insertBefore(draggedObject,obj);
   }
-  var div=obj.parentNode;  
+  var div=obj.parentNode;
   updateToolOrderAndCats(div,draggedObject);
   if (!direct)
   cancelTool(obj1);
@@ -637,7 +639,7 @@
 	   selcat.value=obj.dataset.id;
        else
 	   {
-	    selcat.value=getTagValue(data,'parent');	   
+	    selcat.value=getTagValue(data,'parent');
 	    selcat.dataset.id=obj.dataset.id;
 	   }
       getSubTypes(selcat);
@@ -876,7 +878,7 @@
      S=S+m+':';
      else
       if (m<10)
-      S=S+'0'+m+':';		  
+      S=S+'0'+m+':';
       else
 	  S=S+m+':';
    }
@@ -892,7 +894,7 @@
 	if (s<10)
     S=S+'0'+s;
     else
-	S=S+s;	
+	S=S+s;
   obj.value=S;
  }
  
@@ -961,50 +963,122 @@
 	    else
 		{
 		 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
-         windowShow(null);	
+         windowShow(null);
 		}
 	});	 
  }
  
- function addTask() {
-  var subassemblies = [];
-  var tasks=document.getElementById("tasklist");
-   for (var i=0; i<tasks.children.length; i++)
+ function addSingleOrGroupTask() {
+	var isGroupTask = document.getElementById("new_grouptask");
+	if (isGroupTask.checked)
+		addGroupTask();
+	else
+		addTask();
+ }
+ 
+ function listSelectedSubassemblies()
+ {
+	var tasks=document.getElementById("tasklist");
+	var subassemblies = [];
+	for (var i=0; i<tasks.children.length; i++)
     if (tasks.children[i].tagName=='DIV')
 	 if (tasks.children[i].hasAttribute('data-type'))
       if ((tasks.children[i].dataset.type=="assembly") && (tasks.children[i].children.length>=4))
 	   if ((tasks.children[i].children[3].className.indexOf('editmode')==-1) &&
           (tasks.children[i].children[3].className.indexOf('selected')>-1)) 
        subassemblies.push(i);
+	return subassemblies;
+ }
+ 
+ function addGroupTask() {
+	var followersData = [];
+	var tasks=document.getElementById("tasklist");
+	var followers = document.getElementById("followers").getElementsByClassName("tag");
+	for (var i=1; i<followers.length; i++) //skip first item as it is the editor box
+		followersData.push({stationid: followers[i].dataset.stationid,
+							workerid: followers[i].dataset.workerid});
+	
+	var subassemblies=listSelectedSubassemblies();
+	var workerid = document.getElementById("workers").value;
+	var ntype = document.getElementById("new_subtype");
+	var npart = document.getElementById("partselector");
+	
+	var ntool = document.getElementById("new_tool");
+	if (ntype.dataset.defaulttool=="-1")
+	ntool = 0; //no tool option
+	else
+	ntool=ntool.value;
+	var ntime = document.getElementById("new_time");
+	var ndesc = document.getElementById("new_description");
+	var stationid = document.getElementById("stations").value;
+	var timeout = document.getElementById("new_timeout");
+	if (subassemblies.length==1)
+	stationid=tasks.children[subassemblies[0]].dataset.assembly;
+
+	$.post("update.php",
+	{
+		action: "addGroupTask",
+		stationid: stationid,
+		workerid: workerid,
+		type: ntype.value,
+		part: (npart.value==""?-1:npart.value),
+		tool: ntool,
+		position: "",
+		time: ntime.value,
+		timeout: timeout.value,
+		followers: followersData,
+		desc: ndesc.value
+	},
+	function(data, status){
+		if (getTagValue(data,'result')=='OK')
+		document.location.reload();
+		else
+		{
+		 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
+		 windowShow(null);
+		}
+	});
+ }
+ 
+ function addTask() {
+  var subassemblies = [];
+  var tasks=document.getElementById("tasklist");
+  var subassemblies=listSelectedSubassemblies();
   var workerid = document.getElementById("workers").value;
   var ntype = document.getElementById("new_subtype");
   var npart = document.getElementById("partselector");
   var ntool = document.getElementById("new_tool");
+  var nlocation = document.getElementById("locselector");
+   if (ntype.dataset.defaulttool=="-1")
+	ntool = 0; //no tool option
+	else
+	ntool=ntool.value;
   var ntime = document.getElementById("new_time");
   var ndesc = document.getElementById("new_description");
   var stationid = document.getElementById("stations").value;
    if (subassemblies.length==1)
    stationid=tasks.children[subassemblies[0]].dataset.assembly;
     //if more than two are selected show dialog to pick which one is important
-	   
-   $.post("update.php",
-    {
-        action: "addTask",
+
+	$.post("update.php",
+	{
+		action: "addTask",
 		stationid: stationid,
 		workerid: workerid,
 		type: ntype.value,
-		part: npart.value,
-		tool: ntool.value,
+		part: (npart.value==""?-1:npart.value),
+		tool: ntool,
+		positionmarker: nlocation.value,
 		position: "",
 		time: ntime.value,
 		desc: ndesc.value
-    },
-    function(data, status){
+	},
+	function(data, status){
 		if (getTagValue(data,'result')=='OK')
 		document.location.reload();
-	    else
-        {
-		 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
+		else
+		{
+		 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));
 		 windowShow(null);
 		}
 	});
@@ -1035,7 +1109,7 @@
 		if (getTagValue(data,'result')=='OK')
          obj.parentNode.innerHTML=val;
 		else
-		 obj.parentNode.innerHTML=oldval;	
+		 obj.parentNode.innerHTML=oldval;
 	});
  }
  
@@ -1135,7 +1209,7 @@
 		{
 		 obj.innerHTML='<td class="error" colspan=2>'+getTagValue(data,'result')+'</td>';
 		}
-	});	   
+	});
  }
  
  function searchUsers(obj,event,box) {
@@ -1150,8 +1224,8 @@
 		if (getTagValue(data,'result')=='OK')
          box.innerHTML=getTagValue(data,'userlist');
 		else
-		 box.innerHTML='';	
-	});	  
+		 box.innerHTML='';
+	});
  }
  
  function addUser(box) {
@@ -1163,7 +1237,7 @@
    }
    else
    {
-	   
+
    }
  }
  
@@ -1234,14 +1308,14 @@
 	 operation.style.backgroundColor="";
 	 part.style.backgroundColor="";
 	 tool.style.backgroundColor="";
-	 task.children[2].className=task.children[2].className.split(' editmode').join('');          
+	 task.children[2].className=task.children[2].className.split(' editmode').join('');
 	}
 	else
 	{
 	 windowUpdate('Error',getTagValue(data,'result'),Array('OK'));	
-     windowShow(null);	
+     windowShow(null);
 	}
-   });	 
+   });
  }
  
  function clickPosition(obj) {
@@ -1265,14 +1339,14 @@
   var button=document.createElement('SPAN');
   button.innerHTML='OK';
   button.className="w3-tag w3-round button";
-  button.onclick=okTaskEdit;                                        
+  button.onclick=okTaskEdit;
   tasks.children[i].children[4].appendChild(button);
   button=document.createElement('SPAN');
   button.innerHTML='Cancel';
   button.className="w3-tag w3-round button";
   button.onclick=cancelTaskEdit;
   tasks.children[i].children[4].appendChild(button);
-  tasks.children[i].children[3].children[2].click();	 
+  tasks.children[i].children[3].children[2].click();
  }
  
  function editTaskInStation(tasks, i) {
@@ -1291,14 +1365,14 @@
   var button=document.createElement('SPAN');
   button.innerHTML='OK';
   button.className="w3-tag w3-round button";
-  button.onclick=okTaskEdit;                                        
+  button.onclick=okTaskEdit;
   tasks.children[i].children[3].appendChild(button);
   button=document.createElement('SPAN');
   button.innerHTML='Cancel';
   button.className="w3-tag w3-round button";
   button.onclick=cancelTaskEdit;
   tasks.children[i].children[3].appendChild(button);
-  tasks.children[i].children[2].children[1].click();	 
+  tasks.children[i].children[2].children[1].click();
  }
  
  function editTask() {
@@ -1315,7 +1389,7 @@
 	  if ((tasks.children[i].dataset.type=="assembly") && (tasks.children[i].dataset.id==0))
 	   if ((tasks.children[i].children[3].className.indexOf('editmode')==-1) &&
           (tasks.children[i].children[3].className.indexOf('selected')>-1))  
-	   editSubassembly(tasks, i);	  
+	   editSubassembly(tasks, i);
 	 }
  }
  
@@ -1376,7 +1450,7 @@
  
  function subTypesChange(e) {
   if (!(e instanceof Event))
-  e.target=e;	  	 
+  e.target=e;
   if (e.target.hasAttribute('data-parent'))
   {
     var plabel=document.getElementById(e.target.dataset.parent);
@@ -1390,7 +1464,7 @@
  
  function getSubTypes(e) {
   if (!(e instanceof Event))
-  e.target=e;	  
+  e.target=e;
   var maintype = e.target.value;
   var subtypes = document.getElementById(e.target.dataset.sub);
   if (e.target.hasAttribute('data-parent'))
@@ -1410,7 +1484,7 @@
        if (e.target.hasAttribute('data-parent'))
 	   {
 		if (e.target.hasAttribute("data-id"))
-		{	
+		{
 	     for (var j=0; j<subtypes.options.length; j++)
 		  if (subtypes.options[j].value==e.target.dataset.id)
 		  {
@@ -1511,12 +1585,100 @@
 	});
  }
  
+ function stationWorkers()
+ {
+	var workersbox;
+	var val;
+	var currentWorkerID = document.getElementById("workers").value;
+	 if (event==null)
+	 {
+		 workersbox=document.getElementById("followers_worker");
+		 val=document.getElementById("followers_station").value;
+	 }
+	 else
+	 {
+		workersbox = event.target.nextSibling;
+		val=event.target.value;
+	 }
+	$.post("update.php",
+    {
+        action: "getStationWorkers",
+		stationid: val,
+		exceptWorker: currentWorkerID
+    },
+    function(data, status){
+	 if (getTagValue(data,'result')=='OK')
+	 workersbox.innerHTML=getTagValue(data,'response');
+	});
+ }
+ 
+ function setDefaultLabelValues()
+ {
+  var parttypelabel=document.getElementById("parttypelabel");
+  var partlabel=document.getElementById("partlabel");
+  var tooltypelabel=document.getElementById("tooltypelabel");
+  var toollabel=document.getElementById("toollabel");
+  if (!parttypelabel.hasAttribute('data-default'))
+	  parttypelabel.dataset.default=parttypelabel.innerHTML;
+  if (!partlabel.hasAttribute('data-default'))
+	  partlabel.dataset.default=partlabel.innerHTML;
+  if (!tooltypelabel.hasAttribute('data-default'))
+	  tooltypelabel.dataset.default=tooltypelabel.innerHTML;
+  if (!toollabel.hasAttribute('data-default'))
+	  toollabel.dataset.default=toollabel.innerHTML;
+ }
+ 
+ function assignLabels(seloption)
+ {
+  var parttypelabel=document.getElementById("parttypelabel");
+  var partlabel=document.getElementById("partlabel");
+  var tooltypelabel=document.getElementById("tooltypelabel");
+  var toollabel=document.getElementById("toollabel");
+ 
+  if (seloption.hasAttribute('data-partcatname'))
+  parttypelabel.innerHTML=seloption.dataset.partcatname;
+  else
+  parttypelabel.innerHTML=parttypelabel.dataset.default;
+
+  if (seloption.hasAttribute('data-partname'))
+  partlabel.innerHTML=seloption.dataset.partname;
+  else
+  partlabel.innerHTML=partlabel.dataset.default;
+
+  if (seloption.hasAttribute('data-toolcatname'))
+  tooltypelabel.innerHTML=seloption.dataset.toolcatname;
+  else
+  tooltypelabel.innerHTML=tooltypelabel.dataset.default;
+
+  if (seloption.hasAttribute('data-toolname'))
+  toollabel.innerHTML=seloption.dataset.toolname;
+  else
+  toollabel.innerHTML=toollabel.dataset.default;
+ }
+ 
  function getDefaultTool(obj) {
   var tooltypes=document.getElementById("new_tooltype");
   var subtypes=document.getElementById("new_subtype");
   var parttypes=document.getElementById("new_parttype");
   var toolselector=document.getElementById("new_tool");
   var partselector=document.getElementById("partselector");
+  var locationlabel=document.getElementById("loclabel");
+  var locationselector=document.getElementById("locselector");
+  
+  
+  assignLabels(subtypes.options[subtypes.options.selectedIndex]);
+  if (subtypes.options[subtypes.options.selectedIndex].hasAttribute('data-haslocation'))
+  {
+	locationlabel.style.display='';
+	locationselector.style.display='';
+  }
+  else
+  {
+	locationlabel.style.display='none';
+	locationselector.style.display='none';
+	locationselector.selectedIndex=0;
+  }
+	  
 	if (subtypes.options[subtypes.options.selectedIndex].dataset.defaulttool==-1)
 	{
 	 tooltypes.style.display='none';

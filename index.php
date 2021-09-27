@@ -28,6 +28,86 @@
 <link rel="stylesheet" href="css/index.css">
 
 <script>
+
+ function insertFollower(boxID)
+ {
+	var maxFollowers = document.getElementById("new_subtype").value;
+	if (maxFollowers>-1)
+		maxFollowers = document.getElementById("new_subtype").selectedOptions[0].dataset.maxfolowers;
+	var dialogFAdd = event.target.parentNode;
+	var stationdialog = dialogFAdd.children[0];
+	var workerdialog = dialogFAdd.children[1];
+	var followerBox=document.getElementById(boxID);
+	 if (followerBox.getElementsByClassName("tag").length-1<maxFollowers) //if number of followers is smaller than max allowed for the task then proceed
+	 {
+		followerBox.innerHTML+='<span class="tag" onclick="selectObject();" data-stationid="'+stationdialog.value+'" data-workerid="'+workerdialog.value+'">'+
+		stationdialog.options[stationdialog.selectedIndex].innerText+"/"+
+		workerdialog.options[workerdialog.selectedIndex].innerText+'</span>';
+	 }
+ }
+ 
+ function selectObject()
+ {
+	 if (event.target.className.indexOf("selected")>0)
+		 event.target.className=event.target.className.split("selected").join("").trim();
+	 else
+		 event.target.className+=" selected";
+ }	
+ 
+ function RemoveFollower(id)
+ {
+	 var list=document.getElementById(id);
+	 for (var i=list.children.length-1; i>0; i--)
+		 if (list.children[i].className.split(" ").includes("tag") &&
+			 list.children[i].className.split(" ").includes("selected"))
+			 list.children[i].remove();
+ }
+
+ function tabActivate(tabObj)
+ {
+	 var j=-1;
+	 var tabcount=1;
+	 for (var i=0; i<tabObj.parentNode.children.length; i++)
+	 {
+	  if (tabObj.parentNode.children[i]==tabObj)
+	  {
+		j=i;
+		tabObj.parentNode.children[i].className="active";
+	  }
+	  else
+		  if (tabObj.parentNode.children[i].tagName=="SPAN")
+		  {
+			tabcount++;
+			tabObj.parentNode.children[i].className="";
+		  }
+		  else
+			tabObj.parentNode.children[i].className=(i==j+tabcount?"active":"");
+	 }
+ }
+
+ function groupTaskSingleTaskToggle()
+ {
+	var grouptasktoggle=document.getElementById("new_grouptask"); 
+	var types=document.getElementById("new_type");
+	var followers = document.getElementById("followers");
+	var timeout = document.getElementById("timeout");
+	types.selectedIndex=-1;
+	var showfields = "none";
+	if (grouptasktoggle.checked)
+		showfields="";
+	followers.style.display=showfields;
+	timeout.style.display=showfields;
+	
+	for (var i=0; i<types.children.length; i++)
+	{
+		types.children[i].style.display=(grouptasktoggle.checked == types.children[i].dataset.grouptask?"":"none");
+		if (types.selectedIndex==-1 && grouptasktoggle.checked == types.children[i].dataset.grouptask) //finding first item that is visible and selecting it
+		{
+			types.selectedIndex=i;
+			getSubTypes(types);
+		}
+	}
+ }
  
  function removeStationDialog(stationid) {
   var w=document.getElementById("msgwindow");
@@ -251,8 +331,8 @@
  function partChange() {
 	 var p=document.getElementById('partselector');
 	 loadPart3D(p.value,"session");
-	 //var i=document.getElementById('new_partpreview');
-	 //i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
+	 var i=document.getElementById('new_partpreview');
+	 i.style.backgroundImage='url(\'image.php?part='+p.value+'\')';
  }
  
  function unFoldSubAssembly(obj) {
@@ -266,21 +346,21 @@
 	  while (document.getElementById(obj.parentNode.id+"."+i)!=null)
 	  {
 	   document.getElementById(obj.parentNode.id+"."+i).style.display="none";
-	   i++;	 
+	   i++;
 	  }
 	  document.getElementById(obj.parentNode.id+".end").style.display="none";
-	}	  
+	}
 	obj.className='unfold';
   }
   else
   {
 	if (obj.parentNode.hasAttribute('data-loaded'))
 	{
-	 var i=1;	
+	 var i=1;
 	  while (document.getElementById(obj.parentNode.id+"."+i)!=null)
 	  {
 	   document.getElementById(obj.parentNode.id+"."+i).style.display="";
-	   i++;	 
+	   i++;
 	  }
 	  document.getElementById(obj.parentNode.id+".end").style.display="";
 	  obj.className='fold';
@@ -292,7 +372,7 @@
       action: "getSubAssemblies",
       assembly: obj.parentNode.dataset.assembly
      },
-      function(data, status){ 	
+      function(data, status){
        if (getTagValue(data,'result')=='OK')
 	   {   
         var level=parseInt(obj.parentNode.dataset.level);
@@ -306,7 +386,7 @@
 		b.innerHTML='<div class="handle subassembly bottom"></div>';
 		//TODO: on mouse down event
 		if (obj.parentNode.nextElementSibling==null)
-	    obj.parentNode.parentNode.appendChild(b);   
+	    obj.parentNode.parentNode.appendChild(b);
 		else
         obj.parentNode.parentNode.insertBefore(b,obj.parentNode.nextElementSibling);
 		var mainid=obj.parentNode.dataset.order;
@@ -350,14 +430,13 @@
 		 
 		}
 		obj.parentNode.dataset.loaded=1;
-		obj.className='fold';   
+		obj.className='fold';
 		makeToolDraggable();
 	   }
 	   else
 	   console.debug("Load Sub assemblies: "+getTagValue(data,'result'));
       });
 	}
-
   }
  }
 </script>
@@ -388,22 +467,29 @@
  function loadTasks()
  {
   global $db, $stationid, $workerid;
-   
    $j=0;
-   $sql='SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, '.
+   $possql='if(hlt.positionmarkerid=0,"",ifnull((SELECT name FROM markers WHERE id=hlt.positionmarkerid LIMIT 1),"")) as positionname, hlt.positionmarkerid';
+   $sql='SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, '.$possql.', hlt.`description`, hlt.`esttime`, '.
    '(SELECT pc.icon FROM partcat pc, part_cat p_c WHERE p_c.cat=pc.id and p_c.part=hlt.partid LIMIT 1) as particon, '.
    '(SELECT tc.icon FROM toolcat tc, tool_cat t_c WHERE t_c.cat=tc.id and t_c.tool=hlt.toolid LIMIT 1) as toolicon, '.
    'if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
    'FROM highleveltasks hlt, tools t, parts p, tasktypes tt '.
    'WHERE tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.stationid='.$stationid.' '.' and hlt.workerid='.$workerid.' '.
    'UNION ALL '.
-   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', \'subassembly.png\' as icon, \'\', \'\' FROM stations s, stations p, positions pp WHERE s.main=\'station\' and s.mainpart=p.id and s.position=pp.id and s.parent='.$stationid.' '.
+   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name,0, \'\', \'00:00:00\', \'subassembly.png\' as icon, \'\', \'\' FROM stations s, stations p, positions pp WHERE s.main=\'station\' and s.mainpart=p.id and s.position=pp.id and s.parent='.$stationid.' '.
    'UNION ALL '.
-   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', (SELECT icon FROM partcat pc, part_cat p_c WHERE pc.id=p_c.cat and p_c.part=s.mainpart LIMIT 1) as icon, \'\', \'\' FROM stations s, parts p, positions pp WHERE s.main=\'part\' and s.mainpart=p.id and s.position=pp.id and s.parent='.$stationid.' '.
+   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name,0, \'\', \'00:00:00\', (SELECT icon FROM partcat pc, part_cat p_c WHERE pc.id=p_c.cat and p_c.part=s.mainpart LIMIT 1) as icon, \'\', \'\' FROM stations s, parts p, positions pp WHERE s.main=\'part\' and s.mainpart=p.id and s.position=pp.id and s.parent='.$stationid.' '.
    'UNION ALL '.
-   'SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, CONCAT(\'S\',hlt.subpartid) as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, \'subassembly.png\' as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
+   'SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, CONCAT(\'S\',hlt.subpartid) as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, '.$possql.', hlt.`description`, hlt.`esttime`, \'subassembly.png\' as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
    'FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, stations p, tasktypes tt WHERE t_c.tool=t.id and t_c.cat=tc.id and hlt.partid=0 and hlt.subpartid=p.id and tt.id=hlt.tasktype and t.id=hlt.toolid and hlt.stationid='.$stationid.' and hlt.workerid='.$workerid.' '.
-   '  ORDER BY sortorder, id';
+   'UNION ALL '. //tasks where action is marker
+   'SELECT hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, CONCAT("M", hlt.markerid) as `partid`, m.name as `partname`, t.name as `toolname`, 0 as positionid, '.$possql.', hlt.`description`, hlt.`esttime`, '.
+	'NULL, '.
+	'(SELECT tc.icon FROM toolcat tc, tool_cat t_c WHERE t_c.cat=tc.id and t_c.tool=hlt.toolid LIMIT 1) as toolicon, '.
+	'if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent LIMIT 1),tt.icon) as tticon '.
+	'FROM highleveltasks hlt, tools t, markers m, tasktypes tt '.
+	'WHERE tt.id=hlt.tasktype and m.id=hlt.markerid and t.id=hlt.toolid and hlt.stationid='.$stationid.' and hlt.workerid='.$workerid.' '.
+   'ORDER BY sortorder, id';
    //TODO: Add display of first level subassembly headers
    //TODO: Check why LIMIT 1 is needed in all the subqueries, they should be constrained enough not to produce more than one result.
 
@@ -429,7 +515,10 @@
 	 {
 	 echo "<span id=\"task_".$row['id'].'_operation'."\" onclick=\"clickTaskType(this);\" ".notBlankIcon($row['tticon'])." class=\"w3-tag w3-round tagicon operation\" data-id=\"".$row['tasktypeid']."\">".htmlentities($row['tasktype'])."</span>";
 	 echo "<span id=\"task_".$row['id'].'_part'."\" data-id=\"".$row['partid']."\" onclick=\"clickPart(this);\" ".notBlankIcon($row['particon'])." class=\"w3-tag w3-round tagicon part\">".htmlentities($row['partname'])."</span>";
-	 echo "<span id=\"task_".$row['id'].'_tool'."\" onclick=\"clickTool(this);\" data-id=\"".$row['toolid']."\" ".notBlankIcon($row['toolicon'])." class=\"w3-tag w3-round tagicon tools\">".htmlentities($row['toolname'])."</span></h5>";
+	 echo "<span id=\"task_".$row['id'].'_tool'."\" onclick=\"clickTool(this);\" data-id=\"".$row['toolid']."\" ".notBlankIcon($row['toolicon'])." class=\"w3-tag w3-round tagicon tools\">".htmlentities($row['toolname'])."</span>";
+	 if ($row['positionmarkerid']>0)
+	 echo "<span id=\"task_".$row['id'].'_position'."\" onclick=\"clickPosition(this);\" data-id=\"".$row['positionmarkerid']."\" class=\"w3-tag w3-round tagicon position\">".htmlentities($row['positionname'])."</span>";
+	 echo "</h5>";
      }
 	 //TODO: add position id to the query
 	 
@@ -438,14 +527,19 @@
    }
  }
  
- function insertStations($selectCurrent=true)
+ function insertStations($selectCurrent=true, $withWorkers=false)
  {
-  global $stations;
+  global $stations, $stationsWithWorkers;
   
-  if ($selectCurrent)
-  echo $stations;
+  if ($withWorkers)
+  echo $stationsWithWorkers;
   else
-  echo str_ireplace('<option selected="" value=','<option value=',$stations);
+  {
+   if ($selectCurrent)
+   echo $stations;
+   else
+   echo str_ireplace('<option selected="" value=','<option value=',$stations);
+  }
  }
  
  function insertWorkers($selectCurrent=true)
@@ -484,10 +578,10 @@
  
  function insertTypes()
  {
-  global $db;  
-   if ($result=$db->query('SELECT id, name, sortorder FROM `tasktypes` WHERE parent=0 and language="mosim"'))
+  global $db;
+   if ($result=$db->query('SELECT tt.id, tt.name, ifnull(dtt.grouptask,0) as grouptask, tt.sortorder FROM `tasktypes` tt LEFT JOIN defaulttooltype dtt ON (dtt.tasktype=tt.id) WHERE tt.parent=0 and tt.language="mosim"'))
 	while ($row=$result->fetch_assoc())
-	echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
+	echo '<option data-grouptask="'.$row['grouptask'].'" value="'.$row['id'].'">'.$row['name'].'</option>';
  }
 
 ?>
@@ -550,30 +644,45 @@
 </div>
 
 <div id="newtaskwindow" class="modalwindow"><div>
-<canvas id="renderCanvas" touch-action="none"></canvas><!-- touch-action="none" for best results from PEP -->
-<div id="new_partpreview" style="background-image: url('car.jpg'); display:none;"></div>
+<div class="tabs"><!-- tabs on right side -->
+<span class="active" onclick="tabActivate(this)";>Preview 2D</span>
+<span onclick="tabActivate(this)";>Preview 3D</span>
+<span onclick="tabActivate(this)";>Description</span>
+<div class="active">
+<div id="new_partpreview" style="background-image: url('car.jpg');"></div></div>
+<div class="active"><canvas id="renderCanvas" touch-action="none"></canvas><!-- touch-action="none" for best results from PEP -->
+</div>
+<div><textarea id="new_description" placeholder="You can enter task description here" style="width:100%; height:100%; resize: none;"></textarea></div>
+</div>  <!-- end of tabs on right side -->
+<p><span>Group task:</span><input type="checkbox" class="large" id="new_grouptask" onchange="groupTaskSingleTaskToggle();" /></p>
+<p id="followers"><span>Followers</span><span class="tag dialog"><select id="followers_station" onchange="stationWorkers();"><?php insertStations(false, true); ?></select><select id="followers_worker"></select><span onclick="insertFollower('followers');">Add</span><span onclick="RemoveFollower('followers');">Remove</span></span></p>
+<p id="timeout"><span>Timeout:</span><input id="new_timeout" onchange="timeEstimate(this);" type="text" placeholder="00:00:00" value="" /></p>
 <p><span>Operation type:</span><select id="new_type" data-sub="new_subtype" onchange="getSubTypes(event);"><?php insertTypes(); ?></select></p>
 <p><span>Operation:</span><select id="new_subtype" onchange="getDefaultTool(event);"><?php insertSubTypes(); ?></select></p>
-<p><span>Part type:</span><select id="new_parttype" data-sub="partselector" onchange="getSubParts(event);"><?php $selPartType=insertPartTypes($stationid); ?></select></p>
-<p><span>Part:</span><select id="partselector" onchange="partChange();">
+<p><span id="parttypelabel">Part type:</span><select id="new_parttype" data-sub="partselector" onchange="getSubParts(event);"><?php $selPartType=insertPartTypes($stationid); ?></select></p>
+<p><span id="partlabel">Part:</span><select id="partselector" onchange="partChange();">
   <?php 
    if ($selPartType==-2)
    insertUncategorizedParts($stationid);
    else
    insertParts($selPartType,$stationid); 
   ?></select></p>
-  <p><span>Tool type:</span><select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
-<p><span>Tool:</span><select id="new_tool">
+  <p><span id="tooltypelabel">Tool type:</span><select id="new_tooltype" data-sub="new_tool" onchange="getSubTools(event);"><?php $selToolType=insertToolTypes(); ?></select></p>
+<p><span id="toollabel">Tool:</span><select id="new_tool">
  <?php 
    if ($selToolType==-2)
    insertUncategorizedTools();
    else
    insertTools($selToolType); 
   ?></select></p>
+  <script>setDefaultLabelValues();</script>
+<p><span id="loclabel">Location:</span><select id="locselector" onchange="partChange();">
+  <?php 
+   index::insertLocations($stationid);
+  ?></select></p>
 <p><span>Time estimate:</span><input id="new_time" onchange="timeEstimate(this);" type="text" placeholder="00:00:00" value="" /></p>
-<p><span>Description:</span><textarea id="new_description" style="width:100%"></textarea></p>
 </div>
-<div class="modalbutton" onclick="addTask(); windowCancel(this);">Add</div>
+<div class="modalbutton" onclick="addSingleOrGroupTask(); windowCancel(this);">Add</div>
 <div class="modalbutton" onclick="windowCancel(this);">Cancel</div>
 <div class="modaltoolbar">New task</div>
 </div>
@@ -694,6 +803,8 @@
 <script>
 //partSelect(document.getElementById("partselector"));
 makeToolDraggable();
+groupTaskSingleTaskToggle();
+stationWorkers();
 //dragElement(document.getElementById("tool2"));
 </script>
 </body>

@@ -52,15 +52,27 @@
 
  function insertSubTypes($maintype = 1)
  {
-  global $db;  
-   if ($result=$db->query('SELECT tt.id, tt.name, dtt.tooltype, dtt.parttype, dtt.restricttool, dtt.restrictpart, dtt.partlist, tt.sortorder FROM `tasktypes` tt LEFT JOIN defaulttooltype dtt ON (dtt.tasktype=tt.id) WHERE tt.parent='.$maintype.' and tt.language="mosim"'))
+  global $db;
+  $sql='SELECT tt.id, tt.name, dtt.tooltype, dtt.parttype, dtt.restricttool, dtt.restrictpart, dtt.partlist, tt.sortorder, tt.PartCatName, tt.PartName, tt.ToolCatName, tt.ToolName, ifnull(dtt.followerlimit,0) as followerlimit, dtt.haslocation '.
+  'FROM `tasktypes` tt LEFT JOIN defaulttooltype dtt ON (dtt.tasktype=tt.id) '.
+  'WHERE tt.parent='.$maintype.' and tt.language="mosim"';
+   if ($result=$db->query($sql))
 	while ($row=$result->fetch_assoc())
 	{
 	 if ($row['restricttool']=='notool')
 	 $row['tooltype']=-1;
      if ($row['restrictpart']=='nopart')
 	 $row['parttype']=-1;
-	 echo '<option data-defaulttool="'.$row['tooltype'].'" data-defaultpart="'.$row['parttype'].'" '.($row['restrictpart']=='onlylisted'?'data-onlyparts="'.$row['partlist'].'"':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
+	 echo '<option data-defaulttool="'.$row['tooltype'].
+	            '" data-defaultpart="'.$row['parttype'].'" '.
+				'  data-maxfolowers="'.$row['followerlimit'].'" '.
+			($row['PartCatName']!=""?' data-partcatname="'.$row['PartCatName'].'"':"").' '.
+			($row['PartCatName']!=""?' data-partname="'.$row['PartName'].'"':"").' '.
+			($row['ToolCatName']!=""?' data-toolcatname="'.$row['ToolCatName'].'"':"").' '.
+			($row['ToolCatName']!=""?' data-toolname="'.$row['ToolName'].'"':"").' '.
+			($row['haslocation']==1?' data-haslocation="1"':"").' '.
+			($row['restrictpart']=='onlylisted'?'data-onlyparts="'.$row['partlist'].'"':'').'value="'.$row['id'].'">'.
+				$row['name'].'</option>';
 	}
  }
 
@@ -68,14 +80,26 @@ class index {
 
  public static function loadStations()
  {
-  global $db, $stationid, $stations;
+  global $db, $stationid, $stations, $stationsWithWorkers;
   $stations='';
+  $stationsWithWorkers='';
   $projectid=$_SESSION['projectid'];
   $i=0;
-   if ($result=$db->query('SELECT id, name, sortorder FROM stations WHERE projectid='.$projectid.' and parent=0 ORDER BY sortorder'))
-	while ($row=$result->fetch_assoc())	
+   if ($result=$db->query('SELECT count(id) as isinproject FROM stations WHERE projectid='.$projectid.' and id='.$stationid))
+	   if ($row=$result->fetch_assoc())
+		   if ($row['isinproject']!=1)
+			   if ($result=$db->query('SELECT id FROM stations WHERE projectid='.$projectid.' LIMIT 1'))
+				   if ($row=$result->fetch_assoc())
+					   $stationid=$row['id'];
+				   else
+					   $stationid=0;
+
+   if ($result=$db->query('SELECT s.id, s.name, s.sortorder, count(w.id) as workerscount FROM stations s LEFT JOIN workers w ON (w.projectid=s.projectid and w.stationid=s.id) WHERE s.projectid='.$projectid.' and s.parent=0 GROUP BY s.id ORDER BY sortorder'))
+	while ($row=$result->fetch_assoc())
 	{
-	 $stations.='<option '.((($row['id']==$stationid) || (($stationid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';	
+	 if ($row['workerscount']!=0)
+	  $stationsWithWorkers.='<option '.($stationsWithWorkers==''?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
+	 $stations.='<option '.((($row['id']==$stationid) || (($stationid==0) && ($i==0)))?'selected="" ':'').'value="'.$row['id'].'">'.$row['name'].'</option>';
 	 if (($stationid==0) && ($i==0))
 	 {
 	  $stationid=$row['id'];
@@ -83,6 +107,18 @@ class index {
 	 }
 	 $i++;
 	}
+ }
+ 
+ public static function insertLocations($stationid)
+ {
+	global $db;
+	$sql='SELECT `id`, `projectid`, `stationid`, `name`, `constraintName`, `constraintID`, `type` '.
+	'FROM `markers` '.
+	'WHERE projectid='.$_SESSION['projectid'].' and stationid in (0,'.$stationid.') order by type, name, id';
+	echo '<option value="0" selected>Final location</option>';
+	if ($result=$db->query($sql))
+		while ($row=$result->fetch_assoc())
+			echo '<option value="'.$row['id'].'">'.htmlentities($row['name']).'</option>';
  }
  
  public static function loadWorkers()

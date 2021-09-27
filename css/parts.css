@@ -77,7 +77,8 @@ div#partlist > div, div#partstationlist > div {
  transition: border-top 0.2s linear;
 }
 
-div#partlist > div > span, div#partstationlist > div > span {
+div#partlist > div > span, 
+div#partstationlist > div > span {
  position: absolute;
  top: 0px;
  right: 0px;
@@ -89,6 +90,24 @@ div#partlist > div > span, div#partstationlist > div > span {
  text-align: center;
  background-position:center center;
  background-size:contain;
+ background-repeat: no-repeat;
+}
+
+div#partlist > div > span.isused,
+div#partlist > div > span.islinked {
+ right: 44px;
+ height: 50%;
+ width: 20px;
+}
+
+div#partlist > div > span.isused {
+ background-image: url('../ui/usedintask.png');
+}
+
+div#partlist > div > span.islinked {
+ bottom: 0px;
+ top: auto;
+ background-image: url('../ui/syncok.png');
 }
 
 div#partlist > div > span.check,

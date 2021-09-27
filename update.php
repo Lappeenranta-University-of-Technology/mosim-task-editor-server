@@ -18,7 +18,7 @@
    if ($result=$db->query('SELECT count(*) as ile FROM userroles ur WHERE ur.projectid='.$projectid.' and ur.userid='.$_SESSION['userid'].';'))
 	 if ($row=$result->fetch_assoc())
 	 return ($row['ile']==1);
-  return false;		  
+  return false;
  }
  
  //user management
@@ -620,6 +620,22 @@
   echo '<result>ERROR</result>'; 
  }
  
+ function reorderMarkersToStations($neworder) {
+  global $db;
+   for ($i=0; $i<count($neworder); $i++)
+   {
+	$vals=explode(',',$neworder[$i]);
+	$sql='UPDATE markers SET stationid='.trim($vals[1]).' WHERE id='.trim($vals[0]).' and projectid='.$_SESSION['projectid'].';';
+	$db->query($sql);
+   }
+   if ($db->affected_rows>0)
+   { 
+    echo '<result>OK</result>';
+	return;
+   }
+  echo '<result>ERROR</result>'; 
+ } 
+ 
  function reorderPartsToStations($neworder) {
   global $db;
   $sql='INSERT INTO part_station (station, part, sortorder) VALUES ';
@@ -937,6 +953,67 @@
   return $time;
  }
  
+ function groupTaskSlave($leaderTaskID,$stationid,$workerid,$partsubpart,$timeout)
+ {
+	global $db;
+	$sql='SELECT sum(ile)+1 as ile FROM (SELECT count(*) as ile FROM highleveltasks WHERE stationid='.$stationid.' UNION ALL SELECT count(*) as ile FROM stations WHERE parent='.$stationid.') dane;';
+	$nextorder=1000;
+    if ($result=$db->query($sql))
+	  if ($row=$result->fetch_assoc())
+	  $nextorder=$row['ile'];
+	
+	$sql='INSERT INTO `highleveltasks` (`timeout`, `workerid`, `stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `markerid`,`toolid`,`esttime`, `positionmarkerid`, `positionname`, `description`, `leadertask`) VALUES (\''.
+	$db->real_escape_string($timeout).'\','.$workerid.','.$stationid.','.$_POST['type'].','.$nextorder.','.$partsubpart.','.$_POST['tool'].',\''.$db->real_escape_string($time).'\','.
+	(isset($_POST['positionmarker']) && ctype_digit(strval($_POST['positionmarker']))?
+	$_POST['positionmarker']:'0').',\''.
+	$db->real_escape_string($_POST['position']).'\',\''.
+	$db->real_escape_string($_POST['desc']).'\','.$leaderTaskID.');';
+	echo 'Follower sql: '.$sql."\r\n";
+	return ($db->query($sql));
+ }
+ 
+ function addGroupTask()
+ {
+	global $db;
+	if ($_SESSION['projectid']==0)
+	return 'You do not have active project. Go to <a href=projects.php>projects</a> and select an existing project or create a new one.';	  
+	if (($_POST['stationid']=='') || (!ctype_digit($_POST['stationid'])))
+	return 'You need to select station before you can add tasks.';	  
+	if (($_POST['workerid']=='') || (!ctype_digit($_POST['workerid'])))
+	return 'You need to select worker before you can add tasks.';
+	if (!isUsersProject($_SESSION['projectid']))
+	return 'You do not have rights to edit this project';
+	$time=normalizeTime($_POST['time']);
+	$timeout=normalizeTime($_POST['timeout']);
+	$partsubpart=$_POST['part'].',0,0';
+	if (substr($_POST['part'],0,1)=='S')
+	$partsubpart='0,'.substr($_POST['part'],1).',0';
+	if (substr($_POST['part'],0,1)=='M')
+	$partsubpart='0,0,'.substr($_POST['part'],1);
+	$sql='SELECT sum(ile)+1 as ile FROM (SELECT count(*) as ile FROM highleveltasks WHERE stationid='.$_POST['stationid'].' UNION ALL SELECT count(*) as ile FROM stations WHERE parent='.$_POST['stationid'].') dane;';
+	$nextorder=1000;
+    if ($result=$db->query($sql))
+	  if ($row=$result->fetch_assoc())
+	  $nextorder=$row['ile'];
+	$sql='INSERT INTO `highleveltasks` (`timeout`, `workerid`, `stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `markerid`,`toolid`,`esttime`, `positionmarkerid`, `positionname`, `description`) VALUES (\''.
+	$db->real_escape_string($timeout).'\','.$_POST['workerid'].','.$_POST['stationid'].','.$_POST['type'].','.$nextorder.','.$partsubpart.','.$_POST['tool'].',\''.$db->real_escape_string($time).'\','.
+  (isset($_POST['positionmarker']) && ctype_digit(strval($_POST['positionmarker']))?
+  $_POST['positionmarker']:'0').',\''.
+  $db->real_escape_string($_POST['position']).'\',\''.
+  $db->real_escape_string($_POST['desc']).'\');';
+  if ($db->query($sql))
+  {
+	$leaderTask=$db->insert_id;
+	 for ($i=0; $i<count($_POST['followers']); $i++)
+	 groupTaskSlave($leaderTask,
+					$_POST['followers'][$i]['stationid'],
+					$_POST['followers'][$i]['workerid'],$partsubpart,$timeout);
+   return 'OK';
+  }
+  else
+  return 'Error. Could not add new task.';
+ }
+ 
  function addMultipleTasks($parts) //adding multiple tasks where all data is same except part
  {
 	$ok=0;
@@ -970,7 +1047,9 @@
     if ($result=$db->query($sql))
 	  if ($row=$result->fetch_assoc())
 	  $nextorder=$row['ile'];
-  $sql='INSERT INTO `highleveltasks` (`workerid`, `stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `markerid`,`toolid`,`esttime`, `positionname`, `description`) VALUES ('.$_POST['workerid'].','.$_POST['stationid'].','.$_POST['type'].','.$nextorder.','.$partsubpart.','.$_POST['tool'].',\''.$db->real_escape_string($time).'\',\''.
+  $sql='INSERT INTO `highleveltasks` (`workerid`, `stationid`, `tasktype`, `sortorder`, `partid`, `subpartid`, `markerid`,`toolid`,`esttime`, `positionmarkerid`, `positionname`, `description`) VALUES ('.$_POST['workerid'].','.$_POST['stationid'].','.$_POST['type'].','.$nextorder.','.$partsubpart.','.$_POST['tool'].',\''.$db->real_escape_string($time).'\','.
+  (isset($_POST['positionmarker']) && ctype_digit(strval($_POST['positionmarker']))?
+  $_POST['positionmarker']:'0').',\''.
   $db->real_escape_string($_POST['position']).'\',\''.
   $db->real_escape_string($_POST['desc']).'\');';
   if ($db->query($sql))
@@ -1484,8 +1563,8 @@
   
  function getSubAssemblies($assembly) {
   global $db;
-  $sql='SELECT  hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, pc.icon as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, parts p, tasktypes tt, partcat pc, part_cat p_c WHERE t_c.tool=t.id and t_c.cat=tc.id and p_c.part=hlt.partid and p_c.cat=pc.id and tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.stationid='.$assembly.' '.               
-  'UNION ALL '.                                                                 
+  $sql='SELECT  hlt.`id`, hlt.`stationid`, tt.id as tasktypeid, tt.name as `tasktype`, hlt.`sortorder`, hlt.toolid as toolid, hlt.partid as `partid`, p.name as `partname`, t.name as `toolname`, 0 as positionid, hlt.`positionname`, hlt.`description`, hlt.`esttime`, pc.icon as particon, tc.icon as toolicon, if(tt.icon=\'\',(SELECT icon FROM tasktypes WHERE id=tt.parent),tt.icon) as tticon FROM highleveltasks hlt, tools t, toolcat tc, tool_cat t_c, parts p, tasktypes tt, partcat pc, part_cat p_c WHERE t_c.tool=t.id and t_c.cat=tc.id and p_c.part=hlt.partid and p_c.cat=pc.id and tt.id=hlt.tasktype and p.id=hlt.partid and t.id=hlt.toolid and hlt.stationid='.$assembly.' '.
+  'UNION ALL '.
   'SELECT 0, s.id, 0, s.name, s.sortorder, 0, s.mainpart, p.name, \'\', pp.id, pp.name, \'\', \'00:00:00\', pc.icon, \'\', \'\' FROM stations s, parts p, positions pp, partcat pc, part_cat p_c WHERE s.mainpart=p.id and s.position=pp.id and pc.id=p_c.cat and p_c.part=s.mainpart and s.parent='.$assembly.' '.
   'ORDER BY sortorder, id'; 
   $response='';
@@ -1625,6 +1704,21 @@
 	return 'Input data error.';
  } 
  
+ function getStationWorkers($stationid,$exceptWorker)
+ {
+	global $db;
+	if ((!isset($_SESSION['userid'])) || (!isset($_SESSION['projectid'])))
+	return 'You do not have permissions to edit this project.';
+	//TODO: add checking if station belongs to user's project
+	$sql='SELECT id, name FROM workers WHERE stationid='.$stationid.' and id<>'.$exceptWorker.
+	' ORDER BY name;';
+	$response="";
+	if ($result=$db->query($sql))
+		while ($row=$result->fetch_assoc())
+			$response.="<option value=\"".$row['id']."\">".htmlentities($row['name']).'</option>';
+	return '<result>OK</result><response>'.$response.'</response>';
+ }
+ 
  if (connectDB()==false) exit;
  
  if (isset($_POST['action']))
@@ -1639,6 +1733,13 @@
 		else
 		echo '<result>'.addTask($_POST['part']).'</result>';
 	}
+	else 
+		echo '<result>Wrong input data format.</result>';
+	
+  if ($_POST['action']=='addGroupTask')
+   if (isset($_POST['stationid']) && isset($_POST['type']) && isset($_POST['part']) && isset($_POST['tool']) && isset($_POST['time']) && isset($_POST['position']) && isset($_POST['desc']) && isset($_POST['timeout']) && isset($_POST['followers']))
+	if (ctype_digit($_POST['type']) && array_part_or_assembly($_POST['part'])  && ctype_digit($_POST['tool']))
+		echo '<result>'.addGroupTask().'</result>';
 	else 
 		echo '<result>Wrong input data format.</result>';
 
@@ -1657,6 +1758,12 @@
 	insertSubTypes($_POST['maintype']);
     echo '</response>';
    }
+
+	if ($_POST['action']=='getStationWorkers')
+	 if (isset($_POST['stationid']) && ctype_digit(strval($_POST['stationid'])) &&
+		 isset($_POST['exceptWorker']) && ctype_digit(strval($_POST['exceptWorker'])))
+		echo getStationWorkers($_POST['stationid'],$_POST['exceptWorker']);
+
 
   if (($_POST['action']=='getSubParts') && isset($_POST['maintype']))
    if (ctype_digit(strval($_POST['maintype'])))
@@ -1838,7 +1945,11 @@
 
  if ($_POST['action']=='reorderPartsToStations')
    if (isset($_POST['neworder']))
-   reorderPartsToStations($_POST['neworder']);	  
+   reorderPartsToStations($_POST['neworder']);
+
+ if ($_POST['action']=='reorderMarkersToStations')
+   if (isset($_POST['neworder']))
+   reorderMarkersToStations($_POST['neworder']);
    
  if ($_POST['action']=='reorderTools')
    if (isset($_POST['neworder']))
